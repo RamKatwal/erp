@@ -4,4 +4,6 @@ export type NavItem = {
   title: string
   href: string
   icon: LucideIcon
+  description?: string
+  children?: NavItem[]
 }

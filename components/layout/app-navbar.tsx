@@ -1,8 +1,25 @@
 "use client"
 
-import { Bell, LogOut, Search, Settings, User } from "lucide-react"
+import * as React from "react"
+import {
+  Activity,
+  BellIcon,
+  Bot,
+  Check,
+  ChevronsUpDown,
+  KeyRound,
+  LogOut,
+  Monitor,
+  Moon,
+  Palette,
+  Plus,
+  SearchIcon,
+  Settings,
+  Sun,
+  User,
+} from "lucide-react"
+import { useTheme } from "next-themes"
 
-import { ModeToggle } from "@/components/mode-toggle"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -13,46 +30,129 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { SidebarTrigger } from "@/components/ui/sidebar"
+import { cn } from "@/lib/utils"
+
+const organizations = [
+  {
+    id: "acme",
+    name: "Acme Inc",
+    plan: "Pro",
+    initials: "AC",
+    color: "bg-violet-600 text-white",
+  },
+  {
+    id: "novaco",
+    name: "NovaCo",
+    plan: "Free",
+    initials: "NO",
+    color: "bg-sky-600 text-white",
+  },
+] as const
 
 export function AppNavbar() {
+  const { setTheme, theme } = useTheme()
+  const [mounted, setMounted] = React.useState(false)
+  const [activeOrgId, setActiveOrgId] = React.useState("acme")
+  const activeOrg =
+    organizations.find((org) => org.id === activeOrgId) ?? organizations[0]
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
   return (
-    <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b bg-background/95 px-4 backdrop-blur supports-backdrop-filter:bg-background/60">
-      <div className="flex min-w-0 items-center gap-2">
-        <SidebarTrigger className="-ml-1" />
-      </div>
-
-      <div className="mx-auto w-full max-w-xl px-2">
-        <div className="relative">
-          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search modules, records, actions..."
-            className="h-9 w-full bg-muted/40 pl-9"
-          />
-        </div>
-      </div>
-
-      <div className="flex shrink-0 items-center gap-3">
-        <ModeToggle />
-
+    <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b bg-white px-4 dark:bg-background">
+      <div className="flex h-14 min-w-0 items-center gap-1">
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
               <Button
                 variant="ghost"
-                size="icon-sm"
+                size="sm"
+                className="h-8 max-w-[11rem] gap-1.5 px-1.5 sm:max-w-[14rem]"
+                aria-label="Switch organization"
+              />
+            }
+          >
+            <span
+              className={cn(
+                "flex size-5 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold",
+                activeOrg.color
+              )}
+            >
+              {activeOrg.initials}
+            </span>
+            <span className="truncate text-sm font-medium">{activeOrg.name}</span>
+            <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-64">
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Organizations</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {organizations.map((org) => (
+                <DropdownMenuItem
+                  key={org.id}
+                  onClick={() => setActiveOrgId(org.id)}
+                  className="gap-2"
+                >
+                  <span
+                    className={cn(
+                      "flex size-6 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold",
+                      org.color
+                    )}
+                  >
+                    {org.initials}
+                  </span>
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="truncate font-medium">{org.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {org.plan}
+                    </span>
+                  </span>
+                  {org.id === activeOrgId ? (
+                    <Check className="size-4 shrink-0 text-foreground" />
+                  ) : null}
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <Plus />
+                Create Organization
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <div className="ml-auto flex shrink-0 items-center gap-2">
+        <Button size="sm" className="h-8 gap-1 px-2.5">
+          <Plus className="size-3.5" />
+          Create
+        </Button>
+
+        <Separator orientation="vertical" className="mx-1 hidden h-5 sm:block" />
+
+        <Button variant="outline" size="icon" aria-label="Search">
+          <SearchIcon />
+        </Button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                variant="outline"
+                size="icon"
                 className="relative"
                 aria-label="Notifications"
               />
             }
           >
-            <Bell className="size-4" />
-            <Badge className="absolute -top-1 -right-1 size-4 justify-center rounded-full p-0 text-[10px]">
+            <BellIcon />
+            <Badge className="absolute -top-1.5 -right-1.5 size-4 justify-center rounded-full border-2 border-background p-0 text-[10px]">
               3
             </Badge>
           </DropdownMenuTrigger>
@@ -82,46 +182,102 @@ export function AppNavbar() {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Separator orientation="vertical" className="h-5" />
-
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="rounded-full"
+              <button
+                type="button"
+                className="inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
                 aria-label="User menu"
               />
             }
           >
-            <Avatar size="sm">
-              <AvatarFallback>AU</AvatarFallback>
+            <Avatar className="size-9">
+              <AvatarFallback className="text-xs">NB</AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent align="end" className="w-64">
             <DropdownMenuGroup>
-              <DropdownMenuLabel>
-                <div className="flex flex-col gap-0.5">
-                  <span>Admin User</span>
-                  <span className="text-xs font-normal text-muted-foreground">
-                    admin@ibmerp.com
-                  </span>
+              <DropdownMenuLabel className="p-0 font-normal text-foreground">
+                <div className="flex items-center gap-2 px-1.5 py-1.5">
+                  <Avatar size="sm">
+                    <AvatarFallback>NB</AvatarFallback>
+                  </Avatar>
+                  <div className="flex min-w-0 flex-col">
+                    <span className="truncate text-sm font-semibold">
+                      Nick Bold
+                    </span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      nick@reui.io
+                    </span>
+                  </div>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem>
                 <User />
                 Profile
+                <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Bot />
+                My Agents
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Activity />
+                Usage
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <KeyRound />
+                API Keys
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Settings />
                 Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem variant="destructive">
+              <div
+                className="flex items-center justify-between gap-2 rounded-md px-1.5 py-1.5 text-sm"
+                onPointerDown={(event) => event.preventDefault()}
+              >
+                <span className="flex items-center gap-1.5">
+                  <Palette className="size-4 shrink-0" />
+                  Theme
+                </span>
+                <div className="flex items-center rounded-full border bg-muted/60 p-0.5">
+                  {(
+                    [
+                      { value: "light", icon: Sun, label: "Light" },
+                      { value: "dark", icon: Moon, label: "Dark" },
+                      { value: "system", icon: Monitor, label: "System" },
+                    ] as const
+                  ).map(({ value, icon: Icon, label }) => {
+                    const active = mounted && theme === value
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        aria-label={label}
+                        disabled={!mounted}
+                        className={cn(
+                          "inline-flex size-6 items-center justify-center rounded-full text-muted-foreground transition-colors",
+                          "hover:text-foreground disabled:opacity-50",
+                          active &&
+                            "bg-background text-foreground shadow-sm ring-1 ring-foreground/10"
+                        )}
+                        onClick={() => setTheme(value)}
+                      >
+                        <Icon className="size-3.5" />
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
                 <LogOut />
-                Sign out
+                Sign Out
+                <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
               </DropdownMenuItem>
             </DropdownMenuGroup>
           </DropdownMenuContent>

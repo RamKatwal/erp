@@ -1,10 +1,14 @@
+import { getNavItemByHref } from "@/config/navigation"
+import { ModuleOverview } from "@/components/dashboard/module-overview"
+
 export default function PurchasePage() {
+  const module = getNavItemByHref("/purchase")
+
   return (
-    <div>
-      <h1 className="text-2xl font-semibold tracking-tight">Purchase</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Manage purchase orders and suppliers.
-      </p>
-    </div>
+    <ModuleOverview
+      title="Purchase"
+      description="Handle purchase invoices, orders, requisitions, expenses, and payments."
+      items={module?.children ?? []}
+    />
   )
 }

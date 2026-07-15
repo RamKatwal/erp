@@ -1,41 +1,43 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+import type { Metadata } from "next"
+import { Geist, Geist_Mono } from "next/font/google"
 
-import { ThemeProvider } from "@/components/theme-provider";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/components/theme-provider"
+import { TooltipProvider } from "@/components/ui/tooltip"
 
-import "./globals.css";
-import { cn } from "@/lib/utils";
-
-const inter = Inter({subsets:['latin'],variable:'--font-sans'});
+import "./globals.css"
+import { cn } from "@/lib/utils"
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
   subsets: ["latin"],
-});
+  variable: "--font-geist-sans",
+})
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
   subsets: ["latin"],
-});
+  variable: "--font-geist-mono",
+})
 
 export const metadata: Metadata = {
-  title: "Acme Inc",
+  title: "PROVIDHY",
   description: "Enterprise resource planning dashboard",
-};
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   return (
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("h-full", "antialiased", geistSans.variable, geistMono.variable, "font-sans", inter.variable)}
+      className={cn(
+        "h-full antialiased",
+        geistSans.variable,
+        geistMono.variable
+      )}
     >
-      <body className="min-h-full flex flex-col">
+      <body className={cn("flex min-h-full flex-col font-sans", geistSans.className)}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -46,5 +48,5 @@ export default function RootLayout({
         </ThemeProvider>
       </body>
     </html>
-  );
+  )
 }

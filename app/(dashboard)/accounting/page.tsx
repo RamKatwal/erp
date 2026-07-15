@@ -1,10 +1,14 @@
+import { getNavItemByHref } from "@/config/navigation"
+import { ModuleOverview } from "@/components/dashboard/module-overview"
+
 export default function AccountingPage() {
+  const module = getNavItemByHref("/accounting")
+
   return (
-    <div>
-      <h1 className="text-2xl font-semibold tracking-tight">Accounting</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Manage invoices, payments, and accounts.
-      </p>
-    </div>
+    <ModuleOverview
+      title="Accounting"
+      description="Manage vouchers, chart of accounts, bank accounts, and cheques."
+      items={module?.children ?? []}
+    />
   )
 }
