@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "PROVIDHY",
+  title: "ABC Company",
   description: "Enterprise resource planning dashboard",
 }
 

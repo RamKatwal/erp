@@ -5,8 +5,6 @@ import {
   Activity,
   BellIcon,
   Bot,
-  Check,
-  ChevronsUpDown,
   KeyRound,
   LogOut,
   Monitor,
@@ -20,6 +18,7 @@ import {
 } from "lucide-react"
 import { useTheme } from "next-themes"
 
+import { AppBreadcrumb } from "@/components/layout/app-breadcrumb"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -36,29 +35,9 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 
-const organizations = [
-  {
-    id: "acme",
-    name: "Acme Inc",
-    plan: "Pro",
-    initials: "AC",
-    color: "bg-violet-600 text-white",
-  },
-  {
-    id: "novaco",
-    name: "NovaCo",
-    plan: "Free",
-    initials: "NO",
-    color: "bg-sky-600 text-white",
-  },
-] as const
-
 export function AppNavbar() {
   const { setTheme, theme } = useTheme()
   const [mounted, setMounted] = React.useState(false)
-  const [activeOrgId, setActiveOrgId] = React.useState("acme")
-  const activeOrg =
-    organizations.find((org) => org.id === activeOrgId) ?? organizations[0]
 
   React.useEffect(() => {
     setMounted(true)
@@ -66,66 +45,8 @@ export function AppNavbar() {
 
   return (
     <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b bg-white px-4 dark:bg-background">
-      <div className="flex h-14 min-w-0 items-center gap-1">
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 max-w-[11rem] gap-1.5 px-1.5 sm:max-w-[14rem]"
-                aria-label="Switch organization"
-              />
-            }
-          >
-            <span
-              className={cn(
-                "flex size-5 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold",
-                activeOrg.color
-              )}
-            >
-              {activeOrg.initials}
-            </span>
-            <span className="truncate text-sm font-medium">{activeOrg.name}</span>
-            <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-64">
-            <DropdownMenuGroup>
-              <DropdownMenuLabel>Organizations</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {organizations.map((org) => (
-                <DropdownMenuItem
-                  key={org.id}
-                  onClick={() => setActiveOrgId(org.id)}
-                  className="gap-2"
-                >
-                  <span
-                    className={cn(
-                      "flex size-6 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold",
-                      org.color
-                    )}
-                  >
-                    {org.initials}
-                  </span>
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="truncate font-medium">{org.name}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {org.plan}
-                    </span>
-                  </span>
-                  {org.id === activeOrgId ? (
-                    <Check className="size-4 shrink-0 text-foreground" />
-                  ) : null}
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <Plus />
-                Create Organization
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
+      <div className="flex h-14 min-w-0 flex-1 items-center">
+        <AppBreadcrumb />
       </div>
 
       <div className="ml-auto flex shrink-0 items-center gap-2">
@@ -136,9 +57,19 @@ export function AppNavbar() {
 
         <Separator orientation="vertical" className="mx-1 hidden h-5 sm:block" />
 
-        <Button variant="outline" size="icon" aria-label="Search">
-          <SearchIcon />
-        </Button>
+        <div className="relative group">
+          <Button
+            variant="outline"
+            size="icon"
+            aria-label="Search"
+            className="relative"
+          >
+            <SearchIcon />
+          </Button>
+          <span className="pointer-events-none absolute left-1/2 bottom-full mb-2 hidden -translate-x-1/2 rounded-md bg-black px-2 py-1 text-[11px] text-white group-hover:block">
+            Search
+          </span>
+        </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -146,7 +77,7 @@ export function AppNavbar() {
               <Button
                 variant="outline"
                 size="icon"
-                className="relative"
+                className="relative group"
                 aria-label="Notifications"
               />
             }
@@ -155,6 +86,9 @@ export function AppNavbar() {
             <Badge className="absolute -top-1.5 -right-1.5 size-4 justify-center rounded-full border-2 border-background p-0 text-[10px]">
               3
             </Badge>
+            <span className="pointer-events-none absolute left-1/2 bottom-full mb-2 hidden -translate-x-1/2 rounded-md bg-black px-2 py-1 text-[11px] text-white group-hover:block">
+              Notifications
+            </span>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-72">
             <DropdownMenuGroup>
@@ -187,7 +121,7 @@ export function AppNavbar() {
             render={
               <button
                 type="button"
-                className="inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+                className="inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring/30 relative group"
                 aria-label="User menu"
               />
             }
@@ -195,6 +129,9 @@ export function AppNavbar() {
             <Avatar className="size-9">
               <AvatarFallback className="text-xs">NB</AvatarFallback>
             </Avatar>
+            <span className="pointer-events-none absolute left-1/2 bottom-full mb-2 hidden -translate-x-1/2 rounded-md bg-black px-2 py-1 text-[11px] text-white group-hover:block">
+              Profile
+            </span>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-64">
             <DropdownMenuGroup>

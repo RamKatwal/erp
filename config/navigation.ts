@@ -9,7 +9,6 @@ import {
   Home,
   Landmark,
   ListTree,
-  LogOut,
   Package,
   PackageX,
   Ruler,
@@ -172,18 +171,10 @@ export const mainNavigation: NavItem[] = [
     href: "/reports",
     icon: BarChart3,
   },
-]
-
-export const secondaryNavigation: NavItem[] = [
   {
     title: "Settings",
     href: "/settings",
     icon: Settings,
-  },
-  {
-    title: "Logout",
-    href: "/logout",
-    icon: LogOut,
   },
 ]
 
@@ -208,4 +199,39 @@ export function getNavItemByHref(href: string): NavItem | undefined {
   }
 
   return undefined
+}
+
+export type BreadcrumbEntry = {
+  title: string
+  href?: string
+}
+
+function formatSegmentTitle(segment: string) {
+  return segment
+    .split("-")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ")
+}
+
+export function getBreadcrumbs(pathname: string): BreadcrumbEntry[] {
+  if (pathname === "/") {
+    return [{ title: "Home" }]
+  }
+
+  const crumbs: BreadcrumbEntry[] = []
+  const segments = pathname.split("/").filter(Boolean)
+  let currentPath = ""
+
+  for (const segment of segments) {
+    currentPath += `/${segment}`
+    const navItem = getNavItemByHref(currentPath)
+    const isLast = currentPath === pathname
+
+    crumbs.push({
+      title: navItem?.title ?? formatSegmentTitle(segment),
+      href: isLast ? undefined : currentPath,
+    })
+  }
+
+  return crumbs
 }
