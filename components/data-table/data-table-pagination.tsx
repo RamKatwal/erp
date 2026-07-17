@@ -31,12 +31,18 @@ export function DataTablePagination<TData>({
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 border-t px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
+        "flex flex-col gap-3 border-t border-border bg-muted/20 px-3 py-2 sm:flex-row sm:items-center sm:justify-between",
         className
       )}
     >
-      <p className="text-xs text-muted-foreground">
-        {start}-{end} of {totalRows}
+      <p className="text-xs text-muted-foreground tabular-nums">
+        {totalRows} {totalRows === 1 ? "row" : "rows"}
+        {totalRows > 0 ? (
+          <span className="text-muted-foreground/70">
+            {" "}
+            · {start}-{end}
+          </span>
+        ) : null}
       </p>
 
       <div className="flex items-center gap-4">

@@ -50,7 +50,7 @@ export function AppNavbar() {
       </div>
 
       <div className="ml-auto flex shrink-0 items-center gap-2">
-        <Button size="sm" className="h-8 gap-1 px-2.5">
+        <Button variant="glass" size="sm" className="gap-1 px-2.5">
           <Plus className="size-3.5" />
           Create
         </Button>
@@ -66,7 +66,7 @@ export function AppNavbar() {
           >
             <SearchIcon />
           </Button>
-          <span className="pointer-events-none absolute left-1/2 bottom-full mb-2 hidden -translate-x-1/2 rounded-md bg-black px-2 py-1 text-[11px] text-white group-hover:block">
+          <span className="pointer-events-none absolute left-1/2 top-full mt-2 hidden -translate-x-1/2 rounded-md bg-black px-2 py-1 text-[11px] text-white group-hover:block">
             Search
           </span>
         </div>
@@ -86,7 +86,7 @@ export function AppNavbar() {
             <Badge className="absolute -top-1.5 -right-1.5 size-4 justify-center rounded-full border-2 border-background p-0 text-[10px]">
               3
             </Badge>
-            <span className="pointer-events-none absolute left-1/2 bottom-full mb-2 hidden -translate-x-1/2 rounded-md bg-black px-2 py-1 text-[11px] text-white group-hover:block">
+            <span className="pointer-events-none absolute left-1/2 top-full mt-2 hidden -translate-x-1/2 rounded-md bg-black px-2 py-1 text-[11px] text-white group-hover:block">
               Notifications
             </span>
           </DropdownMenuTrigger>
@@ -129,7 +129,7 @@ export function AppNavbar() {
             <Avatar className="size-9">
               <AvatarFallback className="text-xs">NB</AvatarFallback>
             </Avatar>
-            <span className="pointer-events-none absolute left-1/2 bottom-full mb-2 hidden -translate-x-1/2 rounded-md bg-black px-2 py-1 text-[11px] text-white group-hover:block">
+            <span className="pointer-events-none absolute left-1/2 top-full mt-2 hidden -translate-x-1/2 rounded-md bg-black px-2 py-1 text-[11px] text-white group-hover:block">
               Profile
             </span>
           </DropdownMenuTrigger>

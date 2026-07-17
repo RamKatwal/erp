@@ -64,7 +64,7 @@ export function PurchaseReturnPage() {
             <DownloadIcon />
             Export
           </Button>
-          <Button>
+          <Button variant="glass">
             <PlusIcon />
             Create Purchase Return
           </Button>

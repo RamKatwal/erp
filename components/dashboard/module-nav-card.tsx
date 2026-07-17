@@ -1,8 +1,8 @@
 import Link from "next/link"
-import type { LucideIcon } from "lucide-react"
 import { ArrowUpRight } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import type { NavIcon } from "@/types/navigation"
 
 const accentStyles = [
   "bg-blue-500/10 text-blue-600 dark:text-blue-400",
@@ -17,7 +17,7 @@ type ModuleNavCardProps = {
   title: string
   description: string
   href: string
-  icon: LucideIcon
+  icon: NavIcon
   accentIndex?: number
 }
 

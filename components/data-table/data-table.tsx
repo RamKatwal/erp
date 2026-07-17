@@ -6,6 +6,7 @@ import { type ColumnDef, flexRender } from "@tanstack/react-table"
 import { cn } from "@/lib/utils"
 
 import { DataTablePagination } from "./data-table-pagination"
+import { dataTableClassNames } from "./data-table-styles"
 import { useDataTable } from "./use-data-table"
 
 type DataTableProps<TData, TValue> = {
@@ -43,17 +44,20 @@ export function DataTable<TData, TValue>({
   return (
     <div className={cn("flex flex-col", className)} data-slot="data-table">
       <div className="overflow-x-auto">
-        <table className={cn("w-full caption-bottom text-xs", tableClassName)}>
+        <table
+          className={cn(dataTableClassNames.table, tableClassName)}
+        >
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
-              <tr
-                key={headerGroup.id}
-                className="border-b bg-muted/40 text-muted-foreground"
-              >
+              <tr key={headerGroup.id} className={dataTableClassNames.headerRow}>
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="h-9 px-4 text-left align-middle font-medium whitespace-nowrap"
+                    className={cn(
+                      dataTableClassNames.headerCell,
+                      header.column.id === "select" &&
+                        dataTableClassNames.selectCell
+                    )}
                   >
                     {header.isPlaceholder
                       ? null
@@ -72,12 +76,16 @@ export function DataTable<TData, TValue>({
                 <tr
                   key={row.id}
                   data-state={row.getIsSelected() ? "selected" : undefined}
-                  className="border-b transition-colors hover:bg-muted/30 data-[state=selected]:bg-muted/40"
+                  className={dataTableClassNames.bodyRow}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <td
                       key={cell.id}
-                      className="px-4 py-2.5 align-middle whitespace-nowrap"
+                      className={cn(
+                        dataTableClassNames.bodyCell,
+                        cell.column.id === "select" &&
+                          dataTableClassNames.selectCell
+                      )}
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
@@ -91,7 +99,7 @@ export function DataTable<TData, TValue>({
               <tr>
                 <td
                   colSpan={columns.length}
-                  className="h-24 px-4 text-center text-muted-foreground"
+                  className={dataTableClassNames.emptyCell}
                 >
                   {emptyMessage}
                 </td>

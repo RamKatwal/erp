@@ -1,0 +1,15 @@
+import type { SVGProps } from "react"
+
+export function DuoExpenseIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" {...props}>
+  <g>
+    <path fill="none" d="M13 7.5H9.5c-0.27614 0 -0.5 0.22386 -0.5 0.5v2c0 0.2761 0.22386 0.5 0.5 0.5H13c0.2761 0 0.5 -0.2239 0.5 -0.5V8c0 -0.27614 -0.2239 -0.5 -0.5 -0.5Z" stroke-width="1"></path>
+    <path fill="currentColor" fill-opacity="0.28" fill-rule="evenodd" d="M0.5 5v7.5c0 0.2652 0.105357 0.5196 0.292893 0.7071 0.187537 0.1875 0.441887 0.2929 0.707107 0.2929H11c0.2652 0 0.5196 -0.1054 0.7071 -0.2929S12 12.7652 12 12.5v-2H9.5c-0.27614 0 -0.5 -0.2239 -0.5 -0.5V8c0 -0.27614 0.22386 -0.5 0.5 -0.5H12v-2c0 -0.26522 -0.1054 -0.51957 -0.2929 -0.70711C11.5196 4.60536 11.2652 4.5 11 4.5h-1V2H3.5c-1.65685 0 -3 1.34315 -3 3Z" clip-rule="evenodd" stroke-width="1"></path>
+    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M13 7.5H9.5c-0.27614 0 -0.5 0.22386 -0.5 0.5v2c0 0.2761 0.22386 0.5 0.5 0.5H13c0.2761 0 0.5 -0.2239 0.5 -0.5V8c0 -0.27614 -0.2239 -0.5 -0.5 -0.5Z" stroke-width="1"></path>
+    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M12 10.5v2c0 0.2652 -0.1054 0.5196 -0.2929 0.7071S11.2652 13.5 11 13.5H1.5c-0.26522 0 -0.51957 -0.1054 -0.707107 -0.2929C0.605357 13.0196 0.5 12.7652 0.5 12.5V5c0 -1.65685 1.34315 -3 3 -3H10v2.5" stroke-width="1"></path>
+    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M12 7.5v-2c0 -0.26522 -0.1054 -0.51957 -0.2929 -0.70711C11.5196 4.60536 11.2652 4.5 11 4.5H3.5" stroke-width="1"></path>
+  </g>
+</svg>
+  )
+}

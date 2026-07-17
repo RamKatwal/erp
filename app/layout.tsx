@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+import { GeistSans } from "geist/font/sans"
+import { GeistMono } from "geist/font/mono"
 
 import { ThemeProvider } from "@/components/theme-provider"
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -7,19 +8,13 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import "./globals.css"
 import { cn } from "@/lib/utils"
 
-const geistSans = Geist({
-  subsets: ["latin"],
-  variable: "--font-geist-sans",
-})
-
-const geistMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-geist-mono",
-})
-
 export const metadata: Metadata = {
   title: "ABC Company",
   description: "Enterprise resource planning dashboard",
+  icons: {
+    icon: "/abc-company-logo.png",
+    apple: "/abc-company-logo.png",
+  },
 }
 
 export default function RootLayout({
@@ -33,11 +28,11 @@ export default function RootLayout({
       suppressHydrationWarning
       className={cn(
         "h-full antialiased",
-        geistSans.variable,
-        geistMono.variable
+        GeistSans.variable,
+        GeistMono.variable
       )}
     >
-      <body className={cn("flex min-h-full flex-col font-sans", geistSans.className)}>
+      <body className={cn("flex min-h-full flex-col font-sans", GeistSans.className)}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
