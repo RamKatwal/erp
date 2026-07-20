@@ -1,10 +1,5 @@
-import { ModulePage } from "@/components/dashboard/module-page"
+import { DashboardGrid } from "@/components/dashboard/home/dashboard-grid"
 
 export default function DashboardPage() {
-  return (
-    <ModulePage
-      title="Home"
-      description="Overview of your business activity across modules."
-    />
-  )
+  return <DashboardGrid />
 }
