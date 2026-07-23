@@ -5,6 +5,7 @@ import { IndianRupee } from "lucide-react"
 import { Cell, Pie, PieChart } from "recharts"
 
 import { DashboardWidgetShell } from "@/components/dashboard/home/dashboard-widget-shell"
+import { DASHBOARD_WIDGET_IDS } from "@/lib/dashboard/default-layout"
 import {
   ChartContainer,
   ChartLegend,
@@ -15,18 +16,27 @@ import {
 } from "@/components/ui/chart"
 import { receivableAgeingData } from "@/lib/dashboard/mock-data"
 import { formatCurrency2 } from "@/lib/dashboard/format"
+import { chartColor } from "@/lib/dashboard/chart-colors"
 
 const chartConfig = {
   amount: {
     label: "Amount",
   },
+  current: {
+    label: "Current",
+    color: chartColor(2),
+  },
+  days0to4: {
+    label: "0 - 4 days",
+    color: chartColor(3),
+  },
   recent: {
     label: "5 - 9 days",
-    color: "hsl(210 70% 55%)",
+    color: chartColor(4),
   },
   overdue: {
     label: "10+ days",
-    color: "hsl(38 70% 58%)",
+    color: chartColor(9),
   },
 } satisfies ChartConfig
 
@@ -35,6 +45,7 @@ const totalAmount = receivableAgeingData.reduce((sum, d) => sum + d.amount, 0)
 export function ReceivableAgeingWidget() {
   return (
     <DashboardWidgetShell
+      widgetId={DASHBOARD_WIDGET_IDS.receivableAgeing}
       title="Receivable Ageing Summary"
       action={
         <Link
@@ -45,11 +56,11 @@ export function ReceivableAgeingWidget() {
         </Link>
       }
       footer={
-        <div className="flex items-center gap-2">
-          <span className="inline-flex size-6 items-center justify-center rounded-full bg-muted text-foreground">
+        <div className="flex w-full flex-nowrap items-center gap-2 overflow-hidden">
+          <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
             <IndianRupee className="size-3.5" />
           </span>
-          <span>
+          <span className="truncate">
             Total Amount{" "}
             <span className="font-medium text-foreground">
               {formatCurrency2(totalAmount)}
@@ -58,15 +69,16 @@ export function ReceivableAgeingWidget() {
         </div>
       }
     >
-      <ChartContainer config={chartConfig} className="mx-auto h-full w-full max-w-[200px]">
+      <ChartContainer config={chartConfig} className="mx-auto h-full w-full">
         <PieChart>
           <ChartTooltip content={<ChartTooltipContent hideLabel />} />
           <Pie
             data={receivableAgeingData}
             dataKey="amount"
             nameKey="bucket"
-            innerRadius="60%"
-            outerRadius="80%"
+            innerRadius="55%"
+            outerRadius="75%"
+            stroke="var(--background)"
             strokeWidth={2}
           >
             {receivableAgeingData.map((entry) => (
@@ -76,7 +88,14 @@ export function ReceivableAgeingWidget() {
               />
             ))}
           </Pie>
-          <ChartLegend content={<ChartLegendContent nameKey="bucket" />} />
+          <ChartLegend
+            content={
+              <ChartLegendContent
+                nameKey="bucket"
+                className="flex-nowrap gap-3 whitespace-nowrap [&>div]:shrink-0 [&>div]:whitespace-nowrap"
+              />
+            }
+          />
         </PieChart>
       </ChartContainer>
     </DashboardWidgetShell>

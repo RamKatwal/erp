@@ -1,57 +1,132 @@
 "use client"
 
+import type { LucideIcon } from "lucide-react"
 import {
-  DuoExpenseIcon,
-  DuoPaymentsIcon,
-  DuoPurchaseIcon,
-  DuoSalesIcon,
-} from "@/components/icons/duo"
-import { DashboardWidgetShell } from "@/components/dashboard/home/dashboard-widget-shell"
-import { PeriodSelect } from "@/components/dashboard/home/period-select"
-import { businessOverviewStats } from "@/lib/dashboard/mock-data"
-import { formatCurrency } from "@/lib/format"
+  CreditCard,
+  Receipt,
+  ShoppingBag,
+  ShoppingCart,
+} from "lucide-react"
 
-const statIcons = [
-  DuoSalesIcon,
-  DuoPaymentsIcon,
-  DuoPurchaseIcon,
-  DuoExpenseIcon,
+import { useDashboardLayoutEdit } from "@/components/dashboard/home/dashboard-layout-context"
+import { WidgetRemoveButton } from "@/components/dashboard/home/widget-remove-button"
+import { Badge } from "@/components/ui/badge"
+import {
+  DASHBOARD_WIDGET_IDS,
+  type DashboardWidgetId,
+} from "@/lib/dashboard/default-layout"
+import {
+  businessOverviewStats,
+  type BusinessOverviewStat,
+  type BusinessOverviewTrend,
+} from "@/lib/dashboard/mock-data"
+import { formatCurrency } from "@/lib/format"
+import { cn } from "@/lib/utils"
+
+const icons: Record<string, LucideIcon> = {
+  "total-sales": ShoppingCart,
+  "total-receipt": Receipt,
+  "total-purchase": ShoppingBag,
+  "total-payment": CreditCard,
+}
+
+const KPI_WIDGET_IDS = [
+  DASHBOARD_WIDGET_IDS.totalSales,
+  DASHBOARD_WIDGET_IDS.totalReceipt,
+  DASHBOARD_WIDGET_IDS.totalPurchase,
+  DASHBOARD_WIDGET_IDS.totalPayment,
 ] as const
 
-const iconContainerClass =
-  "flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-foreground"
+type KpiWidgetId = (typeof KPI_WIDGET_IDS)[number]
 
-export function BusinessOverviewWidget() {
+function formatChange(change: number) {
+  const absolute = Math.abs(change).toFixed(change % 1 === 0 ? 2 : 1)
+  if (change > 0) return `+${absolute}%`
+  if (change < 0) return `-${absolute}%`
+  return `${absolute}%`
+}
+
+function trendBadgeClass(trend: BusinessOverviewTrend) {
+  switch (trend) {
+    case "up":
+      return "border-transparent bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
+    case "down":
+      return "border-transparent bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400"
+    default:
+      return "border-transparent bg-muted text-muted-foreground"
+  }
+}
+
+function KpiStatCard({
+  widgetId,
+  stat,
+}: {
+  widgetId: DashboardWidgetId
+  stat: BusinessOverviewStat
+}) {
+  const { isLayoutEditing } = useDashboardLayoutEdit()
+  const Icon = icons[stat.id] ?? ShoppingCart
+
   return (
-    <DashboardWidgetShell
-      title="Business Overview"
-      action={<PeriodSelect />}
-      hug
+    <div
+      className={cn(
+        "relative flex h-full w-full flex-col justify-between gap-1 rounded-xl bg-card px-2.5 py-2 ring-1 ring-foreground/10",
+        isLayoutEditing && "cursor-grab pb-7 active:cursor-grabbing"
+      )}
     >
-      <div className="grid w-full grid-cols-4 gap-2">
-        {businessOverviewStats.map((stat, index) => {
-          const Icon = statIcons[index]
-
-          return (
-            <div
-              key={stat.label}
-              className="flex min-w-0 items-center gap-2.5 rounded-lg border bg-muted/20 px-2.5 py-2"
-            >
-              <div className={iconContainerClass}>
-                <Icon className="size-3.5" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold tabular-nums leading-tight">
-                  {formatCurrency(stat.value)}
-                </p>
-                <p className="truncate text-[11px] text-muted-foreground">
-                  {stat.label}
-                </p>
-              </div>
-            </div>
-          )
-        })}
+      <div className="flex size-7 items-center justify-center rounded-md text-muted-foreground">
+        <Icon className="size-4" strokeWidth={1.75} />
       </div>
-    </DashboardWidgetShell>
+
+      <div className="min-w-0 space-y-0.5">
+        <p className="truncate text-xs text-muted-foreground">{stat.label}</p>
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          <p className="text-xl font-semibold tracking-tight tabular-nums">
+            {formatCurrency(stat.value)}
+          </p>
+          {!isLayoutEditing ? (
+            <Badge
+              className={cn(
+                "dashboard-no-drag h-5 rounded-full px-1.5 text-[10px] font-medium",
+                trendBadgeClass(stat.trend)
+              )}
+            >
+              {formatChange(stat.change)}
+            </Badge>
+          ) : null}
+        </div>
+      </div>
+
+      <WidgetRemoveButton
+        widgetId={widgetId}
+        className="absolute bottom-1.5 left-2"
+      />
+    </div>
   )
 }
+
+function createKpiWidget(widgetId: KpiWidgetId) {
+  const stat = businessOverviewStats.find((item) => item.id === widgetId)
+
+  function KpiWidget() {
+    if (!stat) return null
+    return <KpiStatCard widgetId={widgetId} stat={stat} />
+  }
+
+  KpiWidget.displayName = `KpiWidget(${widgetId})`
+  return KpiWidget
+}
+
+export const TotalSalesWidget = createKpiWidget(
+  DASHBOARD_WIDGET_IDS.totalSales
+)
+export const TotalReceiptWidget = createKpiWidget(
+  DASHBOARD_WIDGET_IDS.totalReceipt
+)
+export const TotalPurchaseWidget = createKpiWidget(
+  DASHBOARD_WIDGET_IDS.totalPurchase
+)
+export const TotalPaymentWidget = createKpiWidget(
+  DASHBOARD_WIDGET_IDS.totalPayment
+)

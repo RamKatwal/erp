@@ -5,6 +5,7 @@ import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
 
 import { DashboardWidgetShell } from "@/components/dashboard/home/dashboard-widget-shell"
 import { PeriodSelect } from "@/components/dashboard/home/period-select"
+import { DASHBOARD_WIDGET_IDS } from "@/lib/dashboard/default-layout"
 import {
   ChartContainer,
   ChartTooltip,
@@ -13,15 +14,16 @@ import {
 } from "@/components/ui/chart"
 import { financialInsightData } from "@/lib/dashboard/mock-data"
 import { formatCurrency2 } from "@/lib/dashboard/format"
+import { chartColor } from "@/lib/dashboard/chart-colors"
 
 const chartConfig = {
   inflow: {
     label: "In",
-    color: "hsl(160 60% 45%)",
+    color: chartColor(2),
   },
   outflow: {
     label: "Out",
-    color: "hsl(0 70% 55%)",
+    color: chartColor(3),
   },
 } satisfies ChartConfig
 
@@ -37,26 +39,27 @@ export function FinancialInsightWidget() {
 
   return (
     <DashboardWidgetShell
+      widgetId={DASHBOARD_WIDGET_IDS.financialInsight}
       title="Financial Insight"
       action={<PeriodSelect />}
       footer={
-        <div className="flex w-full flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex size-6 items-center justify-center rounded-full bg-muted text-foreground">
+        <div className="flex w-full flex-nowrap items-center gap-4 overflow-hidden">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
               <ArrowDownRight className="size-3.5" />
             </span>
-            <span>
+            <span className="truncate">
               In{" "}
               <span className="font-medium text-foreground">
                 {formatCurrency2(totals.inflow)}
               </span>
             </span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="inline-flex size-6 items-center justify-center rounded-full bg-muted text-foreground">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
               <ArrowUpRight className="size-3.5" />
             </span>
-            <span>
+            <span className="truncate">
               Out{" "}
               <span className="font-medium text-foreground">
                 {formatCurrency2(totals.outflow)}

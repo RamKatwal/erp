@@ -18,11 +18,35 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
+  --color-chart-track: var(--chart-track);
+  --color-chart-cursor: var(--chart-cursor);
+  --color-chart-neutral: var(--chart-neutral);
   --color-chart-1: var(--chart-1);
+  --color-chart-1-active: var(--chart-1-active);
+  --color-chart-2: var(--chart-2);
+  --color-chart-2-active: var(--chart-2-active);
+  --color-chart-3: var(--chart-3);
+  --color-chart-3-active: var(--chart-3-active);
+  --color-chart-4: var(--chart-4);
+  --color-chart-4-active: var(--chart-4-active);
+  --color-chart-5: var(--chart-5);
+  --color-chart-5-active: var(--chart-5-active);
+  --color-chart-6: var(--chart-6);
+  --color-chart-6-active: var(--chart-6-active);
+  --color-chart-7: var(--chart-7);
+  --color-chart-7-active: var(--chart-7-active);
+  --color-chart-8: var(--chart-8);
+  --color-chart-8-active: var(--chart-8-active);
+  --color-chart-9: var(--chart-9);
+  --color-chart-9-active: var(--chart-9-active);
+  --color-chart-10: var(--chart-10);
+  --color-chart-10-active: var(--chart-10-active);
+  --color-chart-11: var(--chart-11);
+  --color-chart-11-active: var(--chart-11-active);
+  --color-chart-12: var(--chart-12);
+  --color-chart-12-active: var(--chart-12-active);
+  --color-chart-agents-bar: var(--chart-agents-bar);
+  --color-chart-agents-bar-active: var(--chart-agents-bar-active);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -65,11 +89,38 @@
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  /* Chart UI chrome (neutral only) */
+  --chart-track: oklch(92.2% 0 0); /* neutral-200 */
+  --chart-cursor: oklch(87% 0 0); /* neutral-300 */
+  --chart-neutral: oklch(87% 0 0); /* neutral-300 */
+  /* Categorical accents — BoardUI 1–8 (400 → 500 active) */
+  --chart-1: oklch(77.7% 0.152 181.912); /* teal-400 */
+  --chart-1-active: oklch(70.4% 0.14 182.503); /* teal-500 */
+  --chart-2: oklch(84.1% 0.238 128.85); /* lime-400 */
+  --chart-2-active: oklch(76.8% 0.233 130.85); /* lime-500 */
+  --chart-3: oklch(71.8% 0.202 349.761); /* pink-400 */
+  --chart-3-active: oklch(65.6% 0.241 354.308); /* pink-500 */
+  --chart-4: oklch(74.6% 0.16 232.661); /* sky-400 */
+  --chart-4-active: oklch(68.5% 0.169 237.323); /* sky-500 */
+  --chart-5: oklch(71.4% 0.203 305.504); /* purple-400 */
+  --chart-5-active: oklch(62.7% 0.265 303.9); /* purple-500 */
+  --chart-6: oklch(70.7% 0.165 254.624); /* blue-400 */
+  --chart-6-active: oklch(62.3% 0.214 259.815); /* blue-500 */
+  --chart-7: oklch(76.5% 0.177 163.223); /* emerald-400 */
+  --chart-7-active: oklch(69.6% 0.17 162.48); /* emerald-500 */
+  --chart-8: oklch(85.2% 0.199 91.936); /* yellow-400 */
+  --chart-8-active: oklch(79.5% 0.184 86.047); /* yellow-500 */
+  /* Extra accents beyond BoardUI */
+  --chart-9: oklch(75% 0.183 55.934); /* orange-400 */
+  --chart-9-active: oklch(70.5% 0.213 47.604); /* orange-500 */
+  --chart-10: oklch(71.2% 0.194 13.428); /* rose-400 */
+  --chart-10-active: oklch(64.5% 0.246 16.439); /* rose-500 */
+  --chart-11: oklch(78.9% 0.154 211.53); /* cyan-400 */
+  --chart-11-active: oklch(71.5% 0.143 215.221); /* cyan-500 */
+  --chart-12: oklch(67.3% 0.182 276.935); /* indigo-400 */
+  --chart-12-active: oklch(58.5% 0.233 277.117); /* indigo-500 */
+  --chart-agents-bar: oklch(82.7% 0.119 306.383); /* purple-300 */
+  --chart-agents-bar-active: oklch(71.4% 0.203 305.504); /* purple-400 */
   --radius: 0.625rem;
   --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.25 0 0);
@@ -102,11 +153,11 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  --chart-track: oklch(26.9% 0 0); /* neutral-800 */
+  --chart-cursor: oklch(37.1% 0 0); /* neutral-700 */
+  --chart-neutral: oklch(26.9% 0 0); /* neutral-800 */
+  --chart-agents-bar: oklch(62.7% 0.265 303.9); /* purple-500 */
+  --chart-agents-bar-active: oklch(55.8% 0.288 302.321); /* purple-600 */
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
@@ -138,23 +189,49 @@
   transition-property: transform, width, height;
 }
 
-.dashboard-grid .react-grid-item.react-draggable-dragging {
+.dashboard-grid .react-grid-item.react-draggable-dragging,
+.dashboard-grid .react-grid-item.resizing {
   transition: none;
   z-index: 20;
 }
 
+.dashboard-grid--editing .react-grid-item {
+  cursor: grab;
+}
+
+.dashboard-grid--editing .react-grid-item.react-draggable-dragging {
+  cursor: grabbing;
+  z-index: 20;
+  box-shadow:
+    0 12px 28px color-mix(in oklch, var(--foreground) 14%, transparent),
+    0 0 0 1px color-mix(in oklch, var(--foreground) 8%, transparent);
+}
+
 .dashboard-grid--editing .react-grid-item > .react-resizable-handle {
-  opacity: 0;
-  transition: opacity 150ms;
-}
-
-.dashboard-grid--editing .react-grid-item:hover > .react-resizable-handle {
   opacity: 1;
+  z-index: 10;
 }
 
-.dashboard-grid .react-grid-item > .react-resizable-handle::after {
-  border-right-color: color-mix(in oklch, var(--foreground) 25%, transparent);
-  border-bottom-color: color-mix(in oklch, var(--foreground) 25%, transparent);
+.dashboard-grid--editing .react-grid-item > .react-resizable-handle::after {
+  border-right-color: color-mix(in oklch, var(--foreground) 45%, transparent);
+  border-bottom-color: color-mix(in oklch, var(--foreground) 45%, transparent);
+}
+
+/* Edge handles need a larger hit area than the default corner glyph */
+.dashboard-grid--editing .react-grid-item > .react-resizable-handle-n,
+.dashboard-grid--editing .react-grid-item > .react-resizable-handle-s {
+  width: 40%;
+  height: 12px;
+  left: 30%;
+  margin-left: 0;
+}
+
+.dashboard-grid--editing .react-grid-item > .react-resizable-handle-e,
+.dashboard-grid--editing .react-grid-item > .react-resizable-handle-w {
+  width: 12px;
+  height: 40%;
+  top: 30%;
+  margin-top: 0;
 }
 
 .dashboard-grid .react-grid-placeholder {
@@ -167,23 +244,13 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  overflow: hidden;
 }
 
 .dashboard-grid-item > * {
   flex: 1 1 0%;
   min-height: 0;
   overflow: hidden;
-}
-
-.dashboard-grid-item--hug {
-  align-items: flex-start;
-}
-
-.dashboard-grid-item--hug > * {
-  flex: none;
-  min-height: auto;
-  overflow: visible;
-  width: 100%;
 }
 
 /* Make chart containers fill the available space in dashboard widgets */
@@ -197,4 +264,33 @@
   width: 100% !important;
   height: 100% !important;
   min-height: 120px;
+}
+
+/* Thin, muted scrollbar for overflow regions (widgets, dialogs, lists) */
+@utility thin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklch, var(--foreground) 22%, transparent)
+    transparent;
+
+  &::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    border-radius: 9999px;
+    background: color-mix(in oklch, var(--foreground) 22%, transparent);
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in oklch, var(--foreground) 38%, transparent);
+  }
+
+  &::-webkit-scrollbar-corner {
+    background: transparent;
+  }
 }

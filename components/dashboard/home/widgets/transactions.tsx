@@ -3,9 +3,10 @@
 import * as React from "react"
 
 import { DashboardWidgetShell } from "@/components/dashboard/home/dashboard-widget-shell"
+import { DashboardWidgetTabs } from "@/components/dashboard/home/dashboard-widget-tabs"
+import { DASHBOARD_WIDGET_IDS } from "@/lib/dashboard/default-layout"
 import { dashboardTransactions } from "@/lib/dashboard/mock-data"
 import { formatCurrency } from "@/lib/format"
-import { cn } from "@/lib/utils"
 
 const tabs = [
   { id: "all", label: "All" },
@@ -26,52 +27,50 @@ export function TransactionsWidget() {
 
   return (
     <DashboardWidgetShell
+      widgetId={DASHBOARD_WIDGET_IDS.transactions}
       title="Transactions"
-      action={
-        <div className="flex flex-wrap items-center gap-1">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "rounded-md px-2 py-1 text-xs transition-colors",
-                activeTab === tab.id
-                  ? "bg-teal-50 font-medium text-teal-700 dark:bg-teal-950/40 dark:text-teal-400"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      }
-      contentClassName="py-0"
+      contentClassName="gap-3 px-0 py-0"
     >
-      <div className="flex h-full min-h-0 flex-col">
-        <div className="min-h-0 flex-1 overflow-auto">
-          <ul className="divide-y">
+      <DashboardWidgetTabs
+        tabs={tabs}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
+
+      <div className="thin-scrollbar min-h-0 flex-1 overflow-auto px-4 pb-3">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="bg-muted/50 text-left text-xs text-muted-foreground">
+              <th className="rounded-l-md px-3 py-2.5 font-medium">Date</th>
+              <th className="px-3 py-2.5 font-medium">Party</th>
+              <th className="px-3 py-2.5 font-medium">Description</th>
+              <th className="rounded-r-md px-3 py-2.5 text-right font-medium">
+                Amount
+              </th>
+            </tr>
+          </thead>
+          <tbody>
             {filteredTransactions.map((transaction) => (
-              <li
+              <tr
                 key={transaction.id}
-                className="flex items-center gap-3 px-1 py-3 text-xs"
+                className="border-b border-border/60 last:border-0"
               >
-                <span className="w-24 shrink-0 text-muted-foreground">
+                <td className="px-3 py-3 text-muted-foreground">
                   {transaction.date}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{transaction.customer}</p>
-                  <p className="truncate text-muted-foreground">
-                    {transaction.description}
-                  </p>
-                </div>
-                <span className="shrink-0 font-medium tabular-nums">
+                </td>
+                <td className="px-3 py-3 text-foreground">
+                  {transaction.customer}
+                </td>
+                <td className="px-3 py-3 text-muted-foreground">
+                  {transaction.description}
+                </td>
+                <td className="px-3 py-3 text-right tabular-nums text-foreground">
                   {formatCurrency(transaction.amount)}
-                </span>
-              </li>
+                </td>
+              </tr>
             ))}
-          </ul>
-        </div>
+          </tbody>
+        </table>
       </div>
     </DashboardWidgetShell>
   )

@@ -4,71 +4,75 @@ import * as React from "react"
 import { GripVertical } from "lucide-react"
 
 import { useDashboardLayoutEdit } from "@/components/dashboard/home/dashboard-layout-context"
+import { WidgetRemoveButton } from "@/components/dashboard/home/widget-remove-button"
+import type { DashboardWidgetId } from "@/lib/dashboard/default-layout"
 import { cn } from "@/lib/utils"
 
 type DashboardWidgetShellProps = {
+  widgetId: DashboardWidgetId
   title: string
   action?: React.ReactNode
   footer?: React.ReactNode
   children: React.ReactNode
   className?: string
   contentClassName?: string
-  hug?: boolean
 }
 
 export function DashboardWidgetShell({
+  widgetId,
   title,
   action,
   footer,
   children,
   className,
   contentClassName,
-  hug = false,
 }: DashboardWidgetShellProps) {
   const { isLayoutEditing } = useDashboardLayoutEdit()
 
   return (
     <div
       className={cn(
-        "flex flex-col rounded-lg bg-card text-card-foreground ring-1 ring-foreground/10",
-        !hug && "h-full",
+        "relative flex h-full flex-col rounded-lg bg-card text-card-foreground ring-1 ring-foreground/10",
+        isLayoutEditing && "pb-8",
         className
       )}
     >
       <div
         className={cn(
-          "flex shrink-0 items-center gap-2 border-b px-4",
-          hug ? "py-2" : "py-2.5"
+          "flex shrink-0 items-center gap-2 border-b px-4 h-11",
+          isLayoutEditing && "cursor-grab active:cursor-grabbing"
         )}
       >
         {isLayoutEditing ? (
-          <button
-            type="button"
-            aria-label={`Drag ${title}`}
-            className="dashboard-drag-handle -ml-1 inline-flex size-6 shrink-0 cursor-grab items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground active:cursor-grabbing"
+          <span
+            aria-hidden
+            className="inline-flex size-6 shrink-0 items-center justify-center text-muted-foreground"
           >
             <GripVertical className="size-3.5" />
-          </button>
+          </span>
         ) : null}
         <span className="flex-1 text-sm font-semibold">{title}</span>
-        {action}
+        {action && !isLayoutEditing ? (
+          <div className="dashboard-no-drag shrink-0">{action}</div>
+        ) : null}
       </div>
       <div
         className={cn(
-          "flex flex-col px-4",
-          hug
-            ? "shrink-0 py-2"
-            : "min-h-0 flex-1 flex-col overflow-hidden py-3",
+          "flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-3",
           contentClassName
         )}
       >
         {children}
       </div>
-      {footer ? (
-        <div className="shrink-0 border-t px-4 py-2.5 text-xs text-muted-foreground">
+      {footer && !isLayoutEditing ? (
+        <div className="dashboard-no-drag flex h-11 shrink-0 items-center border-t px-4 text-xs text-muted-foreground">
           {footer}
         </div>
       ) : null}
+      <WidgetRemoveButton
+        widgetId={widgetId}
+        className="absolute bottom-2 left-3"
+      />
     </div>
   )
 }

@@ -10,8 +10,6 @@ import {
   Monitor,
   Moon,
   Palette,
-  Plus,
-  SearchIcon,
   Settings,
   Sun,
   User,
@@ -19,6 +17,8 @@ import {
 import { useTheme } from "next-themes"
 
 import { AppBreadcrumb } from "@/components/layout/app-breadcrumb"
+import { CommandSearch } from "@/components/layout/command-search"
+import { CreateDialog } from "@/components/layout/create-dialog"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -50,26 +50,11 @@ export function AppNavbar() {
       </div>
 
       <div className="ml-auto flex shrink-0 items-center gap-2">
-        <Button variant="glass" size="sm" className="gap-1 px-2.5">
-          <Plus className="size-3.5" />
-          Create
-        </Button>
+        <CreateDialog />
 
         <Separator orientation="vertical" className="mx-1 hidden h-5 sm:block" />
 
-        <div className="relative group">
-          <Button
-            variant="outline"
-            size="icon"
-            aria-label="Search"
-            className="relative"
-          >
-            <SearchIcon />
-          </Button>
-          <span className="pointer-events-none absolute left-1/2 top-full mt-2 hidden -translate-x-1/2 rounded-md bg-black px-2 py-1 text-[11px] text-white group-hover:block">
-            Search
-          </span>
-        </div>
+        <CommandSearch />
 
         <DropdownMenu>
           <DropdownMenuTrigger

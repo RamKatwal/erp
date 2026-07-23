@@ -2,8 +2,11 @@
 
 import * as React from "react"
 
+import type { DashboardWidgetId } from "@/lib/dashboard/default-layout"
+
 type DashboardLayoutContextValue = {
   isLayoutEditing: boolean
+  removeWidget: (widgetId: DashboardWidgetId) => void
 }
 
 const DashboardLayoutContext =
@@ -11,14 +14,16 @@ const DashboardLayoutContext =
 
 export function DashboardLayoutProvider({
   isLayoutEditing,
+  removeWidget,
   children,
 }: {
   isLayoutEditing: boolean
+  removeWidget: (widgetId: DashboardWidgetId) => void
   children: React.ReactNode
 }) {
   const value = React.useMemo(
-    () => ({ isLayoutEditing }),
-    [isLayoutEditing]
+    () => ({ isLayoutEditing, removeWidget }),
+    [isLayoutEditing, removeWidget]
   )
 
   return (

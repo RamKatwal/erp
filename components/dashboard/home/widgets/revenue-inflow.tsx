@@ -2,12 +2,17 @@
 
 import { DashboardWidgetShell } from "@/components/dashboard/home/dashboard-widget-shell"
 import { PeriodSelect } from "@/components/dashboard/home/period-select"
+import { DASHBOARD_WIDGET_IDS } from "@/lib/dashboard/default-layout"
 import { revenueInflowStats } from "@/lib/dashboard/mock-data"
 import { formatCurrency } from "@/lib/format"
 
 export function RevenueInflowWidget() {
   return (
-    <DashboardWidgetShell title="Revenue Inflow" action={<PeriodSelect />}>
+    <DashboardWidgetShell
+      widgetId={DASHBOARD_WIDGET_IDS.revenueInflow}
+      title="Revenue Inflow"
+      action={<PeriodSelect />}
+    >
       <div className="grid auto-rows-fr grid-cols-2 gap-3">
         {revenueInflowStats.map((stat) => (
           <div
