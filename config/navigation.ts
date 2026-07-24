@@ -22,6 +22,7 @@ import {
   DuoStockAdjustmentIcon,
   DuoUnitIcon,
 } from "@/components/icons/duo"
+import { getSettingsItemByHref } from "@/config/settings-navigation"
 
 import type { NavItem } from "@/types/navigation"
 
@@ -229,7 +230,10 @@ export function getBreadcrumbs(pathname: string): BreadcrumbEntry[] {
     const isLast = currentPath === pathname
 
     crumbs.push({
-      title: navItem?.title ?? formatSegmentTitle(segment),
+      title:
+        navItem?.title ??
+        getSettingsItemByHref(currentPath)?.title ??
+        formatSegmentTitle(segment),
       href: isLast ? undefined : currentPath,
     })
   }
