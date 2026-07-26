@@ -1,5 +1,7 @@
 "use client"
 
+import * as React from "react"
+import Link from "next/link"
 import { PlusIcon } from "lucide-react"
 
 import {
@@ -9,11 +11,30 @@ import {
 } from "@/components/data-table/data-table"
 import { groupColumns } from "@/components/settings/group-management/group-columns"
 import { Button } from "@/components/ui/button"
+import {
+  readCustomGroups,
+  readGroupConfiguration,
+} from "@/lib/groups/storage"
 import { mockGroups } from "@/lib/mock/groups"
 
 export function GroupManagementPage() {
+  const [groups, setGroups] = React.useState(mockGroups)
+
+  React.useEffect(() => {
+    const savedGroups = [...mockGroups, ...readCustomGroups()].map((group) => {
+      const configuration = readGroupConfiguration(group)
+      return {
+        id: configuration.id,
+        name: configuration.name,
+        description: configuration.description,
+      }
+    })
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setGroups(savedGroups)
+  }, [])
+
   const table = useDataTable({
-    data: mockGroups,
+    data: groups,
     columns: groupColumns,
     pageSize: 10,
     globalFilterFn: (row, _columnId, filterValue) => {
@@ -39,7 +60,10 @@ export function GroupManagementPage() {
           </p>
         </div>
 
-        <Button variant="glass">
+        <Button
+          variant="glass"
+          render={<Link href="/settings/users/group-management/new" />}
+        >
           <PlusIcon />
           New Group
         </Button>

@@ -1,6 +1,7 @@
 "use client"
 
 import type { ColumnDef } from "@tanstack/react-table"
+import Link from "next/link"
 import {
   MoreVerticalIcon,
   PencilIcon,
@@ -26,7 +27,15 @@ export const groupColumns: ColumnDef<Group>[] = [
       <DataTableColumnHeader column={column} title="Group Name" />
     ),
     cell: ({ row }) => (
-      <Button variant="link" className="h-auto px-0 font-medium">
+      <Button
+        variant="link"
+        className="h-auto px-0 font-medium"
+        render={
+          <Link
+            href={`/settings/users/group-management/${row.original.id}`}
+          />
+        }
+      >
         {row.getValue("name")}
       </Button>
     ),
@@ -62,9 +71,15 @@ export const groupColumns: ColumnDef<Group>[] = [
               <UsersIcon />
               View members
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem
+              render={
+                <Link
+                  href={`/settings/users/group-management/${row.original.id}`}
+                />
+              }
+            >
               <PencilIcon />
-              Edit group
+              Edit permissions & dashboard
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem variant="destructive">

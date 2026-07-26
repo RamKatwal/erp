@@ -49,10 +49,10 @@ export function SettingsNav({ className }: { className?: string }) {
               key={section.href}
               href={section.href}
               className={cn(
-                "rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                "rounded-lg px-3 py-2 text-sm transition-colors",
                 active
-                  ? "bg-primary text-primary-foreground"
-                  : "text-foreground hover:bg-muted"
+                  ? "bg-muted font-medium text-foreground"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >
               {section.title}
@@ -133,7 +133,7 @@ function SettingsNavSection({
         />
       </CollapsibleTrigger>
 
-      <CollapsibleContent className="mt-0.5 ml-2 flex flex-col gap-0.5 border-l border-border pl-2">
+      <CollapsibleContent className="mt-0.5 flex flex-col gap-0.5">
         {items.map((item) => {
           const active = pathname === item.href
 
@@ -142,9 +142,9 @@ function SettingsNavSection({
               key={item.href}
               href={item.href}
               className={cn(
-                "rounded-md px-3 py-1.5 text-sm transition-colors",
+                "rounded-lg px-3 py-1.5 text-sm transition-colors",
                 active
-                  ? "bg-primary font-medium text-primary-foreground"
+                  ? "bg-muted font-medium text-foreground"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >

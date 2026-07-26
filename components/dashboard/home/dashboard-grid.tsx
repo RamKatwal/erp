@@ -45,6 +45,12 @@ const ResponsiveGridLayout = WidthProvider(Responsive)
 
 const RESIZE_HANDLES = ["s", "w", "e", "n", "sw", "nw", "se", "ne"] as const
 
+type DashboardGridProps = {
+  storageKey?: string
+  embedded?: boolean
+  readOnly?: boolean
+}
+
 const widgetMap = {
   [DASHBOARD_WIDGET_IDS.totalSales]: TotalSalesWidget,
   [DASHBOARD_WIDGET_IDS.totalReceipt]: TotalReceiptWidget,
@@ -64,7 +70,11 @@ function cloneLayouts(layouts: ResponsiveLayouts): ResponsiveLayouts {
   return structuredClone(layouts)
 }
 
-export function DashboardGrid() {
+export function DashboardGrid({
+  storageKey = DASHBOARD_LAYOUT_STORAGE_KEY,
+  embedded = false,
+  readOnly = false,
+}: DashboardGridProps = {}) {
   const [isLayoutEditing, setIsLayoutEditing] = React.useState(false)
   const [isAddWidgetsOpen, setIsAddWidgetsOpen] = React.useState(false)
   const [hasCustomLayout, setHasCustomLayout] = React.useState(false)
@@ -77,16 +87,16 @@ export function DashboardGrid() {
     React.useState<ResponsiveLayouts>(defaultDashboardLayouts)
 
   React.useEffect(() => {
-    const versionKey = `${DASHBOARD_LAYOUT_STORAGE_KEY}-version`
+    const versionKey = `${storageKey}-version`
     const savedVersion = window.localStorage.getItem(versionKey)
 
     if (savedVersion !== String(LAYOUT_VERSION)) {
-      window.localStorage.removeItem(DASHBOARD_LAYOUT_STORAGE_KEY)
+      window.localStorage.removeItem(storageKey)
       window.localStorage.setItem(versionKey, String(LAYOUT_VERSION))
       return
     }
 
-    const saved = window.localStorage.getItem(DASHBOARD_LAYOUT_STORAGE_KEY)
+    const saved = window.localStorage.getItem(storageKey)
     if (!saved) return
 
     try {
@@ -96,9 +106,9 @@ export function DashboardGrid() {
       setLayouts(parsed)
       setHasCustomLayout(!areDashboardLayoutsEqual(parsed, defaultDashboardLayouts))
     } catch {
-      window.localStorage.removeItem(DASHBOARD_LAYOUT_STORAGE_KEY)
+      window.localStorage.removeItem(storageKey)
     }
-  }, [])
+  }, [storageKey])
 
   const visibleWidgetIds = React.useMemo(
     () => new Set(getLayoutWidgetIds(layouts)),
@@ -115,14 +125,15 @@ export function DashboardGrid() {
   )
 
   const handleStartEditing = React.useCallback(() => {
+    if (readOnly) return
     setLayouts(cloneLayouts(savedLayouts))
     setIsDirty(false)
     setIsLayoutEditing(true)
-  }, [savedLayouts])
+  }, [readOnly, savedLayouts])
 
   const handleSaveLayout = React.useCallback(() => {
     window.localStorage.setItem(
-      DASHBOARD_LAYOUT_STORAGE_KEY,
+      storageKey,
       JSON.stringify(layouts)
     )
     setSavedLayouts(cloneLayouts(layouts))
@@ -132,7 +143,7 @@ export function DashboardGrid() {
     setIsDirty(false)
     setIsLayoutEditing(false)
     setIsAddWidgetsOpen(false)
-  }, [layouts])
+  }, [layouts, storageKey])
 
   const handleCancelEditing = React.useCallback(() => {
     setLayouts(cloneLayouts(savedLayouts))
@@ -143,7 +154,7 @@ export function DashboardGrid() {
   }, [savedLayouts])
 
   const handleResetLayout = React.useCallback(() => {
-    window.localStorage.removeItem(DASHBOARD_LAYOUT_STORAGE_KEY)
+    window.localStorage.removeItem(storageKey)
     setSavedLayouts(defaultDashboardLayouts)
     setLayouts(defaultDashboardLayouts)
     setHasCustomLayout(false)
@@ -151,7 +162,7 @@ export function DashboardGrid() {
     setIsLayoutEditing(false)
     setIsAddWidgetsOpen(false)
     setLayoutKey((current) => current + 1)
-  }, [])
+  }, [storageKey])
 
   const handleRemoveWidget = React.useCallback(
     (widgetId: DashboardWidgetId) => {
@@ -185,11 +196,84 @@ export function DashboardGrid() {
     [isLayoutEditing, savedLayouts]
   )
 
+  const layoutControls = !readOnly ? (
+    <div
+      className={cn(
+        "z-50 flex gap-2",
+        embedded
+          ? "mb-3 flex-row flex-wrap justify-end"
+          : "fixed right-6 bottom-6 flex-col items-end"
+      )}
+    >
+      {isLayoutEditing ? (
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="shadow-md"
+            onClick={() => setIsAddWidgetsOpen(true)}
+          >
+            <Plus />
+            Add widget
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="shadow-md"
+            onClick={handleCancelEditing}
+          >
+            <X />
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            className="shadow-md"
+            disabled={!isDirty}
+            onClick={handleSaveLayout}
+          >
+            <Save />
+            Save layout
+          </Button>
+        </>
+      ) : (
+        <>
+          {hasCustomLayout ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="shadow-md"
+              onClick={handleResetLayout}
+            >
+              <RotateCcw />
+              Reset layout
+            </Button>
+          ) : null}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="shadow-md"
+            onClick={handleStartEditing}
+          >
+            <LayoutGrid />
+            Edit layout
+          </Button>
+        </>
+      )}
+    </div>
+  ) : null
+
   return (
     <DashboardLayoutProvider
       isLayoutEditing={isLayoutEditing}
       removeWidget={handleRemoveWidget}
     >
+      {embedded ? layoutControls : null}
+
       <div
         className={cn(
           "dashboard-grid -mx-1",
@@ -227,67 +311,7 @@ export function DashboardGrid() {
         </ResponsiveGridLayout>
       </div>
 
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
-        {isLayoutEditing ? (
-          <>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="shadow-md"
-              onClick={() => setIsAddWidgetsOpen(true)}
-            >
-              <Plus />
-              Add widget
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="shadow-md"
-              onClick={handleCancelEditing}
-            >
-              <X />
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              className="shadow-md"
-              disabled={!isDirty}
-              onClick={handleSaveLayout}
-            >
-              <Save />
-              Save layout
-            </Button>
-          </>
-        ) : (
-          <>
-            {hasCustomLayout ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="shadow-md"
-                onClick={handleResetLayout}
-              >
-                <RotateCcw />
-                Reset layout
-              </Button>
-            ) : null}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="shadow-md"
-              onClick={handleStartEditing}
-            >
-              <LayoutGrid />
-              Edit layout
-            </Button>
-          </>
-        )}
-      </div>
+      {!embedded ? layoutControls : null}
 
       <AddWidgetsDialog
         open={isAddWidgetsOpen}

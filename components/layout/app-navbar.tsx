@@ -33,11 +33,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
+import { getCurrentUser, isMainAdmin } from "@/lib/auth/current-user"
 import { cn } from "@/lib/utils"
 
 export function AppNavbar() {
   const { setTheme, theme } = useTheme()
   const [mounted, setMounted] = React.useState(false)
+  const currentUser = getCurrentUser()
 
   React.useEffect(() => {
     setMounted(true)
@@ -112,7 +114,9 @@ export function AppNavbar() {
             }
           >
             <Avatar className="size-9">
-              <AvatarFallback className="text-xs">NB</AvatarFallback>
+              <AvatarFallback className="text-xs">
+                {currentUser.initials}
+              </AvatarFallback>
             </Avatar>
             <span className="pointer-events-none absolute left-1/2 top-full mt-2 hidden -translate-x-1/2 rounded-md bg-black px-2 py-1 text-[11px] text-white group-hover:block">
               Profile
@@ -123,14 +127,19 @@ export function AppNavbar() {
               <DropdownMenuLabel className="p-0 font-normal text-foreground">
                 <div className="flex items-center gap-2 px-1.5 py-1.5">
                   <Avatar size="sm">
-                    <AvatarFallback>NB</AvatarFallback>
+                    <AvatarFallback>{currentUser.initials}</AvatarFallback>
                   </Avatar>
                   <div className="flex min-w-0 flex-col">
-                    <span className="truncate text-sm font-semibold">
-                      Nick Bold
+                    <span className="flex items-center gap-1.5">
+                      <span className="truncate text-sm font-semibold">
+                        {currentUser.name}
+                      </span>
+                      {isMainAdmin(currentUser) ? (
+                        <Badge variant="secondary">Admin</Badge>
+                      ) : null}
                     </span>
                     <span className="truncate text-xs text-muted-foreground">
-                      nick@reui.io
+                      {currentUser.email}
                     </span>
                   </div>
                 </div>
