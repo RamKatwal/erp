@@ -6,7 +6,9 @@ import { Plus } from "lucide-react"
 
 import {
   DuoAccountingIcon,
+  DuoBankAccountsIcon,
   DuoChartOfAccountsIcon,
+  DuoExpenseIcon,
   DuoOrderIcon,
   DuoPaymentsIcon,
   DuoProductsIcon,
@@ -14,6 +16,7 @@ import {
   DuoReturnIcon,
   DuoSalesIcon,
 } from "@/components/icons/duo"
+import { useKeyboardShortcuts } from "@/components/layout/keyboard-shortcuts-provider"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -23,7 +26,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { useIsMac } from "@/hooks/use-is-mac"
 import { createMenuSections } from "@/lib/dashboard/mock-data"
+import { cn } from "@/lib/utils"
 import type { NavIcon } from "@/types/navigation"
 
 const createActionIcons: Record<string, NavIcon> = {
@@ -34,29 +39,41 @@ const createActionIcons: Record<string, NavIcon> = {
   "/purchase/invoice": DuoPurchaseIcon,
   "/purchase/order": DuoOrderIcon,
   "/purchase/return": DuoReturnIcon,
+  "/purchase/expense": DuoExpenseIcon,
   "/purchase/payments": DuoPaymentsIcon,
   "/sales/invoice": DuoSalesIcon,
   "/sales/order": DuoOrderIcon,
   "/sales/payments": DuoPaymentsIcon,
   "/sales/return": DuoReturnIcon,
   "/accounting/chart-of-accounts": DuoChartOfAccountsIcon,
+  "/accounting/bank-accounts": DuoBankAccountsIcon,
   "/accounting/journal-voucher": DuoAccountingIcon,
   "/accounting/payment-voucher": DuoPaymentsIcon,
   "/accounting/receipt-voucher": DuoPaymentsIcon,
 }
 
+function displayShortcut(shortcut: string, isMac: boolean) {
+  if (!isMac) return shortcut
+  return shortcut.replace(/^Alt\+/i, "⌥")
+}
+
 export function CreateDialog() {
-  const [open, setOpen] = React.useState(false)
+  const { createOpen, setCreateOpen } = useKeyboardShortcuts()
+  const isMac = useIsMac()
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={createOpen} onOpenChange={setCreateOpen}>
       <DialogTrigger
         render={
-          <Button variant="glass" size="sm" className="gap-1 px-2.5" />
+          <Button variant="glass" size="sm" className="gap-1.5 px-2.5" />
         }
       >
         <Plus className="size-3.5" />
         Create
+        <kbd className="pointer-events-none ml-0.5 hidden h-5 items-center gap-0.5 rounded border bg-muted/80 px-1 font-mono text-[10px] font-medium text-muted-foreground sm:inline-flex">
+          {isMac ? "⌥" : "Alt"}
+          <span>N</span>
+        </kbd>
       </DialogTrigger>
       <DialogContent
         className="gap-0 overflow-hidden p-0 sm:max-w-lg"
@@ -84,17 +101,29 @@ export function CreateDialog() {
                       key={item.label}
                       variant="outline"
                       className="h-auto justify-start gap-2.5 px-3 py-2.5 text-sm font-normal"
+                      nativeButton={false}
                       render={
                         <Link
                           href={item.href}
-                          onClick={() => setOpen(false)}
+                          onClick={() => setCreateOpen(false)}
                         />
                       }
                     >
                       {Icon ? (
                         <Icon className="size-4 shrink-0 text-foreground" />
                       ) : null}
-                      <span className="truncate">{item.label}</span>
+                      <span className="min-w-0 flex-1 truncate text-left">
+                        {item.label}
+                      </span>
+                      {item.shortcut ? (
+                        <kbd
+                          className={cn(
+                            "pointer-events-none ml-auto shrink-0 rounded border bg-muted px-1.5 py-0.5 font-mono text-[10px] font-medium text-muted-foreground"
+                          )}
+                        >
+                          {displayShortcut(item.shortcut, isMac)}
+                        </kbd>
+                      ) : null}
                     </Button>
                   )
                 })}

@@ -1,12 +1,29 @@
 import type { Metadata } from "next"
 import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
+import { Inter, Roboto } from "next/font/google"
+import Script from "next/script"
 
+import { AppearanceProvider } from "@/components/appearance/appearance-provider"
 import { ThemeProvider } from "@/components/theme-provider"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { appearanceInitScript } from "@/lib/appearance/init-script"
 
 import "./globals.css"
 import { cn } from "@/lib/utils"
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+})
+
+const roboto = Roboto({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--font-roboto",
+  display: "swap",
+})
 
 export const metadata: Metadata = {
   title: "ABC Company",
@@ -29,17 +46,26 @@ export default function RootLayout({
       className={cn(
         "h-full antialiased",
         GeistSans.variable,
-        GeistMono.variable
+        GeistMono.variable,
+        inter.variable,
+        roboto.variable
       )}
     >
-      <body className={cn("flex min-h-full flex-col font-sans", GeistSans.className)}>
+      <body className="flex min-h-full flex-col font-sans">
+        <Script
+          id="appearance-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: appearanceInitScript }}
+        />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
         >
-          <TooltipProvider>{children}</TooltipProvider>
+          <AppearanceProvider>
+            <TooltipProvider>{children}</TooltipProvider>
+          </AppearanceProvider>
         </ThemeProvider>
       </body>
     </html>

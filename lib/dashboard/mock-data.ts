@@ -278,41 +278,63 @@ export const dashboardTransactions: DashboardTransaction[] = [
   },
 ]
 
-export const createMenuSections = [
+export type CreateMenuItem = {
+  label: string
+  href: string
+  /** Display label for Alt shortcut, e.g. "Alt+I" */
+  shortcut?: string
+}
+
+export type CreateMenuSection = {
+  title: string
+  items: CreateMenuItem[]
+}
+
+export const createMenuSections: CreateMenuSection[] = [
   {
     title: "General",
     items: [
-      { label: "Customer", href: "/customers" },
-      { label: "Supplier", href: "/suppliers" },
+      { label: "Customer", href: "/customers", shortcut: "Alt+C" },
+      { label: "Supplier", href: "/suppliers", shortcut: "Alt+V" },
       { label: "Product", href: "/inventory/products" },
-      { label: "Contra", href: "/accounting/contra" },
+      { label: "Contra", href: "/accounting/contra", shortcut: "Alt+T" },
     ],
   },
   {
     title: "Purchase",
     items: [
-      { label: "Purchase Invoice", href: "/purchase/invoice" },
-      { label: "Purchase Order", href: "/purchase/order" },
-      { label: "Purchase Return", href: "/purchase/return" },
-      { label: "Supplier Payment", href: "/purchase/payments" },
+      { label: "Purchase Invoice", href: "/purchase/invoice", shortcut: "Alt+B" },
+      { label: "Purchase Order", href: "/purchase/order", shortcut: "Alt+O" },
+      { label: "Purchase Return", href: "/purchase/return", shortcut: "Alt+D" },
+      { label: "Expense", href: "/purchase/expense", shortcut: "Alt+E" },
+      { label: "Supplier Payment", href: "/purchase/payments", shortcut: "Alt+P" },
     ],
   },
   {
     title: "Sales",
     items: [
-      { label: "Sales Invoice", href: "/sales/invoice" },
-      { label: "Sales Order", href: "/sales/order" },
-      { label: "Customer Payment", href: "/sales/payments" },
-      { label: "Sales Return", href: "/sales/return" },
+      { label: "Sales Invoice", href: "/sales/invoice", shortcut: "Alt+I" },
+      { label: "Sales Order", href: "/sales/order", shortcut: "Alt+W" },
+      { label: "Customer Payment", href: "/sales/payments", shortcut: "Alt+R" },
+      { label: "Sales Return", href: "/sales/return", shortcut: "Alt+M" },
     ],
   },
   {
     title: "Accounting",
     items: [
       { label: "Account", href: "/accounting/chart-of-accounts" },
-      { label: "Journal Voucher", href: "/accounting/journal-voucher" },
+      {
+        label: "Bank Account",
+        href: "/accounting/bank-accounts",
+        shortcut: "Alt+A",
+      },
+      {
+        label: "Journal Voucher",
+        href: "/accounting/journal-voucher",
+        shortcut: "Alt+J",
+      },
       { label: "Payment Voucher", href: "/accounting/payment-voucher" },
       { label: "Receipt Voucher", href: "/accounting/receipt-voucher" },
     ],
   },
-] as const
+]

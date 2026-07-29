@@ -10,7 +10,12 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsUpDown,
+  LayoutGrid,
+  Maximize2,
+  Minimize2,
+  MoreHorizontal,
   Plus,
+  RotateCcw,
 } from "lucide-react"
 
 import {
@@ -18,6 +23,7 @@ import {
   mainNavigation,
 } from "@/config/navigation"
 import { organizations } from "@/config/organizations"
+import { useHomeView } from "@/components/dashboard/home/home-view-context"
 import {
   Collapsible,
   CollapsibleTrigger,
@@ -40,6 +46,7 @@ import {
   SidebarGroupContent,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
@@ -48,6 +55,12 @@ import {
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { SidebarTrialFooter } from "@/components/layout/sidebar-trial-footer"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import type { NavItem } from "@/types/navigation"
 
@@ -64,12 +77,83 @@ function isNavItemActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`)
 }
 
+function HomeMoreActions() {
+  const pathname = usePathname()
+  const { isMobile } = useSidebar()
+  const {
+    isFullscreen,
+    expandToFullscreen,
+    exitFullscreen,
+    layoutActions,
+  } = useHomeView()
+
+  const isHomePage = pathname === "/"
+  const canEdit = Boolean(
+    isHomePage && layoutActions?.canEdit && !layoutActions.isLayoutEditing
+  )
+  const showFullscreenAction = isHomePage || isFullscreen
+
+  return (
+    <DropdownMenu>
+      <Tooltip>
+        <DropdownMenuTrigger
+          render={
+            <TooltipTrigger
+              render={<SidebarMenuAction showOnHover aria-label="More actions" />}
+            />
+          }
+        >
+          <MoreHorizontal />
+          <span className="sr-only">More actions</span>
+        </DropdownMenuTrigger>
+        <TooltipContent side="right">More actions</TooltipContent>
+      </Tooltip>
+      <DropdownMenuContent
+        side={isMobile ? "bottom" : "right"}
+        align="start"
+        className="w-52"
+      >
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>More actions</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {canEdit ? (
+            <DropdownMenuItem onClick={() => layoutActions?.startEditing()}>
+              <LayoutGrid />
+              Edit layout
+            </DropdownMenuItem>
+          ) : null}
+          {canEdit && layoutActions?.hasCustomLayout ? (
+            <DropdownMenuItem onClick={() => layoutActions?.resetLayout()}>
+              <RotateCcw />
+              Reset layout
+            </DropdownMenuItem>
+          ) : null}
+          {showFullscreenAction ? (
+            isFullscreen ? (
+              <DropdownMenuItem onClick={exitFullscreen}>
+                <Minimize2 />
+                Back to default
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem onClick={expandToFullscreen}>
+                <Maximize2 />
+                Expand to full screen
+              </DropdownMenuItem>
+            )
+          ) : null}
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
 function NavMenuItem({ item, pathname }: { item: NavItem; pathname: string }) {
   const Icon = item.icon
   const isActive = isNavItemActive(pathname, item.href)
   const hasChildren = Boolean(item.children?.length)
   const isGroupActive = hasChildren && isActive
   const [expanded, setExpanded] = React.useState(isGroupActive)
+  const isHome = item.href === "/"
 
   React.useEffect(() => {
     if (isGroupActive) {
@@ -88,6 +172,7 @@ function NavMenuItem({ item, pathname }: { item: NavItem; pathname: string }) {
           <Icon />
           <span>{item.title}</span>
         </SidebarMenuButton>
+        {isHome ? <HomeMoreActions /> : null}
       </SidebarMenuItem>
     )
   }
@@ -165,47 +250,34 @@ export function AppSidebar() {
   const activeOrg =
     organizations.find((org) => org.id === activeOrgId) ?? organizations[0]
 
-  React.useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (!event.ctrlKey || event.key !== "/") return
-
-      const target = event.target as HTMLElement | null
-      const tag = target?.tagName?.toLowerCase()
-      const isTypingSurface =
-        tag === "input" ||
-        tag === "textarea" ||
-        tag === "select" ||
-        (target as any)?.isContentEditable
-
-      if (isTypingSurface) return
-
-      event.preventDefault()
-      toggleSidebar()
-    }
-
-    window.addEventListener("keydown", onKeyDown)
-    return () => window.removeEventListener("keydown", onKeyDown)
-  }, [toggleSidebar])
-
   return (
     <Sidebar collapsible="icon" className="relative">
       {!isMobile ? (
-        <button
-          type="button"
-          onClick={toggleSidebar}
-          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className={cn(
-            "absolute top-1/2 z-30 flex size-6 -translate-y-1/2 items-center justify-center rounded-full border border-sidebar-border bg-background text-muted-foreground shadow-sm transition-opacity",
-            "opacity-0 group-hover:opacity-100 hover:bg-accent hover:text-foreground",
-            "-right-3"
-          )}
-        >
-          {isCollapsed ? (
-            <ChevronRight className="size-3.5" />
-          ) : (
-            <ChevronLeft className="size-3.5" />
-          )}
-        </button>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <button
+                type="button"
+                onClick={toggleSidebar}
+                aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                className={cn(
+                  "absolute top-1/2 z-30 flex size-6 -translate-y-1/2 items-center justify-center rounded-full border border-sidebar-border bg-background text-muted-foreground shadow-sm transition-opacity",
+                  "opacity-0 group-hover:opacity-100 hover:bg-accent hover:text-foreground",
+                  "-right-3"
+                )}
+              />
+            }
+          >
+            {isCollapsed ? (
+              <ChevronRight className="size-3.5" />
+            ) : (
+              <ChevronLeft className="size-3.5" />
+            )}
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            {isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          </TooltipContent>
+        </Tooltip>
       ) : null}
 
       <SidebarHeader className="h-14 shrink-0 justify-center gap-0 border-b border-sidebar-border px-3 py-0">
@@ -242,7 +314,8 @@ export function AppSidebar() {
 
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border p-2">
+      <SidebarFooter className="border-t border-sidebar-border p-2 gap-2">
+        <SidebarTrialFooter daysRemaining={3} />
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>

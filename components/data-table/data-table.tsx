@@ -6,7 +6,12 @@ import { type ColumnDef, flexRender } from "@tanstack/react-table"
 import { cn } from "@/lib/utils"
 
 import { DataTablePagination } from "./data-table-pagination"
-import { dataTableClassNames } from "./data-table-styles"
+import {
+  type DataTableRowSize,
+  dataTableClassNames,
+  getDataTableBodyCellClass,
+  getDataTableHeaderCellClass,
+} from "./data-table-styles"
 import { useDataTable } from "./use-data-table"
 
 type DataTableProps<TData, TValue> = {
@@ -22,6 +27,7 @@ type DataTableProps<TData, TValue> = {
   tableClassName?: string
   showPagination?: boolean
   emptyMessage?: string
+  rowSize?: DataTableRowSize
 }
 
 export function DataTable<TData, TValue>({
@@ -33,6 +39,7 @@ export function DataTable<TData, TValue>({
   tableClassName,
   showPagination = true,
   emptyMessage = "No results found.",
+  rowSize = "md",
 }: DataTableProps<TData, TValue>) {
   const table = useDataTable({
     data,
@@ -46,6 +53,7 @@ export function DataTable<TData, TValue>({
       <div className="overflow-x-auto">
         <table
           className={cn(dataTableClassNames.table, tableClassName)}
+          data-row-size={rowSize}
         >
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -54,7 +62,7 @@ export function DataTable<TData, TValue>({
                   <th
                     key={header.id}
                     className={cn(
-                      dataTableClassNames.headerCell,
+                      getDataTableHeaderCellClass(rowSize),
                       header.column.id === "select" &&
                         dataTableClassNames.selectCell
                     )}
@@ -82,7 +90,7 @@ export function DataTable<TData, TValue>({
                     <td
                       key={cell.id}
                       className={cn(
-                        dataTableClassNames.bodyCell,
+                        getDataTableBodyCellClass(rowSize),
                         cell.column.id === "select" &&
                           dataTableClassNames.selectCell
                       )}
@@ -119,4 +127,9 @@ export { DataTableColumnHeader } from "./data-table-column-header"
 export { DataTablePagination } from "./data-table-pagination"
 export { DataTableToolbar } from "./data-table-toolbar"
 export { useDataTable } from "./use-data-table"
+export {
+  dataTableFullscreenClassName,
+  useDataTableFullscreen,
+} from "./use-data-table-fullscreen"
+export type { DataTableRowSize } from "./data-table-styles"
 export type { ColumnDef }

@@ -122,6 +122,7 @@ export function GroupDetailPage({ groupId }: { groupId: string }) {
         </p>
         <Button
           variant="outline"
+          nativeButton={false}
           render={<Link href="/settings/users/group-management" />}
         >
           Back to groups
@@ -137,6 +138,7 @@ export function GroupDetailPage({ groupId }: { groupId: string }) {
           <Button
             variant="link"
             className="mb-1 h-auto px-0 text-muted-foreground"
+            nativeButton={false}
             render={<Link href="/settings/users/group-management" />}
           >
             <ArrowLeft />

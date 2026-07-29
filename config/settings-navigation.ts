@@ -64,6 +64,17 @@ export const settingsNavigation: SettingsNavItem[] = [
     description: "Configure email and in-app notification preferences.",
   },
   {
+    title: "Appearance",
+    href: "/settings/appearance",
+    description: "Customize theme color and font across the workspace.",
+  },
+  {
+    title: "Keyboard Shortcuts",
+    href: "/settings/keyboard-shortcuts",
+    description:
+      "Browse and search every shortcut available across the workspace.",
+  },
+  {
     title: "User Activities",
     href: "/settings/user-activities",
     description: "Review recent user activity and audit logs.",

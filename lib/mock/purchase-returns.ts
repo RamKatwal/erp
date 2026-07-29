@@ -1,100 +1,54 @@
-import type { PurchaseReturn } from "@/types/purchase-return"
+import type { PurchaseReturn, PurchaseReturnStatus } from "@/types/purchase-return"
 
-export const mockPurchaseReturns: PurchaseReturn[] = [
-  {
-    id: "RET-000001-2082/83",
-    entryDate: "2083-03-30",
-    supplier: "Robert Hood",
-    refInvoice: "PIN-000011-2082/83",
-    totalAmount: 100000,
-    status: "approved",
-  },
-  {
-    id: "RET-000002-2082/83",
-    entryDate: "2083-03-28",
-    supplier: "Summit Supplies",
-    refInvoice: "PIN-000009-2082/83",
-    totalAmount: 45250,
-    status: "draft",
-  },
-  {
-    id: "RET-000003-2082/83",
-    entryDate: "2083-03-25",
-    supplier: "Green Valley Traders",
-    refInvoice: "PIN-000007-2082/83",
-    totalAmount: 187500,
-    status: "for-approval",
-  },
-  {
-    id: "RET-000004-2082/83",
-    entryDate: "2083-03-20",
-    supplier: "Metro Hardware",
-    refInvoice: "PIN-000004-2082/83",
-    totalAmount: 32000,
-    status: "void",
-  },
-  {
-    id: "RET-000005-2082/83",
-    entryDate: "2083-03-18",
-    supplier: "Robert Hood",
-    refInvoice: "PIN-000003-2082/83",
-    totalAmount: 67500,
-    status: "approved",
-  },
-  {
-    id: "RET-000006-2082/83",
-    entryDate: "2083-03-15",
-    supplier: "Alpine Distributors",
-    refInvoice: "PIN-000002-2082/83",
-    totalAmount: 91000,
-    status: "for-approval",
-  },
-  {
-    id: "RET-000007-2082/83",
-    entryDate: "2083-03-12",
-    supplier: "Summit Supplies",
-    refInvoice: "PIN-000001-2082/83",
-    totalAmount: 15400,
-    status: "draft",
-  },
-  {
-    id: "RET-000008-2082/83",
-    entryDate: "2083-03-10",
-    supplier: "Green Valley Traders",
-    refInvoice: "PIN-000010-2082/83",
-    totalAmount: 223000,
-    status: "approved",
-  },
-  {
-    id: "RET-000009-2082/83",
-    entryDate: "2083-03-08",
-    supplier: "Metro Hardware",
-    refInvoice: "PIN-000008-2082/83",
-    totalAmount: 48900,
-    status: "draft",
-  },
-  {
-    id: "RET-000010-2082/83",
-    entryDate: "2083-03-05",
-    supplier: "Alpine Distributors",
-    refInvoice: "PIN-000006-2082/83",
-    totalAmount: 76000,
-    status: "approved",
-  },
-  {
-    id: "RET-000011-2082/83",
-    entryDate: "2083-03-02",
-    supplier: "Robert Hood",
-    refInvoice: "PIN-000005-2082/83",
-    totalAmount: 128500,
-    status: "for-approval",
-  },
-  {
-    id: "RET-000012-2082/83",
-    entryDate: "2083-02-28",
-    supplier: "Summit Supplies",
-    refInvoice: "PIN-000012-2082/83",
-    totalAmount: 34500,
-    status: "void",
-  },
+const suppliers = [
+  "Robert Hood",
+  "Summit Supplies",
+  "Green Valley Traders",
+  "Metro Hardware",
+  "Alpine Distributors",
+  "Horizon Parts Co.",
+  "Nexus Trading",
+  "Cedarline Stores",
+  "Pacific Imports",
+  "Valley Forge Ltd.",
+  "Brightway Logistics",
+  "Everest Merchants",
+] as const
+
+const statuses: PurchaseReturnStatus[] = [
+  "approved",
+  "draft",
+  "for-approval",
+  "void",
 ]
+
+function pad(value: number, length = 6) {
+  return String(value).padStart(length, "0")
+}
+
+function entryDateForIndex(index: number) {
+  const base = new Date(Date.UTC(2082, 0, 1))
+  base.setUTCDate(base.getUTCDate() + (index % 400))
+  const year = base.getUTCFullYear()
+  const month = String(base.getUTCMonth() + 1).padStart(2, "0")
+  const day = String(base.getUTCDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
+
+function buildMockPurchaseReturns(count: number): PurchaseReturn[] {
+  return Array.from({ length: count }, (_, index) => {
+    const n = index + 1
+
+    return {
+      id: `RET-${pad(n)}-2082/83`,
+      entryDate: entryDateForIndex(index),
+      supplier: suppliers[index % suppliers.length],
+      refInvoice: `PIN-${pad(((index * 11) % 900) + 1)}-2082/83`,
+      totalAmount: 8500 + ((index * 13750) % 485000),
+      status: statuses[index % statuses.length],
+    }
+  })
+}
+
+export const mockPurchaseReturns: PurchaseReturn[] =
+  buildMockPurchaseReturns(320)

@@ -6,9 +6,15 @@ import {
   ChevronRightIcon,
   ChevronsLeftIcon,
   ChevronsRightIcon,
+  type LucideIcon,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 
 type DataTablePaginationProps<TData> = {
@@ -17,6 +23,37 @@ type DataTablePaginationProps<TData> = {
 }
 
 const pageSizeOptions = [10, 20, 30, 50]
+
+function PageNavButton({
+  label,
+  icon: Icon,
+  onClick,
+  disabled,
+}: {
+  label: string
+  icon: LucideIcon
+  onClick: () => void
+  disabled: boolean
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            variant="outline"
+            size="icon-sm"
+            onClick={onClick}
+            disabled={disabled}
+            aria-label={label}
+          />
+        }
+      >
+        <Icon />
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  )
+}
 
 export function DataTablePagination<TData>({
   table,
@@ -47,42 +84,30 @@ export function DataTablePagination<TData>({
 
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-1">
-          <Button
-            variant="outline"
-            size="icon-sm"
+          <PageNavButton
+            label="First page"
+            icon={ChevronsLeftIcon}
             onClick={() => table.setPageIndex(0)}
             disabled={!table.getCanPreviousPage()}
-            aria-label="First page"
-          >
-            <ChevronsLeftIcon />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon-sm"
+          />
+          <PageNavButton
+            label="Previous page"
+            icon={ChevronLeftIcon}
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
-            aria-label="Previous page"
-          >
-            <ChevronLeftIcon />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon-sm"
+          />
+          <PageNavButton
+            label="Next page"
+            icon={ChevronRightIcon}
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
-            aria-label="Next page"
-          >
-            <ChevronRightIcon />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon-sm"
+          />
+          <PageNavButton
+            label="Last page"
+            icon={ChevronsRightIcon}
             onClick={() => table.setPageIndex(table.getPageCount() - 1)}
             disabled={!table.getCanNextPage()}
-            aria-label="Last page"
-          >
-            <ChevronsRightIcon />
-          </Button>
+          />
         </div>
 
         <div className="flex items-center gap-2">

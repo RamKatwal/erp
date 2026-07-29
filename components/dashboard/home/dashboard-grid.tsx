@@ -3,10 +3,19 @@
 import * as React from "react"
 import type { Layout, ResponsiveLayouts } from "react-grid-layout"
 import { Responsive, WidthProvider } from "react-grid-layout/legacy"
-import { LayoutGrid, Plus, RotateCcw, Save, X } from "lucide-react"
+import {
+  LayoutGrid,
+  Minimize2,
+  MoreHorizontal,
+  Plus,
+  RotateCcw,
+  Save,
+  X,
+} from "lucide-react"
 
 import { AddWidgetsDialog } from "@/components/dashboard/home/add-widgets-dialog"
 import { DashboardLayoutProvider } from "@/components/dashboard/home/dashboard-layout-context"
+import { useHomeViewOptional } from "@/components/dashboard/home/home-view-context"
 import {
   TotalPaymentWidget,
   TotalPurchaseWidget,
@@ -14,6 +23,15 @@ import {
   TotalSalesWidget,
 } from "@/components/dashboard/home/widgets/business-overview"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { BankCashBalanceWidget } from "@/components/dashboard/home/widgets/bank-cash-balance"
 import { CashInOutWidget } from "@/components/dashboard/home/widgets/cash-in-out"
 import { FinancialInsightWidget } from "@/components/dashboard/home/widgets/financial-insight"
@@ -75,6 +93,7 @@ export function DashboardGrid({
   embedded = false,
   readOnly = false,
 }: DashboardGridProps = {}) {
+  const homeView = useHomeViewOptional()
   const [isLayoutEditing, setIsLayoutEditing] = React.useState(false)
   const [isAddWidgetsOpen, setIsAddWidgetsOpen] = React.useState(false)
   const [hasCustomLayout, setHasCustomLayout] = React.useState(false)
@@ -196,48 +215,86 @@ export function DashboardGrid({
     [isLayoutEditing, savedLayouts]
   )
 
-  const layoutControls = !readOnly ? (
-    <div
-      className={cn(
-        "z-50 flex gap-2",
-        embedded
-          ? "mb-3 flex-row flex-wrap justify-end"
-          : "fixed right-6 bottom-6 flex-col items-end"
-      )}
-    >
+  const registerLayoutActions = homeView?.registerLayoutActions
+  const exitFullscreen = homeView?.exitFullscreen
+  const isFullscreen = homeView?.isFullscreen ?? false
+
+  // Register layout actions with the shell so Home sidebar more-actions can drive them.
+  React.useEffect(() => {
+    if (embedded || !registerLayoutActions) return
+
+    registerLayoutActions({
+      canEdit: !readOnly,
+      isLayoutEditing,
+      hasCustomLayout,
+      startEditing: handleStartEditing,
+      resetLayout: handleResetLayout,
+    })
+
+    return () => {
+      registerLayoutActions(null)
+    }
+  }, [
+    embedded,
+    registerLayoutActions,
+    readOnly,
+    isLayoutEditing,
+    hasCustomLayout,
+    handleStartEditing,
+    handleResetLayout,
+  ])
+
+  React.useEffect(() => {
+    if (embedded || !isFullscreen || !exitFullscreen) return
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return
+      exitFullscreen()
+    }
+
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [embedded, isFullscreen, exitFullscreen])
+
+  const editingControls = (
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="shadow-sm"
+        onClick={() => setIsAddWidgetsOpen(true)}
+      >
+        <Plus />
+        Add widget
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="shadow-sm"
+        onClick={handleCancelEditing}
+      >
+        <X />
+        Cancel
+      </Button>
+      <Button
+        type="button"
+        size="sm"
+        className="shadow-sm"
+        disabled={!isDirty}
+        onClick={handleSaveLayout}
+      >
+        <Save />
+        Save layout
+      </Button>
+    </>
+  )
+
+  const embeddedControls = !readOnly ? (
+    <div className="z-50 mb-3 flex flex-row flex-wrap justify-end gap-2">
       {isLayoutEditing ? (
-        <>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="shadow-md"
-            onClick={() => setIsAddWidgetsOpen(true)}
-          >
-            <Plus />
-            Add widget
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="shadow-md"
-            onClick={handleCancelEditing}
-          >
-            <X />
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            className="shadow-md"
-            disabled={!isDirty}
-            onClick={handleSaveLayout}
-          >
-            <Save />
-            Save layout
-          </Button>
-        </>
+        editingControls
       ) : (
         <>
           {hasCustomLayout ? (
@@ -267,12 +324,74 @@ export function DashboardGrid({
     </div>
   ) : null
 
+  const homeEditingSection =
+    !embedded && !readOnly && isLayoutEditing ? (
+      <section
+        aria-label="Layout editing"
+        className="flex flex-row flex-wrap items-center gap-2"
+      >
+        {editingControls}
+      </section>
+    ) : null
+
+  const fullscreenChrome =
+    !embedded && isFullscreen && exitFullscreen ? (
+      <div className="flex items-center justify-end gap-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                aria-label="More actions"
+              />
+            }
+          >
+            <MoreHorizontal />
+            More actions
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>More actions</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {!readOnly && !isLayoutEditing ? (
+                <DropdownMenuItem onClick={handleStartEditing}>
+                  <LayoutGrid />
+                  Edit layout
+                </DropdownMenuItem>
+              ) : null}
+              {!readOnly && !isLayoutEditing && hasCustomLayout ? (
+                <DropdownMenuItem onClick={handleResetLayout}>
+                  <RotateCcw />
+                  Reset layout
+                </DropdownMenuItem>
+              ) : null}
+              <DropdownMenuItem onClick={exitFullscreen}>
+                <Minimize2 />
+                Back to default
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    ) : null
+
   return (
     <DashboardLayoutProvider
       isLayoutEditing={isLayoutEditing}
       removeWidget={handleRemoveWidget}
     >
-      {embedded ? layoutControls : null}
+      {embedded ? embeddedControls : null}
+
+      {!embedded && (homeEditingSection || fullscreenChrome) ? (
+        <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-1 items-center">
+            {homeEditingSection}
+          </div>
+          {fullscreenChrome}
+        </div>
+      ) : null}
 
       <div
         className={cn(
@@ -310,8 +429,6 @@ export function DashboardGrid({
           })}
         </ResponsiveGridLayout>
       </div>
-
-      {!embedded ? layoutControls : null}
 
       <AddWidgetsDialog
         open={isAddWidgetsOpen}

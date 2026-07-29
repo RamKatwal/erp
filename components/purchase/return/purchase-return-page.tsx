@@ -4,9 +4,12 @@ import * as React from "react"
 import { DownloadIcon, PlusIcon } from "lucide-react"
 
 import {
+  type DataTableRowSize,
+  dataTableFullscreenClassName,
   DataTableToolbar,
   DataTableView,
   useDataTable,
+  useDataTableFullscreen,
 } from "@/components/data-table/data-table"
 import { purchaseReturnColumns } from "@/components/purchase/return/purchase-return-columns"
 import { Button } from "@/components/ui/button"
@@ -27,6 +30,8 @@ const statusTabs: PurchaseReturnStatus[] = [
 export function PurchaseReturnPage() {
   const [activeStatus, setActiveStatus] =
     React.useState<PurchaseReturnStatus>("approved")
+  const [rowSize, setRowSize] = React.useState<DataTableRowSize>("md")
+  const { isFullscreen, toggleFullscreen } = useDataTableFullscreen()
 
   const filteredData = React.useMemo(
     () => mockPurchaseReturns.filter((item) => item.status === activeStatus),
@@ -71,7 +76,12 @@ export function PurchaseReturnPage() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border bg-card shadow-xs">
+      <div
+        className={cn(
+          "overflow-hidden rounded-xl border bg-card shadow-xs",
+          dataTableFullscreenClassName(isFullscreen)
+        )}
+      >
         <div className="flex flex-col gap-3 border-b p-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap gap-1.5">
             {statusTabs.map((status) => {
@@ -108,12 +118,17 @@ export function PurchaseReturnPage() {
           <DataTableToolbar
             table={table}
             searchPlaceholder="Search returns..."
+            rowSize={rowSize}
+            onRowSizeChange={setRowSize}
+            isFullscreen={isFullscreen}
+            onToggleFullscreen={toggleFullscreen}
           />
         </div>
 
         <DataTableView
           table={table}
           columnCount={purchaseReturnColumns.length}
+          rowSize={rowSize}
           emptyMessage={`No ${purchaseReturnStatusLabels[activeStatus].toLowerCase()} returns found.`}
         />
       </div>
