@@ -11,6 +11,7 @@ import {
   useDataTable,
   useDataTableFullscreen,
 } from "@/components/data-table/data-table"
+import { PageHeader } from "@/components/layout/page-header"
 import { purchaseReturnColumns } from "@/components/purchase/return/purchase-return-columns"
 import { Button } from "@/components/ui/button"
 import { mockPurchaseReturns } from "@/lib/mock/purchase-returns"
@@ -57,24 +58,22 @@ export function PurchaseReturnPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Purchase Return
-          </h1>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button variant="outline">
-            <DownloadIcon />
-            Export
-          </Button>
-          <Button variant="glass">
-            <PlusIcon />
-            Create Purchase Return
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Purchase Return"
+        count={`${mockPurchaseReturns.length} returns`}
+        actions={
+          <>
+            <Button variant="outline" size="sm">
+              <DownloadIcon />
+              Export
+            </Button>
+            <Button size="sm">
+              <PlusIcon />
+              Create Purchase Return
+            </Button>
+          </>
+        }
+      />
 
       <div
         className={cn(
@@ -82,7 +81,7 @@ export function PurchaseReturnPage() {
           dataTableFullscreenClassName(isFullscreen)
         )}
       >
-        <div className="flex flex-col gap-3 border-b p-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-3 border-b px-3 py-2.5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap gap-1.5">
             {statusTabs.map((status) => {
               const count = mockPurchaseReturns.filter(
@@ -93,6 +92,7 @@ export function PurchaseReturnPage() {
                 <Button
                   key={status}
                   type="button"
+                  size="sm"
                   variant={activeStatus === status ? "default" : "outline"}
                   onClick={() => {
                     setActiveStatus(status)

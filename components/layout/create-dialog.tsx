@@ -65,12 +65,12 @@ export function CreateDialog() {
     <Dialog open={createOpen} onOpenChange={setCreateOpen}>
       <DialogTrigger
         render={
-          <Button variant="glass" size="sm" className="gap-1.5 px-2.5" />
+          <Button size="sm" className="gap-1.5 px-2.5" />
         }
       >
         <Plus className="size-3.5" />
         Create
-        <kbd className="pointer-events-none ml-0.5 hidden h-5 items-center gap-0.5 rounded border bg-muted/80 px-1 font-mono text-[10px] font-medium text-muted-foreground sm:inline-flex">
+        <kbd className="pointer-events-none ml-0.5 hidden h-5 items-center gap-0.5 rounded border border-primary-foreground/20 bg-primary-foreground/15 px-1 font-mono text-[10px] font-medium text-primary-foreground sm:inline-flex">
           {isMac ? "⌥" : "Alt"}
           <span>N</span>
         </kbd>

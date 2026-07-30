@@ -11,8 +11,8 @@ export type FontOption = {
 export const fontOptions: FontOption[] = [
   {
     id: "default",
-    label: "Default",
-    description: "Geist Sans — the current product font",
+    label: "Geist",
+    description: "Modern product sans — default look",
     previewFamily: "var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif",
   },
   {
@@ -24,10 +24,14 @@ export const fontOptions: FontOption[] = [
   {
     id: "roboto",
     label: "Roboto",
-    description: "Neutral geometric sans for dense interfaces",
+    description: "Neutral geometric sans for dense UIs",
     previewFamily: "var(--font-roboto), ui-sans-serif, system-ui, sans-serif",
   },
 ]
+
+export function getFontOption(id: FontId) {
+  return fontOptions.find((option) => option.id === id)
+}
 
 export function isFontId(value: unknown): value is FontId {
   return (

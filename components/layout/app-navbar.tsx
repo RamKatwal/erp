@@ -19,6 +19,8 @@ import { useTheme } from "next-themes"
 import { AppBreadcrumb } from "@/components/layout/app-breadcrumb"
 import { CommandSearch } from "@/components/layout/command-search"
 import { CreateDialog } from "@/components/layout/create-dialog"
+import { NotificationsPanel } from "@/components/layout/notifications-panel"
+import { useSettingsModal } from "@/components/settings/settings-modal-provider"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -34,12 +36,16 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
 import { getCurrentUser, isMainAdmin } from "@/lib/auth/current-user"
+import { sampleNotifications } from "@/lib/mock/notifications"
 import { cn } from "@/lib/utils"
 
 export function AppNavbar() {
   const { setTheme, theme } = useTheme()
   const [mounted, setMounted] = React.useState(false)
+  const [notificationsOpen, setNotificationsOpen] = React.useState(false)
+  const { openSettings } = useSettingsModal()
   const currentUser = getCurrentUser()
+  const unreadCount = sampleNotifications.filter((item) => !item.read).length
 
   React.useEffect(() => {
     setMounted(true)
@@ -58,50 +64,29 @@ export function AppNavbar() {
 
         <CommandSearch />
 
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button
-                variant="outline"
-                size="icon"
-                className="relative group"
-                aria-label="Notifications"
-              />
-            }
-          >
-            <BellIcon />
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="relative group"
+          aria-label="Notifications"
+          aria-expanded={notificationsOpen}
+          onClick={() => setNotificationsOpen(true)}
+        >
+          <BellIcon />
+          {unreadCount > 0 ? (
             <Badge className="absolute -top-1.5 -right-1.5 size-4 justify-center rounded-full border-2 border-background p-0 text-[10px]">
-              3
+              {unreadCount}
             </Badge>
-            <span className="pointer-events-none absolute left-1/2 top-full mt-2 hidden -translate-x-1/2 rounded-md bg-black px-2 py-1 text-[11px] text-white group-hover:block">
-              Notifications
-            </span>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-72">
-            <DropdownMenuGroup>
-              <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="flex flex-col items-start gap-0.5">
-                <span className="font-medium">Low stock alert</span>
-                <span className="text-xs text-muted-foreground">
-                  Widget A is below reorder level
-                </span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="flex flex-col items-start gap-0.5">
-                <span className="font-medium">New purchase order</span>
-                <span className="text-xs text-muted-foreground">
-                  PO-1042 awaiting approval
-                </span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="flex flex-col items-start gap-0.5">
-                <span className="font-medium">Invoice overdue</span>
-                <span className="text-xs text-muted-foreground">
-                  INV-2091 is 5 days past due
-                </span>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          ) : null}
+          <span className="pointer-events-none absolute left-1/2 top-full mt-2 hidden -translate-x-1/2 rounded-md bg-black px-2 py-1 text-[11px] text-white group-hover:block">
+            Notifications
+          </span>
+        </Button>
+        <NotificationsPanel
+          open={notificationsOpen}
+          onOpenChange={setNotificationsOpen}
+        />
 
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -145,7 +130,7 @@ export function AppNavbar() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => openSettings("profile")}>
                 <User />
                 Profile
                 <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
@@ -162,9 +147,10 @@ export function AppNavbar() {
                 <KeyRound />
                 API Keys
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => openSettings("notifications")}>
                 <Settings />
                 Settings
+                <DropdownMenuShortcut>⌘,</DropdownMenuShortcut>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <div

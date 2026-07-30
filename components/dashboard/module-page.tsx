@@ -1,3 +1,5 @@
+import { PageHeader } from "@/components/layout/page-header"
+
 type ModulePageProps = {
   title: string
   description: string
@@ -5,11 +7,8 @@ type ModulePageProps = {
 
 export function ModulePage({ title, description }: ModulePageProps) {
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHeader title={title} description={description} />
 
       <div className="rounded-xl border border-dashed bg-muted/30 p-8 text-center">
         <p className="text-sm text-muted-foreground">

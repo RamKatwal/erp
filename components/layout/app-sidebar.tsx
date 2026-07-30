@@ -61,6 +61,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { useIsMac } from "@/hooks/use-is-mac"
+import { getNavShortcutKeys } from "@/lib/keyboard/shortcuts"
+import { formatShortcutLabel } from "@/lib/keyboard/utils"
 import { cn } from "@/lib/utils"
 import type { NavItem } from "@/types/navigation"
 
@@ -75,6 +78,40 @@ function isNavItemActive(pathname: string, href: string) {
   }
 
   return pathname === href || pathname.startsWith(`${href}/`)
+}
+
+function NavShortcutTooltipLabel({
+  title,
+  shortcutKeys,
+}: {
+  title: string
+  shortcutKeys?: string[] | null
+}) {
+  const isMac = useIsMac()
+
+  return (
+    <>
+      <span>{title}</span>
+      {shortcutKeys?.length ? (
+        <kbd
+          data-slot="kbd"
+          className="pointer-events-none ml-1 inline-flex h-5 items-center rounded border border-background/20 bg-background/15 px-1.5 font-mono text-[10px] font-medium text-background"
+        >
+          {formatShortcutLabel(shortcutKeys, isMac)}
+        </kbd>
+      ) : null}
+    </>
+  )
+}
+
+function navTooltip(title: string, href: string) {
+  const shortcutKeys = getNavShortcutKeys(href)
+
+  return {
+    children: (
+      <NavShortcutTooltipLabel title={title} shortcutKeys={shortcutKeys} />
+    ),
+  }
 }
 
 function HomeMoreActions() {
@@ -166,7 +203,7 @@ function NavMenuItem({ item, pathname }: { item: NavItem; pathname: string }) {
       <SidebarMenuItem>
         <SidebarMenuButton
           render={<Link href={item.href} />}
-          tooltip={item.title}
+          tooltip={navTooltip(item.title, item.href)}
           isActive={isActive}
         >
           <Icon />
@@ -187,7 +224,7 @@ function NavMenuItem({ item, pathname }: { item: NavItem; pathname: string }) {
         <CollapsibleTrigger
           render={
             <SidebarMenuButton
-              tooltip={item.title}
+              tooltip={navTooltip(item.title, item.href)}
               isActive={isGroupActive}
               className="w-full"
             />
@@ -211,6 +248,14 @@ function NavMenuItem({ item, pathname }: { item: NavItem; pathname: string }) {
               <SidebarMenuSub>
                 {item.children?.map((child, index) => {
                   const ChildIcon = child.icon
+                  const shortcutKeys = getNavShortcutKeys(child.href)
+
+                  const content = (
+                    <>
+                      <ChildIcon />
+                      <span>{child.title}</span>
+                    </>
+                  )
 
                   return (
                     <SidebarMenuSubItem key={child.href}>
@@ -222,13 +267,36 @@ function NavMenuItem({ item, pathname }: { item: NavItem; pathname: string }) {
                           delay: index * 0.03,
                         }}
                       >
-                        <SidebarMenuSubButton
-                          render={<Link href={child.href} />}
-                          isActive={isNavItemActive(pathname, child.href)}
-                        >
-                          <ChildIcon />
-                          <span>{child.title}</span>
-                        </SidebarMenuSubButton>
+                        {shortcutKeys ? (
+                          <Tooltip>
+                            <TooltipTrigger
+                              render={
+                                <SidebarMenuSubButton
+                                  render={<Link href={child.href} />}
+                                  isActive={isNavItemActive(
+                                    pathname,
+                                    child.href
+                                  )}
+                                />
+                              }
+                            >
+                              {content}
+                            </TooltipTrigger>
+                            <TooltipContent side="right" align="center">
+                              <NavShortcutTooltipLabel
+                                title={child.title}
+                                shortcutKeys={shortcutKeys}
+                              />
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          <SidebarMenuSubButton
+                            render={<Link href={child.href} />}
+                            isActive={isNavItemActive(pathname, child.href)}
+                          >
+                            {content}
+                          </SidebarMenuSubButton>
+                        )}
                       </motion.div>
                     </SidebarMenuSubItem>
                   )

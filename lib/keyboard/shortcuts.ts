@@ -54,6 +54,44 @@ export const goToShortcuts: Record<string, { href: string; label: string }> = {
   t: { href: "/accounting", label: "Tax Center" },
 }
 
+/**
+ * Preferred G-then key per href when multiple chords share a destination
+ * (e.g. CoA is both G G and G A — show G A in the nav).
+ */
+const preferredGoToKeyByHref: Record<string, string> = {
+  "/": "h",
+  "/sales/invoice": "i",
+  "/purchase/invoice": "b",
+  "/customers": "c",
+  "/suppliers": "v",
+  "/accounting/chart-of-accounts": "a",
+  "/accounting/journal-voucher": "j",
+  "/reports": "r",
+  "/purchase/payments": "p",
+  "/accounting": "t",
+}
+
+/** Shortcut keys for a nav/create href: prefer Go-to chords, else Alt create. */
+export function getNavShortcutKeys(href: string): string[] | null {
+  const preferredKey = preferredGoToKeyByHref[href]
+  if (preferredKey && goToShortcuts[preferredKey]?.href === href) {
+    return ["G", preferredKey.toUpperCase()]
+  }
+
+  for (const [key, target] of Object.entries(goToShortcuts)) {
+    if (target.href === href) {
+      return ["G", key.toUpperCase()]
+    }
+  }
+
+  const create = quickCreateShortcuts[href]
+  if (create) {
+    return ["Alt", create.key.toUpperCase()]
+  }
+
+  return null
+}
+
 export const keyboardShortcuts: KeyboardShortcutDef[] = [
   // Global
   {
@@ -67,6 +105,13 @@ export const keyboardShortcuts: KeyboardShortcutDef[] = [
     id: "quick-create",
     keys: ["Alt", "N"],
     description: "Open the Quick Create menu",
+    category: "Global",
+    availability: "available",
+  },
+  {
+    id: "settings",
+    keys: ["Mod", ","],
+    description: "Open Settings",
     category: "Global",
     availability: "available",
   },

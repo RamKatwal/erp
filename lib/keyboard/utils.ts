@@ -44,6 +44,19 @@ export function formatShortcutParts(parts: string[], isMac: boolean): string {
     .join(isMac ? "" : "+")
 }
 
+/** Human-readable label; uses "then" for G-style chord sequences. */
+export function formatShortcutLabel(parts: string[], isMac: boolean): string {
+  const isSequence = parts.every(
+    (part) => part.length === 1 && /^[A-Za-z0-9]$/i.test(part)
+  )
+
+  if (isSequence) {
+    return parts.map((part) => part.toUpperCase()).join(" then ")
+  }
+
+  return formatShortcutParts(parts, isMac)
+}
+
 export function focusPageSearch() {
   const el = document.querySelector<HTMLInputElement>(
     "[data-page-search='true']"

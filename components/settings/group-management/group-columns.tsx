@@ -32,7 +32,7 @@ export const groupColumns: ColumnDef<Group>[] = [
         className="h-auto px-0 font-medium"
         render={
           <Link
-            href={`/settings/users/group-management/${row.original.id}`}
+            href={`/configurations/users/group-management/${row.original.id}`}
           />
         }
       >
@@ -74,7 +74,7 @@ export const groupColumns: ColumnDef<Group>[] = [
             <DropdownMenuItem
               render={
                 <Link
-                  href={`/settings/users/group-management/${row.original.id}`}
+                  href={`/configurations/users/group-management/${row.original.id}`}
                 />
               }
             >

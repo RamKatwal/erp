@@ -1,10 +1,10 @@
+import { PageHeader } from "@/components/layout/page-header"
+
 export default function ReportsPage() {
   return (
-    <div>
-      <h1 className="text-2xl font-semibold tracking-tight">Reports</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        View analytics and business reports.
-      </p>
-    </div>
+    <PageHeader
+      title="Reports"
+      description="View analytics and business reports."
+    />
   )
 }

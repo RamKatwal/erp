@@ -42,7 +42,7 @@ type PaletteItem = {
   title: string
   href: string
   keywords: string
-  group: "Pages" | "Quick Create" | "Reports & Settings"
+  group: "Pages" | "Quick Create" | "Reports & Configurations"
   shortcut?: string
   icon: React.ComponentType<{ className?: string }>
 }
@@ -52,7 +52,7 @@ function iconForHref(href: string): React.ComponentType<{ className?: string }> 
   if (href.startsWith("/purchase")) return ShoppingCartIcon
   if (href.startsWith("/sales")) return ReceiptIcon
   if (href.startsWith("/inventory")) return PackageIcon
-  if (href.startsWith("/settings")) return SettingsIcon
+  if (href.startsWith("/configurations")) return SettingsIcon
   if (href.startsWith("/reports")) return FileTextIcon
   if (href === "/customers" || href === "/suppliers") return UsersIcon
   if (href.includes("bank")) return LandmarkIcon
@@ -77,8 +77,8 @@ function buildPaletteItems(): PaletteItem[] {
       title: nav.title,
       href: nav.href,
       keywords: [nav.title, nav.description ?? "", "page", "go to"].join(" "),
-      group: nav.href === "/reports" || nav.href === "/settings"
-        ? "Reports & Settings"
+      group: nav.href === "/reports" || nav.href === "/configurations"
+        ? "Reports & Configurations"
         : "Pages",
       icon: iconForHref(nav.href),
       shortcut:
@@ -169,19 +169,19 @@ function buildPaletteItems(): PaletteItem[] {
       title: "Trial Balance",
       href: "/reports",
       keywords: "trial balance report financial",
-      group: "Reports & Settings",
+      group: "Reports & Configurations",
     },
     {
       title: "Profit and Loss",
       href: "/reports",
       keywords: "profit and loss p&l income statement report",
-      group: "Reports & Settings",
+      group: "Reports & Configurations",
     },
     {
       title: "Balance Sheet",
       href: "/reports",
       keywords: "balance sheet report financial",
-      group: "Reports & Settings",
+      group: "Reports & Configurations",
     },
     {
       title: "Bank Reconciliation",
@@ -243,7 +243,7 @@ export function CommandSearch({ className }: { className?: string }) {
 
   const pages = paletteItems.filter((i) => i.group === "Pages")
   const creates = paletteItems.filter((i) => i.group === "Quick Create")
-  const reports = paletteItems.filter((i) => i.group === "Reports & Settings")
+  const reports = paletteItems.filter((i) => i.group === "Reports & Configurations")
 
   return (
     <>
@@ -354,7 +354,7 @@ export function CommandSearch({ className }: { className?: string }) {
 
             <CommandSeparator />
 
-            <CommandGroup heading="Reports & Settings">
+            <CommandGroup heading="Reports & Configurations">
               {reports.map((page) => (
                 <CommandItem
                   key={page.id}

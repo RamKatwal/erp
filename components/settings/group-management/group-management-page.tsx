@@ -12,6 +12,7 @@ import {
   useDataTable,
   useDataTableFullscreen,
 } from "@/components/data-table/data-table"
+import { PageHeader } from "@/components/layout/page-header"
 import { groupColumns } from "@/components/settings/group-management/group-columns"
 import { Button } from "@/components/ui/button"
 import {
@@ -56,25 +57,21 @@ export function GroupManagementPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Group Management
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Create groups and assign shared access across modules.
-          </p>
-        </div>
-
-        <Button
-          variant="glass"
-          nativeButton={false}
-          render={<Link href="/settings/users/group-management/new" />}
-        >
-          <PlusIcon />
-          New Group
-        </Button>
-      </div>
+      <PageHeader
+        title="Group Management"
+        count={`${groups.length} groups`}
+        description="Create groups and assign shared access across modules."
+        actions={
+          <Button
+            size="sm"
+            nativeButton={false}
+            render={<Link href="/configurations/users/group-management/new" />}
+          >
+            <PlusIcon />
+            New Group
+          </Button>
+        }
+      />
 
       <div
         className={cn(
@@ -82,7 +79,7 @@ export function GroupManagementPage() {
           dataTableFullscreenClassName(isFullscreen)
         )}
       >
-        <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-end">
+        <div className="flex flex-col gap-3 border-b px-3 py-2.5 sm:flex-row sm:items-center sm:justify-end">
           <DataTableToolbar
             table={table}
             searchPlaceholder="Search groups..."

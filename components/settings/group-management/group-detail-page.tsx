@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { ArrowLeft, LayoutGrid, Lock, Save, ShieldCheck } from "lucide-react"
 
 import { DashboardGrid } from "@/components/dashboard/home/dashboard-grid"
+import { PageHeader } from "@/components/layout/page-header"
 import { PermissionMatrix } from "@/components/settings/group-management/permission-matrix"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -101,7 +102,7 @@ export function GroupDetailPage({ groupId }: { groupId: string }) {
         window.localStorage.removeItem(`${draftLayoutKey}-version`)
       }
 
-      router.replace(`/settings/users/group-management/${nextId}`)
+      router.replace(`/configurations/users/group-management/${nextId}`)
       return
     }
 
@@ -123,7 +124,7 @@ export function GroupDetailPage({ groupId }: { groupId: string }) {
         <Button
           variant="outline"
           nativeButton={false}
-          render={<Link href="/settings/users/group-management" />}
+          render={<Link href="/configurations/users/group-management" />}
         >
           Back to groups
         </Button>
@@ -133,34 +134,37 @@ export function GroupDetailPage({ groupId }: { groupId: string }) {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
+      <PageHeader
+        title={isNewGroup ? "New Group" : configuration.name}
+        badge={
+          canCustomizeDashboard ? (
+            <Badge variant="secondary">Main admin</Badge>
+          ) : null
+        }
+        description="Configure access and the dashboard shared by this group."
+        breadcrumb={
           <Button
             variant="link"
-            className="mb-1 h-auto px-0 text-muted-foreground"
+            size="sm"
+            className="mb-0.5 h-auto self-start px-0 text-muted-foreground"
             nativeButton={false}
-            render={<Link href="/settings/users/group-management" />}
+            render={<Link href="/configurations/users/group-management" />}
           >
             <ArrowLeft />
             Group Management
           </Button>
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-semibold tracking-tight">
-              {isNewGroup ? "New Group" : configuration.name}
-            </h1>
-            {canCustomizeDashboard ? (
-              <Badge variant="secondary">Main admin</Badge>
-            ) : null}
-          </div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Configure access and the dashboard shared by this group.
-          </p>
-        </div>
-        <Button onClick={handleSave} disabled={!configuration.name.trim()}>
-          <Save />
-          {saved ? "Saved" : "Save group"}
-        </Button>
-      </div>
+        }
+        actions={
+          <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={!configuration.name.trim()}
+          >
+            <Save />
+            {saved ? "Saved" : "Save group"}
+          </Button>
+        }
+      />
 
       <section className="grid gap-4 rounded-xl border bg-card p-4 md:grid-cols-2">
         <label className="space-y-1.5">

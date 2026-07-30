@@ -7,6 +7,8 @@ import { AppNavbar } from "@/components/layout/app-navbar"
 import { AppSidebar } from "@/components/layout/app-sidebar"
 import { KeyboardShortcutsDialog } from "@/components/layout/keyboard-shortcuts-dialog"
 import { KeyboardShortcutsProvider } from "@/components/layout/keyboard-shortcuts-provider"
+import { SettingsModal } from "@/components/settings/settings-modal"
+import { SettingsModalProvider } from "@/components/settings/settings-modal-provider"
 import {
   HomeViewProvider,
   useHomeView,
@@ -57,8 +59,11 @@ export function DashboardShell({ children }: DashboardShellProps) {
   return (
     <HomeViewProvider>
       <KeyboardShortcutsProvider>
-        <DashboardShellContent>{children}</DashboardShellContent>
-        <KeyboardShortcutsDialog />
+        <SettingsModalProvider>
+          <DashboardShellContent>{children}</DashboardShellContent>
+          <KeyboardShortcutsDialog />
+          <SettingsModal />
+        </SettingsModalProvider>
       </KeyboardShortcutsProvider>
     </HomeViewProvider>
   )

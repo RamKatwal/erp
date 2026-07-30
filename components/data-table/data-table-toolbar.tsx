@@ -56,13 +56,13 @@ export function DataTableToolbar<TData>({
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <div className="relative w-full max-w-[220px]">
-        <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+        <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
         <Input
           data-page-search="true"
           placeholder={searchPlaceholder}
           value={globalFilter}
           onChange={(event) => table.setGlobalFilter(event.target.value)}
-          className="h-9 pl-9"
+          className="h-8 pl-9 text-xs"
         />
       </div>
 
@@ -124,7 +124,7 @@ export function DataTableToolbar<TData>({
         </TooltipContent>
       </Tooltip>
 
-      <Button variant="outline">
+      <Button variant="outline" size="sm">
         <FilterIcon />
         Filter
       </Button>

@@ -66,7 +66,7 @@ function TrialProgressRing({
 export function SidebarTrialFooter({
   daysRemaining = 3,
   totalDays = FREE_TRIAL_TOTAL_DAYS,
-  href = "/settings/billing-plans",
+  href = "/configurations/billing-plans",
   className,
 }: SidebarTrialFooterProps) {
   const remaining = Math.max(0, Math.min(daysRemaining, totalDays))
@@ -99,7 +99,6 @@ export function SidebarTrialFooter({
       </div>
 
       <Button
-        variant="glass"
         size="sm"
         className="w-full"
         nativeButton={false}
