@@ -4,7 +4,7 @@ import {
   type AppearancePreferences,
 } from "./types"
 import { isFontId } from "./fonts"
-import { isThemeColorId } from "./theme-colors"
+import { resolveThemeColorId } from "./theme-colors"
 
 export function readAppearancePreferences(): AppearancePreferences {
   if (typeof window === "undefined") {
@@ -19,9 +19,8 @@ export function readAppearancePreferences(): AppearancePreferences {
 
     const parsed = JSON.parse(saved) as Partial<AppearancePreferences>
     return {
-      colorId: isThemeColorId(parsed.colorId)
-        ? parsed.colorId
-        : DEFAULT_APPEARANCE.colorId,
+      colorId:
+        resolveThemeColorId(parsed.colorId) ?? DEFAULT_APPEARANCE.colorId,
       fontId: isFontId(parsed.fontId) ? parsed.fontId : DEFAULT_APPEARANCE.fontId,
     }
   } catch {
@@ -43,7 +42,7 @@ export function applyAppearanceToDocument(
 ) {
   const root = document.documentElement
 
-  if (preferences.colorId === "default") {
+  if (preferences.colorId === DEFAULT_APPEARANCE.colorId) {
     root.removeAttribute("data-theme-color")
   } else {
     root.setAttribute("data-theme-color", preferences.colorId)

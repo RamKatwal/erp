@@ -10,7 +10,7 @@ export const sampleNotifications: AppNotification[] = [
     actor: {
       name: "Sarah Chen",
       initials: "SC",
-      color: "bg-amber-100 text-amber-800",
+      color: "bg-warning/15 text-warning-foreground",
     },
   },
   {
@@ -36,7 +36,7 @@ export const sampleNotifications: AppNotification[] = [
     actor: {
       name: "Marcus Rivera",
       initials: "MR",
-      color: "bg-sky-100 text-sky-800",
+      color: "bg-info/15 text-info",
     },
     rich: { type: "rating", value: 5 },
   },
@@ -70,17 +70,17 @@ export const sampleNotifications: AppNotification[] = [
         {
           name: "Sarah Chen",
           initials: "SC",
-          color: "bg-amber-100 text-amber-800",
+          color: "bg-warning/15 text-warning-foreground",
         },
         {
           name: "James Park",
           initials: "JP",
-          color: "bg-violet-100 text-violet-800",
+          color: "bg-chart-5/15 text-chart-5-active",
         },
         {
           name: "Priya Nair",
           initials: "PN",
-          color: "bg-rose-100 text-rose-800",
+          color: "bg-chart-10/15 text-chart-10-active",
         },
       ],
     },

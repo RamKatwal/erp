@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useRouter } from "next/navigation"
 import {
   Activity,
   BellIcon,
@@ -40,6 +41,7 @@ import { sampleNotifications } from "@/lib/mock/notifications"
 import { cn } from "@/lib/utils"
 
 export function AppNavbar() {
+  const router = useRouter()
   const { setTheme, theme } = useTheme()
   const [mounted, setMounted] = React.useState(false)
   const [notificationsOpen, setNotificationsOpen] = React.useState(false)
@@ -191,7 +193,7 @@ export function AppNavbar() {
                 </div>
               </div>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/signup")}>
                 <LogOut />
                 Sign Out
                 <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>

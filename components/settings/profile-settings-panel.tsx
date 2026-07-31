@@ -1,7 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { Upload, X } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { LogOut, Upload, X } from "lucide-react"
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -16,6 +17,7 @@ type ProfileSettingsPanelProps = {
 }
 
 export function ProfileSettingsPanel({ className }: ProfileSettingsPanelProps) {
+  const router = useRouter()
   const currentUser = getCurrentUser()
   const username = currentUser.email.split("@")[0] ?? "user"
 
@@ -51,7 +53,7 @@ export function ProfileSettingsPanel({ className }: ProfileSettingsPanelProps) {
       <SettingsField
         label="Email address"
         description="Used for sign-in and notifications."
-        badge={<Badge className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">Verified</Badge>}
+        badge={<Badge className="bg-success/10 text-success">Verified</Badge>}
       >
         <Input defaultValue={currentUser.email} type="email" className="h-9" />
       </SettingsField>
@@ -102,6 +104,23 @@ export function ProfileSettingsPanel({ className }: ProfileSettingsPanelProps) {
           className="min-h-24 resize-none"
         />
       </SettingsField>
+
+      <div className="border-t pt-6">
+        <SettingsField
+          label="Sign out"
+          description="End your current session and return to the sign-up page."
+        >
+          <Button
+            type="button"
+            variant="outline"
+            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+            onClick={() => router.push("/signup")}
+          >
+            <LogOut className="size-3.5" />
+            Sign Out
+          </Button>
+        </SettingsField>
+      </div>
     </div>
   )
 }

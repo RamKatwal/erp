@@ -49,8 +49,8 @@ const recentActivities = [
 ]
 
 const statusStyles = {
-  success: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400",
-  warning: "bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-400",
+  success: "bg-success/10 text-success",
+  warning: "bg-warning/15 text-warning-foreground dark:text-warning",
   neutral: "bg-muted text-muted-foreground",
 }
 

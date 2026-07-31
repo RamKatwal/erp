@@ -5,12 +5,12 @@ import { cn } from "@/lib/utils"
 import type { NavIcon } from "@/types/navigation"
 
 const accentStyles = [
-  "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-  "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-  "bg-violet-500/10 text-violet-600 dark:text-violet-400",
-  "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  "bg-rose-500/10 text-rose-600 dark:text-rose-400",
-  "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400",
+  "bg-chart-6/10 text-chart-6-active",
+  "bg-chart-7/10 text-chart-7-active",
+  "bg-chart-5/10 text-chart-5-active",
+  "bg-chart-9/10 text-chart-9-active",
+  "bg-chart-10/10 text-chart-10-active",
+  "bg-chart-11/10 text-chart-11-active",
 ] as const
 
 type ModuleNavCardProps = {

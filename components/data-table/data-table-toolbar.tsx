@@ -11,6 +11,7 @@ import {
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { ButtonGroup } from "@/components/ui/button-group"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -66,68 +67,70 @@ export function DataTableToolbar<TData>({
         />
       </div>
 
-      <DropdownMenu>
+      <ButtonGroup>
+        <DropdownMenu>
+          <Tooltip>
+            <DropdownMenuTrigger
+              render={
+                <TooltipTrigger
+                  render={
+                    <Button
+                      variant="outline"
+                      size="icon-sm"
+                      aria-label="Row size"
+                    />
+                  }
+                />
+              }
+            >
+              <Rows3Icon />
+            </DropdownMenuTrigger>
+            <TooltipContent>Row size</TooltipContent>
+          </Tooltip>
+          <DropdownMenuContent align="end" className="min-w-40">
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Row size</DropdownMenuLabel>
+              {dataTableRowSizes.map((size) => (
+                <DropdownMenuItem
+                  key={size.value}
+                  onClick={() => onRowSizeChange?.(size.value)}
+                >
+                  <span>{size.label}</span>
+                  {rowSize === size.value ? (
+                    <CheckIcon className="ml-auto size-4" />
+                  ) : (
+                    <span className="ml-auto size-4" aria-hidden />
+                  )}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         <Tooltip>
-          <DropdownMenuTrigger
+          <TooltipTrigger
             render={
-              <TooltipTrigger
-                render={
-                  <Button
-                    variant="outline"
-                    size="icon-sm"
-                    aria-label="Row size"
-                  />
-                }
+              <Button
+                variant="outline"
+                size="icon-sm"
+                aria-label={isFullscreen ? "Exit full screen" : "Full screen"}
+                aria-pressed={isFullscreen}
+                onClick={onToggleFullscreen}
               />
             }
           >
-            <Rows3Icon />
-          </DropdownMenuTrigger>
-          <TooltipContent>Row size</TooltipContent>
+            {isFullscreen ? <Minimize2Icon /> : <Maximize2Icon />}
+          </TooltipTrigger>
+          <TooltipContent>
+            {isFullscreen ? "Exit full screen" : "Full screen"}
+          </TooltipContent>
         </Tooltip>
-        <DropdownMenuContent align="end" className="min-w-40">
-          <DropdownMenuGroup>
-            <DropdownMenuLabel>Row size</DropdownMenuLabel>
-            {dataTableRowSizes.map((size) => (
-              <DropdownMenuItem
-                key={size.value}
-                onClick={() => onRowSizeChange?.(size.value)}
-              >
-                <span>{size.label}</span>
-                {rowSize === size.value ? (
-                  <CheckIcon className="ml-auto size-4" />
-                ) : (
-                  <span className="ml-auto size-4" aria-hidden />
-                )}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
 
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <Button
-              variant="outline"
-              size="icon-sm"
-              aria-label={isFullscreen ? "Exit full screen" : "Full screen"}
-              aria-pressed={isFullscreen}
-              onClick={onToggleFullscreen}
-            />
-          }
-        >
-          {isFullscreen ? <Minimize2Icon /> : <Maximize2Icon />}
-        </TooltipTrigger>
-        <TooltipContent>
-          {isFullscreen ? "Exit full screen" : "Full screen"}
-        </TooltipContent>
-      </Tooltip>
-
-      <Button variant="outline" size="sm">
-        <FilterIcon />
-        Filter
-      </Button>
+        <Button variant="outline" size="sm">
+          <FilterIcon />
+          Filter
+        </Button>
+      </ButtonGroup>
     </div>
   )
 }

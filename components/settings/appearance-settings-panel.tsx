@@ -298,7 +298,7 @@ function ThemePicker({
           </div>
         </div>
 
-        <div className="max-h-64 overflow-y-auto p-1">
+        <div className="max-h-80 overflow-y-auto p-1">
           {filtered.length === 0 ? (
             <p className="px-2 py-3 text-center text-xs text-muted-foreground">
               No themes found
@@ -309,24 +309,19 @@ function ThemePicker({
               return (
                 <DropdownMenuItem
                   key={option.id}
-                  className="gap-2.5 py-2"
+                  className="gap-2.5"
                   onClick={() => onChange(option.id)}
                 >
                   <ThemeSwatch
                     swatch={option.swatch}
                     surface={option.surface}
-                    className="size-5"
+                    className="size-4 rounded-sm"
                   />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium">
-                      {option.label}
-                    </span>
-                    <span className="block truncate text-[11px] text-muted-foreground">
-                      {option.description}
-                    </span>
+                  <span className="min-w-0 flex-1 truncate text-sm">
+                    {option.label}
                   </span>
                   {active ? (
-                    <CheckIcon className="size-3.5 shrink-0 text-primary" />
+                    <CheckIcon className="size-3.5 shrink-0 text-foreground" />
                   ) : (
                     <span className="size-3.5 shrink-0" />
                   )}

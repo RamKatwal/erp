@@ -46,32 +46,31 @@ const iconMap: Record<
 > = {
   trend: {
     icon: TrendingDownIcon,
-    className: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400",
+    className: "bg-warning/15 text-warning-foreground dark:text-warning",
   },
   check: {
     icon: CheckCircle2Icon,
-    className: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400",
+    className: "bg-warning/15 text-warning-foreground dark:text-warning",
   },
   users: {
     icon: UsersIcon,
-    className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400",
+    className: "bg-success/10 text-success",
   },
   star: {
     icon: StarIcon,
-    className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400",
+    className: "bg-success/10 text-success",
   },
   calendar: {
     icon: CalendarIcon,
-    className: "bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-400",
+    className: "bg-chart-5/15 text-chart-5-active",
   },
 }
 
 const badgeToneClass: Record<NotificationBadge["tone"], string> = {
-  urgent: "border-transparent bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-400",
+  urgent: "border-transparent bg-destructive/10 text-destructive",
   priority:
-    "border-transparent bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-400",
-  success:
-    "border-transparent bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400",
+    "border-transparent bg-warning/15 text-warning-foreground dark:text-warning",
+  success: "border-transparent bg-success/10 text-success",
   neutral: "border-transparent bg-muted text-muted-foreground",
 }
 
@@ -133,7 +132,7 @@ function NotificationRich({ content }: { content: NotificationRichContent }) {
             className={cn(
               "size-3.5",
               index < content.value
-                ? "fill-amber-400 text-amber-400"
+                ? "fill-warning text-warning"
                 : "text-muted-foreground/30"
             )}
           />
@@ -158,7 +157,7 @@ function NotificationRich({ content }: { content: NotificationRichContent }) {
     return (
       <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
         <div
-          className="h-full rounded-full bg-emerald-500"
+          className="h-full rounded-full bg-success"
           style={{ width: `${percent}%` }}
         />
       </div>
@@ -180,7 +179,7 @@ function NotificationRich({ content }: { content: NotificationRichContent }) {
               href={content.locationHref}
               target="_blank"
               rel="noreferrer"
-              className="text-sky-600 hover:underline dark:text-sky-400"
+              className="text-info hover:underline"
             >
               {content.locationLabel}
             </a>

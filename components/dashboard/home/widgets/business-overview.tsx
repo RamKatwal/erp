@@ -49,9 +49,9 @@ function formatChange(change: number) {
 function trendBadgeClass(trend: BusinessOverviewTrend) {
   switch (trend) {
     case "up":
-      return "border-transparent bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
+      return "border-transparent bg-success/10 text-success"
     case "down":
-      return "border-transparent bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400"
+      return "border-transparent bg-destructive/10 text-destructive"
     default:
       return "border-transparent bg-muted text-muted-foreground"
   }

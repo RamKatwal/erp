@@ -4,14 +4,14 @@ export const organizations = [
     name: "Acme Inc",
     plan: "Pro",
     initials: "AC",
-    color: "bg-violet-600 text-white",
+    color: "bg-primary text-primary-foreground",
   },
   {
     id: "novaco",
     name: "NovaCo",
     plan: "Free",
     initials: "NO",
-    color: "bg-sky-600 text-white",
+    color: "bg-info text-info-foreground",
   },
 ] as const
 
