@@ -137,6 +137,13 @@ export const keyboardShortcuts: KeyboardShortcutDef[] = [
     availability: "available",
   },
   {
+    id: "sign-out",
+    keys: ["Mod", "Shift", "Q"],
+    description: "Sign out of the current session",
+    category: "Global",
+    availability: "available",
+  },
+  {
     id: "save",
     keys: ["Mod", "S"],
     description: "Save the current record",

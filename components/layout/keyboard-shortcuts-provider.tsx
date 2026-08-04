@@ -109,6 +109,14 @@ export function KeyboardShortcutsProvider({
         return
       }
 
+      // Mod+Shift+Q → sign out
+      if (mod && event.shiftKey && lower === "q") {
+        event.preventDefault()
+        clearSequence()
+        router.push("/signup")
+        return
+      }
+
       // Mod+F → page search (don't steal browser find when no page search)
       if (mod && !event.shiftKey && lower === "f") {
         if (typing) return

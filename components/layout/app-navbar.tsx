@@ -30,7 +30,6 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuShortcut,
   DropdownMenuTrigger,
@@ -95,13 +94,13 @@ export function AppNavbar() {
             render={
               <button
                 type="button"
-                className="inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring/30 relative group"
+                className="inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring/30 relative group [&_*]:cursor-pointer"
                 aria-label="User menu"
               />
             }
           >
-            <Avatar className="size-9">
-              <AvatarFallback className="text-xs">
+            <Avatar className="size-9 cursor-pointer">
+              <AvatarFallback className="cursor-pointer text-xs">
                 {currentUser.initials}
               </AvatarFallback>
             </Avatar>
@@ -111,8 +110,11 @@ export function AppNavbar() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-64">
             <DropdownMenuGroup>
-              <DropdownMenuLabel className="p-0 font-normal text-foreground">
-                <div className="flex items-center gap-2 px-1.5 py-1.5">
+              <DropdownMenuItem
+                className="p-0"
+                onClick={() => openSettings("profile")}
+              >
+                <div className="flex w-full items-center gap-2 px-1.5 py-1.5">
                   <Avatar size="sm">
                     <AvatarFallback>{currentUser.initials}</AvatarFallback>
                   </Avatar>
@@ -130,7 +132,7 @@ export function AppNavbar() {
                     </span>
                   </div>
                 </div>
-              </DropdownMenuLabel>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => openSettings("profile")}>
                 <User />
@@ -179,7 +181,7 @@ export function AppNavbar() {
                         aria-label={label}
                         disabled={!mounted}
                         className={cn(
-                          "inline-flex size-6 items-center justify-center rounded-full text-muted-foreground transition-colors",
+                          "inline-flex size-6 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors",
                           "hover:text-foreground disabled:opacity-50",
                           active &&
                             "bg-background text-foreground shadow-sm ring-1 ring-foreground/10"

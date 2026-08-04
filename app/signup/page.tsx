@@ -11,11 +11,11 @@ export default function SignupPage() {
           <div className="flex max-w-120 flex-col gap-4 text-white">
             <Logo />
             <h4 className="text-2xl font-semibold tracking-tight">
-              Start creating more designs with Radian
+              Manage Your Business with Clarity, Confidence &amp; Control
             </h4>
             <p className="text-base text-white">
-              Create a free account and get full access to all features for
-              30-days. No credit card needed.
+              Organize finances, reduce errors, and gain actionable insights to
+              make smarter decisions for your business growth.
             </p>
           </div>
           <div className="absolute top-[50vh] right-0 h-max w-full pl-30">

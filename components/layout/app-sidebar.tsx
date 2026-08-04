@@ -392,7 +392,7 @@ export function AppSidebar() {
                   <SidebarMenuButton
                     size="lg"
                     tooltip={activeOrg.name}
-                    className="h-12 gap-2.5 rounded-lg px-2 data-popup-open:bg-sidebar-accent"
+                    className="h-12 cursor-pointer gap-2.5 rounded-lg px-2 data-popup-open:bg-sidebar-accent"
                   />
                 }
               >

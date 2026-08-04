@@ -1,0 +1,261 @@
+"use client"
+
+import * as React from "react"
+import { ChevronDown } from "lucide-react"
+import {
+  Cancel01Icon,
+  InformationCircleIcon,
+  Tick02Icon,
+} from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
+
+import { Button } from "@/components/ui/button"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import {
+  formatNpr,
+  PLAN_FEATURE_CATEGORIES,
+  PLANS,
+  type PlanFeatureValue,
+  type PlanId,
+} from "@/lib/onboarding/plans"
+import { cn } from "@/lib/utils"
+
+function FeatureCell({ value }: { value: PlanFeatureValue }) {
+  if (typeof value === "string") {
+    return (
+      <span className="text-xs font-medium leading-snug text-foreground">
+        {value}
+      </span>
+    )
+  }
+
+  if (value) {
+    return (
+      <span
+        className="inline-flex size-6 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+        aria-label="Included"
+      >
+        <HugeiconsIcon icon={Tick02Icon} className="size-3.5" strokeWidth={2} />
+      </span>
+    )
+  }
+
+  return (
+    <span
+      className="inline-flex size-6 items-center justify-center rounded-full bg-destructive/10 text-destructive"
+      aria-label="Not included"
+    >
+      <HugeiconsIcon icon={Cancel01Icon} className="size-3" strokeWidth={2} />
+    </span>
+  )
+}
+
+function CategorySection({
+  category,
+  defaultOpen = false,
+}: {
+  category: (typeof PLAN_FEATURE_CATEGORIES)[number]
+  defaultOpen?: boolean
+}) {
+  const [open, setOpen] = React.useState(defaultOpen)
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger
+        className={cn(
+          "flex w-full items-center justify-between gap-3 border-b border-border bg-muted/40 px-3 py-2.5 text-left transition-colors hover:bg-muted/60",
+          open && "border-b-0"
+        )}
+      >
+        <span className="text-sm font-semibold text-foreground">
+          {category.name}
+        </span>
+        <ChevronDown
+          className={cn(
+            "size-4 shrink-0 text-muted-foreground transition-transform",
+            open && "rotate-180"
+          )}
+        />
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="divide-y divide-border border-b border-border">
+          {category.features.map((feature) => (
+            <div
+              key={feature.id}
+              className="grid grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))] items-center gap-2 px-3 py-2.5"
+            >
+              <div className="flex min-w-0 items-center gap-1.5">
+                <span className="text-xs text-foreground sm:text-sm">
+                  {feature.name}
+                </span>
+                {feature.description ? (
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <button
+                          type="button"
+                          className="inline-flex size-4 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
+                          aria-label={`About ${feature.name}`}
+                        />
+                      }
+                    >
+                      <HugeiconsIcon
+                        icon={InformationCircleIcon}
+                        className="size-3.5"
+                        strokeWidth={2}
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[220px]">
+                      {feature.description}
+                    </TooltipContent>
+                  </Tooltip>
+                ) : null}
+              </div>
+              {(PLANS.map((p) => p.id) as PlanId[]).map((planId) => (
+                <div key={planId} className="flex justify-center">
+                  <FeatureCell value={feature.values[planId]} />
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  )
+}
+
+export function PlanCompareDialog({
+  selectedPlanId,
+  onSelectPlan,
+  triggerClassName,
+}: {
+  selectedPlanId?: PlanId
+  onSelectPlan?: (planId: PlanId) => void
+  triggerClassName?: string
+}) {
+  const [open, setOpen] = React.useState(false)
+
+  function handleSelect(planId: PlanId) {
+    onSelectPlan?.(planId)
+    setOpen(false)
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger
+        render={
+          <Button
+            type="button"
+            variant="link"
+            className={cn(
+              "h-auto px-0 text-sm font-medium text-primary",
+              triggerClassName
+            )}
+          />
+        }
+      >
+        View details
+      </DialogTrigger>
+
+      <DialogContent className="flex max-h-[min(860px,calc(100svh-2rem))] w-full max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl">
+        <DialogHeader className="shrink-0 border-b border-border px-5 py-4 pr-12">
+          <DialogTitle className="font-heading text-base font-semibold">
+            Compare plans
+          </DialogTitle>
+          <DialogDescription>
+            See what is included in each plan. Expand a category for the full
+            feature list.
+          </DialogDescription>
+        </DialogHeader>
+
+        <TooltipProvider>
+          <div className="min-h-0 flex-1 overflow-auto">
+            <div className="sticky top-0 z-10 grid grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))] gap-2 border-b border-border bg-popover px-3 py-3">
+              <div className="flex items-end pb-1 text-xs font-medium text-muted-foreground">
+                Features
+              </div>
+              {PLANS.map((plan) => {
+                const isSelected = selectedPlanId === plan.id
+                const priceLabel =
+                  plan.monthlyPerUser === 0
+                    ? "Free"
+                    : `${formatNpr(plan.monthlyPerUser)}/user`
+
+                return (
+                  <div
+                    key={plan.id}
+                    className={cn(
+                      "flex flex-col items-center gap-2 rounded-lg border px-2 py-2.5 text-center",
+                      isSelected
+                        ? "border-primary bg-primary/5 ring-1 ring-primary/30"
+                        : "border-border bg-muted/20"
+                    )}
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-semibold text-foreground sm:text-sm">
+                        {plan.name}
+                      </p>
+                      <p className="mt-0.5 text-[11px] tabular-nums text-muted-foreground">
+                        {priceLabel}
+                        {plan.monthlyPerUser > 0 ? " /mo" : ""}
+                      </p>
+                    </div>
+                    {onSelectPlan ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={isSelected ? "default" : "outline"}
+                        className="h-7 w-full max-w-[7.5rem] text-xs"
+                        onClick={() => handleSelect(plan.id)}
+                      >
+                        {isSelected ? (
+                          <>
+                            <HugeiconsIcon
+                              icon={Tick02Icon}
+                              className="size-3"
+                            />
+                            Selected
+                          </>
+                        ) : (
+                          "Select"
+                        )}
+                      </Button>
+                    ) : null}
+                  </div>
+                )
+              })}
+            </div>
+
+            <div className="pb-2">
+              {PLAN_FEATURE_CATEGORIES.map((category, index) => (
+                <CategorySection
+                  key={category.id}
+                  category={category}
+                  defaultOpen={index === 0}
+                />
+              ))}
+            </div>
+          </div>
+        </TooltipProvider>
+      </DialogContent>
+    </Dialog>
+  )
+}
