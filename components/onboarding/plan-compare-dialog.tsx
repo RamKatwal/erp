@@ -146,12 +146,27 @@ export function PlanCompareDialog({
   selectedPlanId,
   onSelectPlan,
   triggerClassName,
+  triggerLabel = "View details",
+  open: openProp,
+  onOpenChange,
+  hideTrigger = false,
 }: {
   selectedPlanId?: PlanId
   onSelectPlan?: (planId: PlanId) => void
   triggerClassName?: string
+  triggerLabel?: string
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  hideTrigger?: boolean
 }) {
-  const [open, setOpen] = React.useState(false)
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(false)
+  const isControlled = openProp !== undefined
+  const open = isControlled ? openProp : uncontrolledOpen
+
+  function setOpen(next: boolean) {
+    if (!isControlled) setUncontrolledOpen(next)
+    onOpenChange?.(next)
+  }
 
   function handleSelect(planId: PlanId) {
     onSelectPlan?.(planId)
@@ -160,20 +175,22 @@ export function PlanCompareDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger
-        render={
-          <Button
-            type="button"
-            variant="link"
-            className={cn(
-              "h-auto px-0 text-sm font-medium text-primary",
-              triggerClassName
-            )}
-          />
-        }
-      >
-        View details
-      </DialogTrigger>
+      {hideTrigger ? null : (
+        <DialogTrigger
+          render={
+            <Button
+              type="button"
+              variant="link"
+              className={cn(
+                "h-auto px-0 text-sm font-medium text-primary",
+                triggerClassName
+              )}
+            />
+          }
+        >
+          {triggerLabel}
+        </DialogTrigger>
+      )}
 
       <DialogContent className="flex max-h-[min(860px,calc(100svh-2rem))] w-full max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl">
         <DialogHeader className="shrink-0 border-b border-border px-5 py-4 pr-12">

@@ -5,14 +5,16 @@ import { Spinner } from "@/components/ui/spinner"
 
 export default function OnboardingCompanyPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex flex-1 items-center justify-center py-24">
-          <Spinner size={24} variant="default" />
-        </div>
-      }
-    >
-      <CompanyDetailsForm />
-    </Suspense>
+    <div className="flex-1 py-8 md:py-10">
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center py-24">
+            <Spinner size={24} variant="default" />
+          </div>
+        }
+      >
+        <CompanyDetailsForm />
+      </Suspense>
+    </div>
   )
 }

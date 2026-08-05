@@ -22,6 +22,7 @@ import {
   DuoStockAdjustmentIcon,
   DuoUnitIcon,
 } from "@/components/icons/duo"
+import { getAdminNavItemByHref } from "@/config/admin-navigation"
 import { getConfigurationsItemByHref } from "@/config/configurations-navigation"
 
 import type { NavItem } from "@/types/navigation"
@@ -220,13 +221,18 @@ export function getBreadcrumbs(pathname: string): BreadcrumbEntry[] {
     return [{ title: "Home" }]
   }
 
+  if (pathname === "/admin") {
+    return [{ title: "Home" }]
+  }
+
   const crumbs: BreadcrumbEntry[] = []
   const segments = pathname.split("/").filter(Boolean)
   let currentPath = ""
 
   for (const segment of segments) {
     currentPath += `/${segment}`
-    const navItem = getNavItemByHref(currentPath)
+    const navItem =
+      getAdminNavItemByHref(currentPath) ?? getNavItemByHref(currentPath)
     const isLast = currentPath === pathname
 
     crumbs.push({

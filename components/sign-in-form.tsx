@@ -67,7 +67,7 @@ export default function SignInForm() {
     setIsLoading(true)
     setTimeout(() => {
       setIsLoading(false)
-      router.push("/")
+      router.push("/admin")
     }, 800)
   }
 

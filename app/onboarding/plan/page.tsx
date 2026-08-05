@@ -7,7 +7,7 @@ export default function OnboardingPlanPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex flex-1 items-center justify-center py-24">
+        <div className="flex flex-1 items-center justify-center">
           <Spinner size={24} variant="default" />
         </div>
       }

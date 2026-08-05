@@ -6,6 +6,7 @@ import type {
 } from "@/lib/onboarding/plans"
 import {
   ADDITIONAL_MODULES,
+  DEFAULT_PAYMENT_METHOD_ID,
   DEFAULT_PLAN_ID,
   PAYMENT_PERIODS,
 } from "@/lib/onboarding/plans"
@@ -19,7 +20,7 @@ export type OnboardingPlanSelection = {
   branchesEnabled: boolean
   branchCount: number
   moduleIds: AdditionalModuleId[]
-  paymentMethod: PaymentMethodId | null
+  paymentMethod: PaymentMethodId
 }
 
 export const DEFAULT_PLAN_SELECTION: OnboardingPlanSelection = {
@@ -29,7 +30,7 @@ export const DEFAULT_PLAN_SELECTION: OnboardingPlanSelection = {
   branchesEnabled: false,
   branchCount: 1,
   moduleIds: [],
-  paymentMethod: null,
+  paymentMethod: DEFAULT_PAYMENT_METHOD_ID,
 }
 
 const VALID_MODULES = new Set<string>(ADDITIONAL_MODULES.map((m) => m.id))
@@ -50,6 +51,11 @@ function normalizePeriod(period: unknown): PaymentPeriod {
     return period as PaymentPeriod
   }
   return DEFAULT_PLAN_SELECTION.period
+}
+
+function normalizePaymentMethod(method: unknown): PaymentMethodId {
+  if (method === "esewa" || method === "fonepay") return method
+  return DEFAULT_PAYMENT_METHOD_ID
 }
 
 export function savePlanSelection(selection: OnboardingPlanSelection): void {
@@ -75,6 +81,7 @@ export function loadPlanSelection(): OnboardingPlanSelection | null {
       ...parsed,
       period: normalizePeriod(parsed.period),
       moduleIds: normalizeModuleIds(parsed.moduleIds),
+      paymentMethod: normalizePaymentMethod(parsed.paymentMethod),
     }
   } catch {
     return null

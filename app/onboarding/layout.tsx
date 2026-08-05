@@ -11,8 +11,8 @@ export default function OnboardingLayout({
 }) {
   return (
     <div className="flex min-h-svh flex-col bg-background">
-      <header className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-5 py-4 md:px-8">
+      <header className="sticky top-0 z-10 border-b border-border bg-card">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-5 py-4 md:px-8">
           <ProvidhyLogo href="/signup" className="text-xl" />
           <Suspense
             fallback={
@@ -25,7 +25,7 @@ export default function OnboardingLayout({
           </Suspense>
         </div>
       </header>
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 py-8 md:px-8 md:py-10">
+      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-5 py-0 md:px-8">
         {children}
       </main>
     </div>

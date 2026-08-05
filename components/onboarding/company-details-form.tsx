@@ -128,12 +128,12 @@ export default function CompanyDetailsForm() {
     clearPlanSelection()
     setTimeout(() => {
       setIsLoading(false)
-      router.push("/")
+      router.push("/admin")
     }, 700)
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-8">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
           Add company information
@@ -146,7 +146,7 @@ export default function CompanyDetailsForm() {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="flex flex-col gap-6"
+          className="flex flex-col gap-6 rounded-lg bg-card p-5 text-card-foreground ring-1 ring-foreground/10 md:p-6"
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
             <button

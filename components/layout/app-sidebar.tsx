@@ -314,7 +314,7 @@ export function AppSidebar() {
   const pathname = usePathname()
   const { state, isMobile, toggleSidebar } = useSidebar()
   const isCollapsed = state === "collapsed" && !isMobile
-  const [activeOrgId, setActiveOrgId] = React.useState("acme")
+  const [activeOrgId, setActiveOrgId] = React.useState(organizations[0].id)
   const activeOrg =
     organizations.find((org) => org.id === activeOrgId) ?? organizations[0]
 
@@ -411,7 +411,7 @@ export function AppSidebar() {
                     {activeOrg.name}
                   </span>
                   <span className="truncate text-[11px] text-sidebar-foreground/50">
-                    {activeOrg.plan} plan
+                    {activeOrg.plan}
                   </span>
                 </div>
                 <ChevronsUpDown className="ml-auto size-3.5 shrink-0 text-sidebar-foreground/40 group-data-[collapsible=icon]:hidden" />

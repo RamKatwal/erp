@@ -29,29 +29,56 @@ export type PlanDefinition = {
   description: string
   /** Base price per user per month in NPR */
   monthlyPerUser: number
+  /** Optional list price for strikethrough discount display */
+  listMonthlyPerUser?: number
+  badge?: "default" | "popular"
+  priceNote: string
+  highlights: string[]
   includes: string[]
 }
 
 export const PLANS: PlanDefinition[] = [
   {
-    id: "delite",
-    name: "Delite Account",
-    description: "Essentials for growing teams",
-    monthlyPerUser: 699,
+    id: "free_trial",
+    name: "Free Trial",
+    description: "Perfect for evaluating Providhy with full module access.",
+    monthlyPerUser: 0,
+    badge: "default",
+    priceNote: "14 days · no card required",
+    highlights: [
+      "Full Inventory, Purchase, Sales & Accounting",
+      "Up to 5 users during trial",
+      "Cancel anytime before trial ends",
+    ],
     includes: ["Inventory", "Purchase", "Sales", "Accounting"],
   },
   {
-    id: "free_trial",
-    name: "Free Trial",
-    description: "14 days · full access",
-    monthlyPerUser: 0,
+    id: "delite",
+    name: "Delite Account",
+    description: "Essentials for teams starting to run day-to-day operations.",
+    monthlyPerUser: 699,
+    listMonthlyPerUser: 899,
+    priceNote: "per user / month",
+    highlights: [
+      "Core Inventory, Purchase, Sales & Accounting",
+      "Basic reports & stock alerts",
+      "Cancel anytime · Instant activation",
+    ],
     includes: ["Inventory", "Purchase", "Sales", "Accounting"],
   },
   {
     id: "standard",
     name: "Standard Plan",
-    description: "Advanced tools & support",
+    description: "Everything you need to scale with confidence.",
     monthlyPerUser: 1499,
+    listMonthlyPerUser: 1999,
+    badge: "popular",
+    priceNote: "per user / month",
+    highlights: [
+      "All Delite features + advanced tools",
+      "Multi-warehouse, multi-currency & templates",
+      "Priority support included",
+    ],
     includes: ["Inventory", "Purchase", "Sales", "Accounting"],
   },
 ]
@@ -230,6 +257,8 @@ export const PAYMENT_PERIODS: {
   { id: "annually", label: "Annually" },
 ]
 
+export const DEFAULT_PAYMENT_METHOD_ID: PaymentMethodId = "esewa"
+
 export const PAYMENT_METHODS: {
   id: PaymentMethodId
   name: string
@@ -239,13 +268,13 @@ export const PAYMENT_METHODS: {
   {
     id: "esewa",
     name: "eSewa",
-    description: "Pay with your eSewa wallet",
+    description: "eSewa",
     logoSrc: "/images/payment/esewa.png",
   },
   {
     id: "fonepay",
     name: "Fonepay",
-    description: "Pay via Fonepay QR / wallet",
+    description: "Fonepay",
     logoSrc: "/images/payment/fonepay.png",
   },
 ]
@@ -288,10 +317,22 @@ export type ModuleLineItem = {
 export type PricingBreakdown = {
   planName: string
   periodLabel: string
+  /** Period label for display (e.g. Monthly) */
+  periodDisplayLabel: string
+  /** Per-user monthly unit price used in the Amount line */
+  unitMonthlyPrice: number
+  users: number
+  /** Gross plan amount before discount (list price when available) */
+  amount: number
+  /** Plan list → sale discount */
+  discount: number
   planSubtotal: number
   branchesSubtotal: number
   modulesSubtotal: number
   moduleLines: ModuleLineItem[]
+  /** Amount after discount (= taxable base before VAT) */
+  taxableAmount: number
+  /** @deprecated use taxableAmount */
   subtotal: number
   tax: number
   total: number
@@ -299,7 +340,11 @@ export type PricingBreakdown = {
 }
 
 export function getPlan(planId: PlanId): PlanDefinition {
-  return PLANS.find((p) => p.id === planId) ?? PLANS[1]
+  return (
+    PLANS.find((p) => p.id === planId) ??
+    PLANS.find((p) => p.id === DEFAULT_PLAN_ID) ??
+    PLANS[0]
+  )
 }
 
 export function getPeriodLabel(period: PaymentPeriod): string {
@@ -313,9 +358,16 @@ export function calculatePricing(input: PricingInput): PricingBreakdown {
   const users = Math.max(1, input.users)
   const periodMultiplier = PERIOD_MONTH_MULTIPLIER[input.period] ?? 1
   const periodLabel = getPeriodLabel(input.period)
+  const periodDisplayLabel =
+    PAYMENT_PERIODS.find((p) => p.id === input.period)?.label ?? periodLabel
   const selectedModuleIds = new Set(input.moduleIds ?? [])
 
+  const listUnitMonthly = plan.listMonthlyPerUser ?? plan.monthlyPerUser
+  const unitMonthlyPrice = listUnitMonthly
+
+  const amount = listUnitMonthly * users * periodMultiplier
   const planSubtotal = plan.monthlyPerUser * users * periodMultiplier
+  const discount = Math.max(0, amount - planSubtotal)
 
   const branchesSubtotal =
     input.branchesEnabled && input.branchCount > 0
@@ -332,18 +384,24 @@ export function calculatePricing(input: PricingInput): PricingBreakdown {
 
   const modulesSubtotal = moduleLines.reduce((sum, line) => sum + line.amount, 0)
 
-  const subtotal = planSubtotal + branchesSubtotal + modulesSubtotal
-  const tax = Math.round(subtotal * VAT_RATE * 100) / 100
-  const total = Math.round((subtotal + tax) * 100) / 100
+  const taxableAmount = planSubtotal + branchesSubtotal + modulesSubtotal
+  const tax = Math.round(taxableAmount * VAT_RATE * 100) / 100
+  const total = Math.round((taxableAmount + tax) * 100) / 100
 
   return {
     planName: plan.name,
     periodLabel,
+    periodDisplayLabel,
+    unitMonthlyPrice,
+    users,
+    amount,
+    discount,
     planSubtotal,
     branchesSubtotal,
     modulesSubtotal,
     moduleLines,
-    subtotal,
+    taxableAmount,
+    subtotal: taxableAmount,
     tax,
     total,
     isFree: total <= 0,

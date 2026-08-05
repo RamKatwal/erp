@@ -4,7 +4,7 @@ export type ConfigurationsNavItem = {
   description?: string
   children?: ConfigurationsNavItem[]
 }
-
+  
 export const configurationsNavigation: ConfigurationsNavItem[] = [
   {
     title: "General Setting",
