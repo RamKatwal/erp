@@ -22,7 +22,10 @@ import {
   appBrand,
   mainNavigation,
 } from "@/config/navigation"
-import { organizations } from "@/config/organizations"
+import {
+  organizations,
+  type Organization,
+} from "@/config/organizations"
 import { useHomeView } from "@/components/dashboard/home/home-view-context"
 import {
   Collapsible,
@@ -314,7 +317,9 @@ export function AppSidebar() {
   const pathname = usePathname()
   const { state, isMobile, toggleSidebar } = useSidebar()
   const isCollapsed = state === "collapsed" && !isMobile
-  const [activeOrgId, setActiveOrgId] = React.useState(organizations[0].id)
+  const [activeOrgId, setActiveOrgId] = React.useState<Organization["id"]>(
+    organizations[0].id
+  )
   const activeOrg =
     organizations.find((org) => org.id === activeOrgId) ?? organizations[0]
 

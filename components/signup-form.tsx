@@ -9,6 +9,7 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
+import { DemoFillFab } from "@/components/demo-fill-fab"
 import Logo from "@/components/radian-logo"
 import { Button } from "@/components/ui/button"
 import {
@@ -21,6 +22,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
+import { DEMO_SIGNUP } from "@/lib/demo/signup"
 import { cn } from "@/lib/utils"
 
 const FormSchema = z
@@ -81,6 +83,10 @@ export default function SignupForm() {
       e.stopPropagation()
       setter((prev) => !prev)
     }
+  }
+
+  function fillDemoSignup() {
+    form.reset({ ...DEMO_SIGNUP })
   }
 
   const onSubmit = (data: z.infer<typeof FormSchema>) => {
@@ -312,6 +318,8 @@ export default function SignupForm() {
           </p>
         </form>
       </Form>
+
+      <DemoFillFab label="Fill demo account" onFill={fillDemoSignup} />
     </div>
   )
 }

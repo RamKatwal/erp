@@ -9,6 +9,7 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
+import { DemoFillFab } from "@/components/demo-fill-fab"
 import { GithubIcon } from "@/components/github-icon"
 import { GoogleIcon } from "@/components/google-icon"
 import Logo from "@/components/radian-logo"
@@ -25,6 +26,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
+import { DEMO_ADMIN, isDemoAdminCredentials } from "@/lib/demo/auth"
 import { cn } from "@/lib/utils"
 
 const FormSchema = z.object({
@@ -63,7 +65,20 @@ export default function SignInForm() {
     setShowPassword((prev) => !prev)
   }
 
-  const onSubmit = (_data: z.infer<typeof FormSchema>) => {
+  function fillDemoAdmin() {
+    form.setValue("email", DEMO_ADMIN.email, { shouldValidate: true })
+    form.setValue("password", DEMO_ADMIN.password, { shouldValidate: true })
+    form.clearErrors()
+  }
+
+  const onSubmit = (data: z.infer<typeof FormSchema>) => {
+    if (!isDemoAdminCredentials(data.email, data.password)) {
+      form.setError("password", {
+        message: `Use ${DEMO_ADMIN.email} / ${DEMO_ADMIN.password} for demo sign-in`,
+      })
+      return
+    }
+
     setIsLoading(true)
     setTimeout(() => {
       setIsLoading(false)
@@ -85,6 +100,9 @@ export default function SignInForm() {
             >
               Sign Up
             </Link>
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Demo admin: {DEMO_ADMIN.email} / {DEMO_ADMIN.password}
           </p>
         </div>
       </div>
@@ -210,6 +228,8 @@ export default function SignInForm() {
           </Button>
         </div>
       </div>
+
+      <DemoFillFab label="Fill admin login" onFill={fillDemoAdmin} />
     </div>
   )
 }

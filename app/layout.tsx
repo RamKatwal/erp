@@ -3,6 +3,7 @@ import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import { Inter, Roboto } from "next/font/google"
 import Script from "next/script"
+import { Analytics } from "@vercel/analytics/next"
 
 import { AppearanceProvider } from "@/components/appearance/appearance-provider"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -67,6 +68,7 @@ export default function RootLayout({
             <TooltipProvider>{children}</TooltipProvider>
           </AppearanceProvider>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   )

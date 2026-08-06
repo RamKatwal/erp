@@ -8,6 +8,7 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
+import { DemoFillFab } from "@/components/demo-fill-fab"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -20,6 +21,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
+import { DEMO_COMPANY } from "@/lib/demo/company"
 import { clearPlanSelection } from "@/lib/onboarding/storage"
 import { cn } from "@/lib/utils"
 
@@ -102,6 +104,13 @@ export default function CompanyDetailsForm() {
       if (logoPreview) URL.revokeObjectURL(logoPreview)
     }
   }, [logoPreview])
+
+  function fillDemoCompany() {
+    form.reset({
+      ...DEMO_COMPANY,
+      email: emailFromQuery || DEMO_COMPANY.email,
+    })
+  }
 
   function handleLogoChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
@@ -457,6 +466,8 @@ export default function CompanyDetailsForm() {
           </div>
         </form>
       </Form>
+
+      <DemoFillFab label="Fill demo company" onFill={fillDemoCompany} />
     </div>
   )
 }

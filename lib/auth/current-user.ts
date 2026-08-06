@@ -11,10 +11,10 @@ export type CurrentUser = {
 
 /** Signed-in user for the prototype, until real authentication exists. */
 const currentUser: CurrentUser = {
-  id: "usr-nick-bold",
-  name: "Nick Bold",
-  email: "nick@reui.io",
-  initials: "NB",
+  id: "usr-main-admin",
+  name: "Main Admin",
+  email: "admin@gmail.com",
+  initials: "MA",
   role: "main-admin",
   groupId: "grp-admin",
 }
