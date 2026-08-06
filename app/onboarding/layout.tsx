@@ -1,7 +1,7 @@
 import { Suspense } from "react"
 
+import { AppBrand } from "@/components/app-brand"
 import { OnboardingStepIndicator } from "@/components/onboarding/onboarding-step-indicator"
-import ProvidhyLogo from "@/components/providhy-logo"
 import { Spinner } from "@/components/ui/spinner"
 
 export default function OnboardingLayout({
@@ -12,8 +12,13 @@ export default function OnboardingLayout({
   return (
     <div className="flex min-h-svh flex-col bg-background">
       <header className="sticky top-0 z-10 border-b border-border bg-card">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-5 py-4 md:px-8">
-          <ProvidhyLogo href="/signup" className="text-xl" />
+        <div className="mx-auto flex h-14 w-full max-w-7xl items-center justify-between gap-4 px-5 md:px-8">
+          <AppBrand
+            href="/signup"
+            className="text-foreground"
+            nameClassName="text-foreground"
+            priority
+          />
           <Suspense
             fallback={
               <div className="flex h-6 w-40 items-center justify-end">

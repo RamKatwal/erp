@@ -8,6 +8,11 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import { adminBrand, adminNavigation } from "@/config/admin-navigation"
 import Logo from "@/components/logo"
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
+import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
@@ -16,6 +21,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar"
@@ -38,18 +46,73 @@ function isNavItemActive(pathname: string, href: string) {
 function NavMenuItem({ item, pathname }: { item: NavItem; pathname: string }) {
   const Icon = item.icon
   const isActive = isNavItemActive(pathname, item.href)
+  const hasChildren = Boolean(item.children?.length)
+  const isGroupActive = hasChildren && isActive
+  const [expanded, setExpanded] = React.useState(isGroupActive)
+
+  React.useEffect(() => {
+    if (isGroupActive) {
+      setExpanded(true)
+    }
+  }, [isGroupActive])
+
+  if (!hasChildren) {
+    return (
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          render={<Link href={item.href} />}
+          tooltip={item.title}
+          isActive={isActive}
+        >
+          <Icon />
+          <span>{item.title}</span>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    )
+  }
 
   return (
-    <SidebarMenuItem>
-      <SidebarMenuButton
-        render={<Link href={item.href} />}
-        tooltip={item.title}
-        isActive={isActive}
-      >
-        <Icon />
-        <span>{item.title}</span>
-      </SidebarMenuButton>
-    </SidebarMenuItem>
+    <Collapsible
+      open={expanded}
+      onOpenChange={setExpanded}
+      className="group/collapsible"
+    >
+      <SidebarMenuItem>
+        <CollapsibleTrigger
+          render={
+            <SidebarMenuButton
+              tooltip={item.title}
+              isActive={isGroupActive}
+              className="w-full"
+            />
+          }
+        >
+          <Icon />
+          <span>{item.title}</span>
+          <ChevronRight className="ml-auto size-3.5! text-sidebar-foreground/40 transition-transform group-data-[open]/collapsible:rotate-90" />
+        </CollapsibleTrigger>
+
+        <CollapsibleContent>
+          <SidebarMenuSub>
+            {item.children?.map((child) => {
+              const ChildIcon = child.icon
+
+              return (
+                <SidebarMenuSubItem key={child.href}>
+                  <SidebarMenuSubButton
+                    render={<Link href={child.href} />}
+                    isActive={isNavItemActive(pathname, child.href)}
+                  >
+                    <ChildIcon />
+                    <span>{child.title}</span>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+              )
+            })}
+          </SidebarMenuSub>
+        </CollapsibleContent>
+      </SidebarMenuItem>
+    </Collapsible>
   )
 }
 

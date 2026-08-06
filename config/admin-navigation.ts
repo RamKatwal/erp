@@ -21,6 +21,20 @@ export const adminNavigation: NavItem[] = [
     title: "Settings",
     href: "/admin/settings",
     icon: DuoSettingsIcon,
+    children: [
+      {
+        title: "Branch Management",
+        href: "/admin/settings/branch-management",
+        icon: DuoSettingsIcon,
+        description: "Create and manage company branches.",
+      },
+      {
+        title: "Users & Permissions",
+        href: "/admin/settings/users-permissions",
+        icon: DuoSettingsIcon,
+        description: "Manage groups, users, and entity permissions.",
+      },
+    ],
   },
   {
     title: "Configurations",
@@ -34,5 +48,18 @@ export const adminBrand = {
 }
 
 export function getAdminNavItemByHref(href: string): NavItem | undefined {
-  return adminNavigation.find((item) => item.href === href)
+  for (const item of adminNavigation) {
+    if (item.href === href) {
+      return item
+    }
+
+    if (item.children) {
+      const child = item.children.find((entry) => entry.href === href)
+      if (child) {
+        return child
+      }
+    }
+  }
+
+  return undefined
 }

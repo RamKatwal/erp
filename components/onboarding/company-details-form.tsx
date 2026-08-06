@@ -21,8 +21,9 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
+import { appBrand } from "@/config/navigation"
 import { DEMO_COMPANY } from "@/lib/demo/company"
-import { clearPlanSelection } from "@/lib/onboarding/storage"
+import { saveCompanyDraft } from "@/lib/onboarding/company-storage"
 import { cn } from "@/lib/utils"
 
 const INDUSTRY_OPTIONS = [
@@ -101,7 +102,7 @@ export default function CompanyDetailsForm() {
 
   React.useEffect(() => {
     return () => {
-      if (logoPreview) URL.revokeObjectURL(logoPreview)
+      if (logoPreview?.startsWith("blob:")) URL.revokeObjectURL(logoPreview)
     }
   }, [logoPreview])
 
@@ -110,6 +111,9 @@ export default function CompanyDetailsForm() {
       ...DEMO_COMPANY,
       email: emailFromQuery || DEMO_COMPANY.email,
     })
+    if (logoPreview?.startsWith("blob:")) URL.revokeObjectURL(logoPreview)
+    setLogoPreview(appBrand.logo)
+    setLogoError(null)
   }
 
   function handleLogoChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -128,17 +132,34 @@ export default function CompanyDetailsForm() {
       return
     }
 
-    if (logoPreview) URL.revokeObjectURL(logoPreview)
+    if (logoPreview?.startsWith("blob:")) URL.revokeObjectURL(logoPreview)
     setLogoPreview(URL.createObjectURL(file))
   }
 
-  const onSubmit = (_data: z.infer<typeof FormSchema>) => {
+  const onSubmit = (data: z.infer<typeof FormSchema>) => {
     setIsLoading(true)
-    clearPlanSelection()
+    saveCompanyDraft({
+      companyName: data.companyName,
+      email: data.email,
+      contact: data.contact,
+      pan: data.pan,
+      registeredWithVat: data.registeredWithVat,
+      industryType: data.industryType,
+      province: data.province,
+      district: data.district,
+      fullAddress: data.fullAddress,
+      companyWebsite: data.companyWebsite,
+      employeeNumber: data.employeeNumber,
+    })
+
+    const emailQuery = data.email.trim()
+      ? `?email=${encodeURIComponent(data.email.trim())}`
+      : ""
+
     setTimeout(() => {
       setIsLoading(false)
-      router.push("/admin")
-    }, 700)
+      router.push(`/onboarding/branches${emailQuery}`)
+    }, 500)
   }
 
   return (
@@ -148,7 +169,8 @@ export default function CompanyDetailsForm() {
           Add company information
         </h1>
         <p className="text-sm text-muted-foreground">
-          Tell us about your business so we can set up your workspace.
+          Tell us about your business so we can set up your workspace. Next
+          you&apos;ll add your branches.
         </p>
       </div>
 

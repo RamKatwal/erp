@@ -1,23 +1,27 @@
 "use client"
 
 import * as React from "react"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import {
   Activity,
   BellIcon,
   Bot,
+  Building2,
   KeyRound,
   LogOut,
   Monitor,
   Moon,
   Palette,
   Settings,
+  Shield,
   Sun,
   User,
 } from "lucide-react"
 import { useTheme } from "next-themes"
 
+import { AdminGoToCompany } from "@/components/layout/admin-go-to-company"
 import { AppBreadcrumb } from "@/components/layout/app-breadcrumb"
+import { BranchSwitcher } from "@/components/layout/branch-switcher"
 import { CommandSearch } from "@/components/layout/command-search"
 import { CreateDialog } from "@/components/layout/create-dialog"
 import { NotificationsPanel } from "@/components/layout/notifications-panel"
@@ -35,33 +39,49 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
+import { useIsMac } from "@/hooks/use-is-mac"
 import { getCurrentUser, isMainAdmin } from "@/lib/auth/current-user"
+import { formatShortcutParts } from "@/lib/keyboard/utils"
 import { sampleNotifications } from "@/lib/mock/notifications"
 import { cn } from "@/lib/utils"
 
 export function AppNavbar() {
   const router = useRouter()
+  const pathname = usePathname()
+  const isMac = useIsMac()
   const { setTheme, theme } = useTheme()
   const [mounted, setMounted] = React.useState(false)
   const [notificationsOpen, setNotificationsOpen] = React.useState(false)
   const { openSettings } = useSettingsModal()
   const currentUser = getCurrentUser()
   const unreadCount = sampleNotifications.filter((item) => !item.read).length
+  const onAdminPortal = pathname.startsWith("/admin")
+  const canSwitchPortals = isMainAdmin(currentUser)
+  const switchPortalShortcut = formatShortcutParts(
+    ["Mod", "Shift", "A"],
+    isMac
+  )
 
   React.useEffect(() => {
     setMounted(true)
   }, [])
 
   return (
-    <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b bg-white px-4 dark:bg-background">
-      <div className="flex h-14 min-w-0 flex-1 items-center">
+    <header className="sticky top-0 z-10 flex h-14 shrink-0 items-stretch border-b bg-white dark:bg-background">
+      {!onAdminPortal ? (
+        <div className="flex shrink-0 items-center border-r px-3">
+          <BranchSwitcher />
+        </div>
+      ) : null}
+
+      <div className="flex min-w-0 flex-1 items-center px-4">
         <AppBreadcrumb />
       </div>
 
-      <div className="ml-auto flex shrink-0 items-center gap-2">
-        <CreateDialog />
+      <div className="ml-auto flex shrink-0 items-center gap-2 px-4">
+        {onAdminPortal ? <AdminGoToCompany /> : <CreateDialog />}
 
-        <Separator orientation="vertical" className="mx-1 hidden h-5 sm:block" />
+        <Separator orientation="vertical" className="mx-1 hidden self-stretch sm:block" />
 
         <CommandSearch />
 
@@ -195,10 +215,31 @@ export function AppNavbar() {
                 </div>
               </div>
               <DropdownMenuSeparator />
+              {canSwitchPortals ? (
+                onAdminPortal ? (
+                  <DropdownMenuItem onClick={() => router.push("/")}>
+                    <Building2 />
+                    Switch to Head Office
+                    <DropdownMenuShortcut>
+                      {switchPortalShortcut}
+                    </DropdownMenuShortcut>
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem onClick={() => router.push("/admin")}>
+                    <Shield />
+                    Switch to Admin
+                    <DropdownMenuShortcut>
+                      {switchPortalShortcut}
+                    </DropdownMenuShortcut>
+                  </DropdownMenuItem>
+                )
+              ) : null}
               <DropdownMenuItem onClick={() => router.push("/signup")}>
                 <LogOut />
                 Sign Out
-                <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
+                <DropdownMenuShortcut>
+                  {formatShortcutParts(["Mod", "Shift", "Q"], isMac)}
+                </DropdownMenuShortcut>
               </DropdownMenuItem>
             </DropdownMenuGroup>
           </DropdownMenuContent>

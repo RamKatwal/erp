@@ -24,6 +24,7 @@ import {
 } from "@/components/icons/duo"
 import { getAdminNavItemByHref } from "@/config/admin-navigation"
 import { getConfigurationsItemByHref } from "@/config/configurations-navigation"
+import { getUsersPermissionsItemByHref } from "@/config/users-permissions-navigation"
 
 import type { NavItem } from "@/types/navigation"
 
@@ -184,6 +185,8 @@ export const mainNavigation: NavItem[] = [
 export const appBrand = {
   name: "ABC Company",
   plan: "Platform",
+  /** Default company mark — reuse whenever a company logo is needed. */
+  logo: "/abc-company-logo.png",
 }
 
 export function getNavItemByHref(href: string): NavItem | undefined {
@@ -239,6 +242,7 @@ export function getBreadcrumbs(pathname: string): BreadcrumbEntry[] {
       title:
         navItem?.title ??
         getConfigurationsItemByHref(currentPath)?.title ??
+        getUsersPermissionsItemByHref(currentPath)?.title ??
         formatSegmentTitle(segment),
       href: isLast ? undefined : currentPath,
     })

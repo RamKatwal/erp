@@ -8,7 +8,14 @@ import { cn } from "@/lib/utils"
 const STEPS = [
   { id: "plan", label: "Plan", href: "/onboarding/plan" },
   { id: "company", label: "Company", href: "/onboarding/company" },
+  { id: "branches", label: "Branches", href: "/onboarding/branches" },
 ] as const
+
+function stepIndexFromPath(pathname: string) {
+  if (pathname.includes("/branches")) return 2
+  if (pathname.includes("/company")) return 1
+  return 0
+}
 
 export function OnboardingStepIndicator() {
   const pathname = usePathname()
@@ -16,13 +23,15 @@ export function OnboardingStepIndicator() {
   const email = searchParams.get("email")?.trim()
   const emailQuery = email ? `?email=${encodeURIComponent(email)}` : ""
 
-  const activeIndex = pathname.includes("/company") ? 1 : 0
+  const activeIndex = stepIndexFromPath(pathname)
 
   return (
     <nav aria-label="Onboarding steps" className="flex items-center gap-2">
       {STEPS.map((step, index) => {
         const isActive = index === activeIndex
         const isComplete = index < activeIndex
+        // Company is required — only allow going back to completed steps.
+        // Branches can be reached from company once company is done (complete).
         const canLink = isComplete
 
         const content = (
@@ -39,7 +48,7 @@ export function OnboardingStepIndicator() {
             </span>
             <span
               className={cn(
-                "text-sm font-medium",
+                "hidden text-sm font-medium sm:inline",
                 isActive ? "text-foreground" : "text-muted-foreground"
               )}
             >
@@ -52,7 +61,7 @@ export function OnboardingStepIndicator() {
           <div key={step.id} className="flex items-center gap-2">
             {index > 0 ? (
               <span
-                className="mx-1 h-px w-6 bg-border sm:w-10"
+                className="mx-1 h-px w-4 bg-border sm:w-8"
                 aria-hidden
               />
             ) : null}

@@ -9,6 +9,7 @@ import { AppearanceProvider } from "@/components/appearance/appearance-provider"
 import { ThemeProvider } from "@/components/theme-provider"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { appearanceInitScript } from "@/lib/appearance/init-script"
+import { appBrand } from "@/config/navigation"
 
 import "./globals.css"
 import { cn } from "@/lib/utils"
@@ -30,8 +31,8 @@ export const metadata: Metadata = {
   title: "ABC Company",
   description: "Enterprise resource planning dashboard",
   icons: {
-    icon: "/abc-company-logo.png",
-    apple: "/abc-company-logo.png",
+    icon: appBrand.logo,
+    apple: appBrand.logo,
   },
 }
 

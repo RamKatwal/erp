@@ -98,6 +98,15 @@ export function createFullGroupPermissions(): GroupPermissions {
   )
 }
 
+/** Empty matrix — groups start with no permissions until configured per entity. */
+export function createEmptyGroupPermissions(): GroupPermissions {
+  return Object.fromEntries(
+    GROUP_PERMISSION_MODULES.flatMap((module) =>
+      module.items.map((item) => [item.id, [] as GroupPermissionAction[]])
+    )
+  )
+}
+
 export function createDefaultGroupPermissions(groupId: string): GroupPermissions {
   if (groupId === "grp-admin") {
     return createFullGroupPermissions()

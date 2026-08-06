@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { AnimatePresence, motion } from "framer-motion"
@@ -18,8 +17,8 @@ import {
   RotateCcw,
 } from "lucide-react"
 
+import { AppBrand } from "@/components/app-brand"
 import {
-  appBrand,
   mainNavigation,
 } from "@/config/navigation"
 import {
@@ -355,22 +354,13 @@ export function AppSidebar() {
 
       <SidebarHeader className="h-14 shrink-0 justify-center gap-0 border-b border-sidebar-border px-3 py-0">
         <div className="flex h-full items-center gap-2">
-          <Link
+          <AppBrand
             href="/"
-            className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg outline-hidden ring-sidebar-ring focus-visible:ring-2 group-data-[collapsible=icon]:justify-center"
-          >
-            <Image
-              src="/abc-company-logo.png"
-              alt={appBrand.name}
-              width={28}
-              height={28}
-              className="h-7 w-7 shrink-0 rounded-md object-contain group-data-[collapsible=icon]:h-7 group-data-[collapsible=icon]:w-7"
-              priority
-            />
-            <span className="truncate text-sm font-semibold tracking-tight text-sidebar-foreground group-data-[collapsible=icon]:hidden">
-              {appBrand.name}
-            </span>
-          </Link>
+            className="flex-1 ring-sidebar-ring focus-visible:ring-2 group-data-[collapsible=icon]:justify-center"
+            nameClassName="text-sidebar-foreground group-data-[collapsible=icon]:hidden"
+            imageClassName="h-7 w-7 group-data-[collapsible=icon]:h-7 group-data-[collapsible=icon]:w-7"
+            priority
+          />
         </div>
       </SidebarHeader>
 

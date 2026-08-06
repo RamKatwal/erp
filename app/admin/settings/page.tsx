@@ -1,10 +1,5 @@
-import { ModulePage } from "@/components/dashboard/module-page"
+import { redirect } from "next/navigation"
 
 export default function AdminSettingsPage() {
-  return (
-    <ModulePage
-      title="Settings"
-      description="Admin settings. Content coming soon."
-    />
-  )
+  redirect("/admin/settings/branch-management")
 }
