@@ -4,7 +4,7 @@ export const mockSubscriptions: Subscription[] = [
   {
     id: "SUB-10294",
     companyId: "comp_10294",
-    companyName: "ABC Company",
+    companyName: "Omniverse",
     planId: "plan_ent_01",
     planName: "Enterprise Plan",
     planTier: "Enterprise Custom",

@@ -1,38 +1,57 @@
 "use client"
 
+import * as React from "react"
 import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
 
+import {
+  fetchOnboardingSession,
+  loadOnboardingSessionClient,
+} from "@/lib/onboarding/client-session"
+import {
+  SETUP_STEPS,
+  canAccessSetupStep,
+  isSetupStepComplete,
+  pathForSetupStep,
+  setupStepIndexFromPath,
+  type OnboardingStatus,
+} from "@/lib/onboarding/status"
 import { cn } from "@/lib/utils"
 
-const STEPS = [
-  { id: "plan", label: "Plan", href: "/onboarding/plan" },
-  { id: "company", label: "Company", href: "/onboarding/company" },
-  { id: "branches", label: "Branches", href: "/onboarding/branches" },
-] as const
-
-function stepIndexFromPath(pathname: string) {
-  if (pathname.includes("/branches")) return 2
-  if (pathname.includes("/company")) return 1
-  return 0
-}
-
+/** Post-payment setup stepper: Company → Branches → Users */
 export function OnboardingStepIndicator() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const email = searchParams.get("email")?.trim()
-  const emailQuery = email ? `?email=${encodeURIComponent(email)}` : ""
+  const emailFromQuery = searchParams.get("email")?.trim()
 
-  const activeIndex = stepIndexFromPath(pathname)
+  const [status, setStatus] = React.useState<OnboardingStatus>("plan_active")
+  const [email, setEmail] = React.useState(emailFromQuery ?? "")
+
+  React.useEffect(() => {
+    const local = loadOnboardingSessionClient()
+    if (local) {
+      setStatus(local.status)
+      setEmail(local.email || emailFromQuery || "")
+    }
+    fetchOnboardingSession().then((session) => {
+      if (!session) return
+      setStatus(session.status)
+      setEmail(session.email || emailFromQuery || "")
+    })
+  }, [emailFromQuery, pathname])
+
+  const activeIndex = setupStepIndexFromPath(pathname)
 
   return (
-    <nav aria-label="Onboarding steps" className="flex items-center gap-2">
-      {STEPS.map((step, index) => {
+    <nav aria-label="Workspace setup steps" className="flex items-center gap-2">
+      {SETUP_STEPS.map((step, index) => {
         const isActive = index === activeIndex
-        const isComplete = index < activeIndex
-        // Company is required — only allow going back to completed steps.
-        // Branches can be reached from company once company is done (complete).
-        const canLink = isComplete
+        const isComplete = isSetupStepComplete(status, index)
+        const canLink =
+          isComplete ||
+          (index < activeIndex && canAccessSetupStep(status, index))
+
+        const href = pathForSetupStep(step.id, email || emailFromQuery)
 
         const content = (
           <>
@@ -40,7 +59,7 @@ export function OnboardingStepIndicator() {
               className={cn(
                 "flex size-6 items-center justify-center rounded-full text-xs font-semibold",
                 isActive && "bg-primary text-primary-foreground",
-                isComplete && "bg-primary/15 text-primary",
+                isComplete && !isActive && "bg-primary/15 text-primary",
                 !isActive && !isComplete && "bg-muted text-muted-foreground"
               )}
             >
@@ -67,7 +86,7 @@ export function OnboardingStepIndicator() {
             ) : null}
             {canLink ? (
               <Link
-                href={`${step.href}${emailQuery}`}
+                href={href}
                 className="flex items-center gap-2 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
               >
                 {content}

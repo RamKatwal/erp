@@ -9,8 +9,8 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
+import { AppBrand } from "@/components/app-brand"
 import { DemoFillFab } from "@/components/demo-fill-fab"
-import Logo from "@/components/radian-logo"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -102,7 +102,7 @@ export default function SignupForm() {
   return (
     <div className="flex w-full max-w-xl flex-col gap-8 bg-background">
       <div className="flex flex-col gap-6">
-        <Logo />
+        <AppBrand href="/signup" size={32} priority />
         <div className="flex flex-col gap-2">
           <h1 className="text-2xl font-semibold tracking-tight">Sign Up</h1>
           <p className="text-sm text-muted-foreground">
@@ -290,7 +290,7 @@ export default function SignupForm() {
           </Button>
 
           <p className="text-[13px] leading-relaxed text-muted-foreground">
-            By clicking &apos;Create Account&apos;, I agree to Providhy&apos;s{" "}
+            By clicking &apos;Create Account&apos;, I agree to Omniverse&apos;s{" "}
             <Link
               href="#"
               className="font-medium text-primary underline-offset-4 hover:underline"

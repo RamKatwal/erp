@@ -37,6 +37,12 @@ import {
   type PlanId,
 } from "@/lib/onboarding/plans"
 import {
+  apiJson,
+  restoreOnboardingSessionFromClient,
+  saveOnboardingSessionClient,
+} from "@/lib/onboarding/client-session"
+import type { OnboardingSessionData } from "@/lib/onboarding/session-types"
+import {
   DEFAULT_PLAN_SELECTION,
   loadPlanSelection,
   savePlanSelection,
@@ -97,12 +103,38 @@ export default function PlanSelectionForm() {
   const [isLoading, setIsLoading] = React.useState(false)
   const [paymentError, setPaymentError] = React.useState<string | null>(null)
   const [compareOpen, setCompareOpen] = React.useState(false)
+  const [paymentSubStatus, setPaymentSubStatus] = React.useState<
+    "idle" | "selecting" | "checkout" | "confirming" | "active" | "failed"
+  >("idle")
 
   React.useEffect(() => {
+    const paymentFlag = searchParams.get("payment")
+    if (paymentFlag === "failed") {
+      setPaymentError("Payment was cancelled or failed. You can retry below.")
+      setPaymentSubStatus("failed")
+    }
+
     const stored = loadPlanSelection()
     if (stored) setSelection(stored)
-    setHydrated(true)
-  }, [])
+
+    ;(async () => {
+      try {
+        const session = await restoreOnboardingSessionFromClient()
+        if (session?.plan) {
+          setSelection(session.plan)
+          savePlanSelection(session.plan)
+        }
+        if (session?.paymentSubStatus) {
+          setPaymentSubStatus(session.paymentSubStatus)
+        }
+        if (session) saveOnboardingSessionClient(session)
+      } catch {
+        // local draft is enough for demo resume within browser
+      } finally {
+        setHydrated(true)
+      }
+    })()
+  }, [searchParams])
 
   const pricing = calculatePricing({
     planId: selection.planId,
@@ -168,7 +200,7 @@ export default function PlanSelectionForm() {
     setPaymentError(null)
   }
 
-  function handleContinue() {
+  async function handleContinue() {
     if (!pricing.isFree && !selection.paymentMethod) {
       setPaymentError("Select eSewa or Fonepay to continue.")
       return
@@ -188,20 +220,75 @@ export default function PlanSelectionForm() {
     }
     savePlanSelection(payload)
     setIsLoading(true)
+    setPaymentError(null)
+    setPaymentSubStatus(pricing.isFree ? "confirming" : "checkout")
 
     const companyPath = email
       ? `/onboarding/company?email=${encodeURIComponent(email)}`
       : "/onboarding/company"
 
-    setTimeout(() => {
+    try {
+      // Ensure session exists (verification should have created it)
+      if (email) {
+        await apiJson("/api/auth/session", {
+          method: "POST",
+          body: JSON.stringify({ email }),
+        }).catch(() => null)
+      }
+
+      const planRes = await apiJson<{
+        session: OnboardingSessionData
+        checkoutRequired: boolean
+      }>("/api/onboarding/plan", {
+        method: "POST",
+        body: JSON.stringify({
+          plan: payload,
+          activateFree: pricing.isFree,
+        }),
+      })
+      saveOnboardingSessionClient(planRes.session)
+
+      if (!planRes.checkoutRequired) {
+        setPaymentSubStatus("active")
+        router.push(companyPath)
+        return
+      }
+
+      const payRes = await apiJson<{
+        session: OnboardingSessionData
+        checkoutUrl: string | null
+        alreadyActive?: boolean
+      }>("/api/onboarding/payment/initiate", {
+        method: "POST",
+        body: JSON.stringify({ returnBase: window.location.origin }),
+      })
+      saveOnboardingSessionClient(payRes.session)
+
+      if (payRes.alreadyActive) {
+        setPaymentSubStatus("active")
+        router.push(companyPath)
+        return
+      }
+
+      if (!payRes.checkoutUrl) {
+        throw new Error("Could not start checkout.")
+      }
+
+      setPaymentSubStatus("checkout")
+      router.push(payRes.checkoutUrl)
+    } catch (e) {
+      setPaymentSubStatus("failed")
+      setPaymentError(
+        e instanceof Error ? e.message : "Could not continue. Try again."
+      )
+    } finally {
       setIsLoading(false)
-      router.push(companyPath)
-    }, 700)
+    }
   }
 
   const ctaLabel = pricing.isFree
-    ? "Continue"
-    : `Pay ${formatNpr(pricing.total)}`
+    ? "Continue with Free Trial"
+    : `Pay ${formatNpr(pricing.total)} & continue`
 
   if (!hydrated) {
     return (
@@ -559,7 +646,11 @@ export default function PlanSelectionForm() {
               {isLoading ? <Spinner size={18} variant="default" /> : ctaLabel}
             </Button>
             <p className="text-center text-[11px] text-muted-foreground">
-              Payments are secure. Mock checkout for demo only.
+              {pricing.isFree
+                ? "No payment required. Upgrade later from Billing & Plans."
+                : paymentSubStatus === "failed"
+                  ? "Previous payment did not complete. Retry when ready."
+                  : "You will confirm payment on the secure checkout step before company setup."}
             </p>
           </div>
         </div>

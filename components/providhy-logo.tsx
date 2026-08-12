@@ -1,7 +1,6 @@
-import Link from "next/link"
+import { AppBrand } from "@/components/app-brand"
 
-import { cn } from "@/lib/utils"
-
+/** @deprecated Prefer `AppBrand` — kept for older imports. */
 export default function ProvidhyLogo({
   className,
   href = "/signup",
@@ -9,15 +8,5 @@ export default function ProvidhyLogo({
   className?: string
   href?: string
 }) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "text-2xl font-bold tracking-[0.08em] text-foreground uppercase",
-        className
-      )}
-    >
-      Providhy
-    </Link>
-  )
+  return <AppBrand href={href} className={className} size={32} priority />
 }

@@ -1,4 +1,5 @@
 import { loadPlanSelection } from "@/lib/onboarding/storage"
+import { loadEntitlementClient } from "@/lib/onboarding/entitlement"
 
 /** Used when onboarding plan selection is not available (demo default). */
 export const DEFAULT_BRANCH_LIMIT = 3
@@ -31,6 +32,9 @@ function readPersistedBranchLimit(): number | null {
 }
 
 function branchLimitFromPlan(): number | null {
+  const entitlement = loadEntitlementClient()
+  if (entitlement) return Math.max(1, entitlement.branchCount)
+
   const plan = loadPlanSelection()
   if (!plan) return null
   if (!plan.branchesEnabled) return 1

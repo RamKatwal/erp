@@ -1,9 +1,9 @@
 export const organizations = [
   {
     id: "abc",
-    name: "ABC Company",
+    name: "Omniverse",
     plan: "De-lite Plan",
-    initials: "A",
+    initials: "O",
     location: "Suryabinayak, Bhaktapur",
     color: "bg-muted text-foreground",
   },

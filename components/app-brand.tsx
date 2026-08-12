@@ -11,9 +11,10 @@ type AppBrandProps = {
   imageClassName?: string
   size?: number
   priority?: boolean
+  showName?: boolean
 }
 
-/** Shared company mark (logo + name) used in head-office sidebar and onboarding. */
+/** Shared company mark (logo + name) used across auth, sidebar, and onboarding. */
 export function AppBrand({
   href = "/",
   className,
@@ -21,6 +22,7 @@ export function AppBrand({
   imageClassName,
   size = 28,
   priority = false,
+  showName = true,
 }: AppBrandProps) {
   return (
     <Link
@@ -36,20 +38,22 @@ export function AppBrand({
         width={size}
         height={size}
         className={cn(
-          "shrink-0 rounded-md object-contain",
+          "shrink-0 rounded-[22%] object-contain",
           imageClassName
         )}
         style={{ width: size, height: size }}
         priority={priority}
       />
-      <span
-        className={cn(
-          "truncate text-sm font-semibold tracking-tight",
-          nameClassName
-        )}
-      >
-        {appBrand.name}
-      </span>
+      {showName ? (
+        <span
+          className={cn(
+            "truncate text-sm font-semibold tracking-tight",
+            nameClassName
+          )}
+        >
+          {appBrand.name}
+        </span>
+      ) : null}
     </Link>
   )
 }

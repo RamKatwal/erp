@@ -7,9 +7,9 @@ import { HugeiconsIcon } from "@hugeicons/react"
 
 import { DemoFillFab } from "@/components/demo-fill-fab"
 import { QuickBranchesTable } from "@/components/onboarding/quick-branches-table"
-import { SettingUpScreen } from "@/components/onboarding/setting-up-screen"
 import { PageHeader } from "@/components/layout/page-header"
 import { Button } from "@/components/ui/button"
+import { Spinner } from "@/components/ui/spinner"
 import {
   saveActiveBranchId,
   saveBranches,
@@ -28,11 +28,14 @@ import {
   type QuickBranchRow,
 } from "@/lib/onboarding/branch-draft"
 import {
-  clearCompanyDraft,
   loadCompanyDraft,
   type OnboardingCompanyDraft,
 } from "@/lib/onboarding/company-storage"
-import { clearPlanSelection } from "@/lib/onboarding/storage"
+import {
+  apiJson,
+  saveOnboardingSessionClient,
+} from "@/lib/onboarding/client-session"
+import type { OnboardingSessionData } from "@/lib/onboarding/session-types"
 import type { Branch } from "@/types/branch"
 
 type RowErrors = Record<string, Partial<Record<keyof QuickBranchRow, string>>>
@@ -139,43 +142,84 @@ export default function BranchesSetupForm() {
   const [branchLimit, setBranchLimit] = React.useState(1)
   const [rows, setRows] = React.useState<QuickBranchRow[]>([])
   const [errors, setErrors] = React.useState<RowErrors>({})
-  const [isSettingUp, setIsSettingUp] = React.useState(false)
+  const [isLoading, setIsLoading] = React.useState(false)
   const [hydrated, setHydrated] = React.useState(false)
 
   React.useEffect(() => {
-    const draft = loadCompanyDraft()
-    if (!draft) {
-      router.replace(`/onboarding/company${emailQuery}`)
-      return
-    }
+    let cancelled = false
+    ;(async () => {
+      let draft = loadCompanyDraft()
+      try {
+        const data = await apiJson<{ session: OnboardingSessionData | null }>(
+          "/api/onboarding/status"
+        )
+        if (cancelled) return
+        if (data.session) {
+          saveOnboardingSessionClient(data.session)
+          draft = data.session.company ?? draft
+        }
+      } catch {
+        // fall through to local draft
+      }
 
-    const limit = getBranchLimit()
-    const prefix = companyCodePrefix(draft.companyName)
-    setCompany(draft)
-    setCompanyPrefix(prefix)
-    setBranchLimit(limit)
-    setRows(buildDefaultBranchRows(limit, draft))
-    setHydrated(true)
+      if (!draft) {
+        router.replace(`/onboarding/company${emailQuery}`)
+        return
+      }
+
+      const limit = getBranchLimit()
+      const prefix = companyCodePrefix(draft.companyName)
+      setCompany(draft)
+      setCompanyPrefix(prefix)
+      setBranchLimit(limit)
+      setRows(buildDefaultBranchRows(limit, draft))
+      setHydrated(true)
+    })()
+    return () => {
+      cancelled = true
+    }
   }, [emailQuery, router])
 
-  function finishSetup(branches: Branch[]) {
-    setIsSettingUp(true)
-
+  async function finishSetup(branches: Branch[]) {
     persistBranchLimit(branchLimit)
     saveBranches(branches)
     if (branches[0]) {
       saveActiveBranchId(branches[0].id)
     }
-    clearCompanyDraft()
-    clearPlanSelection()
 
-    window.setTimeout(() => {
-      router.push("/admin")
-    }, 2800)
+    const provisionToken = `prov_${Date.now().toString(36)}`
+    setIsLoading(true)
+
+    try {
+      const res = await apiJson<{
+        session: OnboardingSessionData
+        alreadyProvisioned?: boolean
+      }>("/api/onboarding/branches", {
+        method: "POST",
+        body: JSON.stringify({
+          branches: branches.map((b) => ({
+            id: b.id,
+            name: b.name,
+            code: b.code,
+            address: b.address,
+            contactNumber: b.contactNumber,
+            contactEmail: b.contactEmail,
+          })),
+          provisionToken,
+        }),
+      })
+      saveOnboardingSessionClient(res.session)
+      router.push(`/onboarding/users${emailQuery}`)
+    } catch {
+      // Demo resilience: still continue to users step with local branches
+      router.push(`/onboarding/users${emailQuery}`)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   function handleSkip() {
-    if (!company || isSettingUp) return
+    if (!company || isLoading) return
     finishSetup([headOfficeFromCompany(company, companyPrefix)])
   }
 
@@ -225,14 +269,14 @@ export default function BranchesSetupForm() {
         <PageHeader
           title="Quick branch setup"
           count={`${branchLimit} / ${branchLimit}`}
-          description="Fill each branch from your plan. Type in cells or paste from Excel, then save all at once."
+          description="Fill each branch from your plan. Next you’ll invite users to your workspace."
           actions={
             <div className="flex items-center gap-2">
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                disabled={isSettingUp}
+                disabled={isLoading}
                 onClick={handleSkip}
               >
                 Skip — add later
@@ -240,15 +284,21 @@ export default function BranchesSetupForm() {
               <Button
                 type="button"
                 size="sm"
-                disabled={isSettingUp || rows.length === 0}
+                disabled={isLoading || rows.length === 0}
                 onClick={handleCreateBranches}
               >
-                Save all
-                <HugeiconsIcon
-                  icon={ArrowRight01Icon}
-                  className="size-4"
-                  data-icon="inline-end"
-                />
+                {isLoading ? (
+                  <Spinner size={16} variant="default" />
+                ) : (
+                  <>
+                    Save all
+                    <HugeiconsIcon
+                      icon={ArrowRight01Icon}
+                      className="size-4"
+                      data-icon="inline-end"
+                    />
+                  </>
+                )}
               </Button>
             </div>
           }
@@ -274,7 +324,7 @@ export default function BranchesSetupForm() {
           <QuickBranchesTable
             rows={rows}
             companyPrefix={companyPrefix}
-            disabled={isSettingUp}
+            disabled={isLoading}
             onChange={(next) => {
               setRows(next)
               setErrors({})
@@ -292,7 +342,7 @@ export default function BranchesSetupForm() {
                 type="button"
                 variant="outline"
                 size="sm"
-                disabled={isSettingUp}
+                disabled={isLoading}
                 onClick={handleSkip}
               >
                 Skip — add later
@@ -300,24 +350,28 @@ export default function BranchesSetupForm() {
               <Button
                 type="button"
                 size="sm"
-                disabled={isSettingUp || rows.length === 0}
+                disabled={isLoading || rows.length === 0}
                 onClick={handleCreateBranches}
               >
-                Save all ({rows.length})
-                <HugeiconsIcon
-                  icon={ArrowRight01Icon}
-                  className="size-4"
-                  data-icon="inline-end"
-                />
+                {isLoading ? (
+                  <Spinner size={16} variant="default" />
+                ) : (
+                  <>
+                    Save all ({rows.length})
+                    <HugeiconsIcon
+                      icon={ArrowRight01Icon}
+                      className="size-4"
+                      data-icon="inline-end"
+                    />
+                  </>
+                )}
               </Button>
             </div>
           </div>
         </div>
       </div>
 
-      <SettingUpScreen open={isSettingUp} />
-
-      {!isSettingUp ? (
+      {!isLoading ? (
         <DemoFillFab label="Fill demo branches" onFill={fillDemoBranches} />
       ) : null}
     </>

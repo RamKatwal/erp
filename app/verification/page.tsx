@@ -10,7 +10,7 @@ export default function VerificationPage() {
       <div className="hidden w-1/2 p-6 md:block">
         <AuthMarketingPanel />
       </div>
-      <div className="flex w-full flex-1 items-center justify-center overflow-y-auto p-5 md:w-1/2 md:p-8">
+      <div className="flex w-full flex-1 items-center justify-center overflow-y-auto p-5 md:w-1/2">
         <Suspense
           fallback={
             <div className="flex items-center justify-center py-20">

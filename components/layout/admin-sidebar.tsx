@@ -5,9 +5,9 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
-import { adminBrand, adminNavigation } from "@/config/admin-navigation"
+import { adminNavigation } from "@/config/admin-navigation"
+import { AppBrand } from "@/components/app-brand"
 import { OrganizationSwitcher } from "@/components/layout/organization-switcher"
-import Logo from "@/components/logo"
 import {
   Collapsible,
   CollapsibleContent,
@@ -201,15 +201,12 @@ export function AdminSidebar() {
 
       <SidebarHeader className="h-14 shrink-0 justify-center gap-0 border-b border-sidebar-border px-3 py-0">
         <div className="flex h-full items-center gap-2">
-          <Link
+          <AppBrand
             href="/admin"
-            className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg outline-hidden ring-sidebar-ring focus-visible:ring-2 group-data-[collapsible=icon]:justify-center"
-          >
-            <Logo width={28} height={28} />
-            <span className="truncate text-sm font-semibold tracking-tight text-sidebar-foreground group-data-[collapsible=icon]:hidden">
-              {adminBrand.name}
-            </span>
-          </Link>
+            className="flex-1 text-sidebar-foreground ring-sidebar-ring focus-visible:ring-2 group-data-[collapsible=icon]:justify-center [&_span]:group-data-[collapsible=icon]:hidden"
+            nameClassName="text-sidebar-foreground"
+            size={28}
+          />
         </div>
       </SidebarHeader>
 

@@ -105,7 +105,7 @@ export function AddSubscriptionDialog({
                   <FormItem>
                     <FormLabel>Company name</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. ABC Company" {...field} />
+                      <Input placeholder="e.g. Omniverse" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

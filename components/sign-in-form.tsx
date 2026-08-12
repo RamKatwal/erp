@@ -9,10 +9,10 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
+import { AppBrand } from "@/components/app-brand"
 import { DemoFillFab } from "@/components/demo-fill-fab"
 import { GithubIcon } from "@/components/github-icon"
 import { GoogleIcon } from "@/components/google-icon"
-import Logo from "@/components/radian-logo"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Divider } from "@/components/ui/divider"
@@ -27,6 +27,14 @@ import {
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
 import { DEMO_ADMIN, isDemoAdminCredentials } from "@/lib/demo/auth"
+import {
+  apiJson,
+  restoreOnboardingSessionFromClient,
+  saveAuthSessionClient,
+  saveOnboardingSessionClient,
+} from "@/lib/onboarding/client-session"
+import type { AuthSessionData, OnboardingSessionData } from "@/lib/onboarding/session-types"
+import { resumePathForStatus } from "@/lib/onboarding/status"
 import { cn } from "@/lib/utils"
 
 const FormSchema = z.object({
@@ -71,25 +79,70 @@ export default function SignInForm() {
     form.clearErrors()
   }
 
-  const onSubmit = (data: z.infer<typeof FormSchema>) => {
-    if (!isDemoAdminCredentials(data.email, data.password)) {
+  const onSubmit = async (data: z.infer<typeof FormSchema>) => {
+    const email = data.email.trim().toLowerCase()
+    const isAdmin = isDemoAdminCredentials(data.email, data.password)
+    setIsLoading(true)
+
+    try {
+      if (isAdmin) {
+        const res = await apiJson<{
+          auth: AuthSessionData
+          session: OnboardingSessionData
+        }>("/api/auth/session", {
+          method: "POST",
+          body: JSON.stringify({
+            email: DEMO_ADMIN.email,
+            name: DEMO_ADMIN.name,
+            completeOnboarding: true,
+          }),
+        })
+        saveAuthSessionClient(res.auth)
+        saveOnboardingSessionClient(res.session)
+        router.push("/admin")
+        return
+      }
+
+      // Prefer durable local mirror if cookie was cleared
+      await restoreOnboardingSessionFromClient()
+
+      const statusRes = await apiJson<{
+        session: OnboardingSessionData | null
+      }>("/api/onboarding/status")
+
+      const existing = statusRes.session
+      if (existing && existing.email === email) {
+        const res = await apiJson<{
+          auth: AuthSessionData
+          session: OnboardingSessionData
+        }>("/api/auth/session", {
+          method: "POST",
+          body: JSON.stringify({ email }),
+        })
+        saveAuthSessionClient(res.auth)
+        saveOnboardingSessionClient(res.session)
+        router.push(
+          resumePathForStatus(res.session.status, res.session.email)
+        )
+        return
+      }
+
+      form.setError("password", {
+        message: `No onboarding session for this email. Sign up first, or use ${DEMO_ADMIN.email} / ${DEMO_ADMIN.password}`,
+      })
+    } catch {
       form.setError("password", {
         message: `Use ${DEMO_ADMIN.email} / ${DEMO_ADMIN.password} for demo sign-in`,
       })
-      return
-    }
-
-    setIsLoading(true)
-    setTimeout(() => {
+    } finally {
       setIsLoading(false)
-      router.push("/admin")
-    }, 800)
+    }
   }
 
   return (
     <div className="flex w-full max-w-sm flex-col gap-8">
       <div className="flex flex-col gap-6">
-        <Logo />
+        <AppBrand href="/signin" size={32} priority />
         <div className="flex flex-col gap-2">
           <h1 className="text-2xl font-semibold tracking-tight">Sign In</h1>
           <p className="text-sm text-muted-foreground">
@@ -102,7 +155,9 @@ export default function SignInForm() {
             </Link>
           </p>
           <p className="text-xs text-muted-foreground">
-            Demo admin: {DEMO_ADMIN.email} / {DEMO_ADMIN.password}
+            Demo admin: {DEMO_ADMIN.email} / {DEMO_ADMIN.password}. To resume
+            unfinished onboarding, sign in with the same email (any password ≥8
+            characters).
           </p>
         </div>
       </div>

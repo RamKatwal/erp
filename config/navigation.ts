@@ -183,10 +183,10 @@ export const mainNavigation: NavItem[] = [
 ]
 
 export const appBrand = {
-  name: "ABC Company",
+  name: "Omniverse",
   plan: "Platform",
   /** Default company mark — reuse whenever a company logo is needed. */
-  logo: "/abc-company-logo.png",
+  logo: "/omniverse-logo.png",
 }
 
 export function getNavItemByHref(href: string): NavItem | undefined {

@@ -66,7 +66,7 @@ export const adminNavigation: NavItem[] = [
 ]
 
 export const adminBrand = {
-  name: "Providhy",
+  name: "Omniverse",
 }
 
 export function getAdminNavItemByHref(href: string): NavItem | undefined {

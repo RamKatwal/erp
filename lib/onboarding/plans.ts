@@ -41,7 +41,7 @@ export const PLANS: PlanDefinition[] = [
   {
     id: "free_trial",
     name: "Free Trial",
-    description: "Perfect for evaluating Providhy with full module access.",
+    description: "Perfect for evaluating Omniverse with full module access.",
     monthlyPerUser: 0,
     badge: "default",
     priceNote: "14 days · no card required",

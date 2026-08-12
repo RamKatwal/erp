@@ -28,7 +28,7 @@ const roboto = Roboto({
 })
 
 export const metadata: Metadata = {
-  title: "ABC Company",
+  title: "Omniverse",
   description: "Enterprise resource planning dashboard",
   icons: {
     icon: appBrand.logo,

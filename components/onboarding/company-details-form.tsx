@@ -23,7 +23,16 @@ import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
 import { appBrand } from "@/config/navigation"
 import { DEMO_COMPANY } from "@/lib/demo/company"
-import { saveCompanyDraft } from "@/lib/onboarding/company-storage"
+import {
+  apiJson,
+  restoreOnboardingSessionFromClient,
+  saveOnboardingSessionClient,
+} from "@/lib/onboarding/client-session"
+import {
+  loadCompanyDraft,
+  saveCompanyDraft,
+} from "@/lib/onboarding/company-storage"
+import type { OnboardingSessionData } from "@/lib/onboarding/session-types"
 import { cn } from "@/lib/utils"
 
 const INDUSTRY_OPTIONS = [
@@ -71,6 +80,7 @@ export default function CompanyDetailsForm() {
   const emailFromQuery = searchParams.get("email")?.trim() ?? ""
 
   const [isLoading, setIsLoading] = React.useState(false)
+  const [hydrated, setHydrated] = React.useState(false)
   const [logoPreview, setLogoPreview] = React.useState<string | null>(null)
   const [logoError, setLogoError] = React.useState<string | null>(null)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
@@ -95,8 +105,49 @@ export default function CompanyDetailsForm() {
   })
 
   React.useEffect(() => {
-    if (emailFromQuery) {
-      form.setValue("email", emailFromQuery)
+    let cancelled = false
+    ;(async () => {
+      const localDraft = loadCompanyDraft()
+      try {
+        const session = await restoreOnboardingSessionFromClient()
+        if (cancelled) return
+        const draft = session?.company ?? localDraft
+        if (session) saveOnboardingSessionClient(session)
+        if (draft) {
+          form.reset({
+            companyName: draft.companyName,
+            email: draft.email || emailFromQuery,
+            contact: draft.contact,
+            pan: draft.pan,
+            registeredWithVat: draft.registeredWithVat,
+            industryType: draft.industryType || "Automobiles",
+            province: draft.province,
+            district: draft.district,
+            fullAddress: draft.fullAddress,
+            companyWebsite: draft.companyWebsite ?? "",
+            employeeNumber: draft.employeeNumber ?? "",
+          })
+        } else if (emailFromQuery) {
+          form.setValue("email", emailFromQuery)
+        }
+      } catch {
+        if (cancelled) return
+        if (localDraft) {
+          form.reset({
+            ...localDraft,
+            companyWebsite: localDraft.companyWebsite ?? "",
+            employeeNumber: localDraft.employeeNumber ?? "",
+            email: localDraft.email || emailFromQuery,
+          })
+        } else if (emailFromQuery) {
+          form.setValue("email", emailFromQuery)
+        }
+      } finally {
+        if (!cancelled) setHydrated(true)
+      }
+    })()
+    return () => {
+      cancelled = true
     }
   }, [emailFromQuery, form])
 
@@ -136,9 +187,9 @@ export default function CompanyDetailsForm() {
     setLogoPreview(URL.createObjectURL(file))
   }
 
-  const onSubmit = (data: z.infer<typeof FormSchema>) => {
+  const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     setIsLoading(true)
-    saveCompanyDraft({
+    const draft = {
       companyName: data.companyName,
       email: data.email,
       contact: data.contact,
@@ -150,16 +201,39 @@ export default function CompanyDetailsForm() {
       fullAddress: data.fullAddress,
       companyWebsite: data.companyWebsite,
       employeeNumber: data.employeeNumber,
-    })
+    }
+    saveCompanyDraft(draft)
 
     const emailQuery = data.email.trim()
       ? `?email=${encodeURIComponent(data.email.trim())}`
       : ""
 
-    setTimeout(() => {
-      setIsLoading(false)
+    try {
+      const res = await apiJson<{ session: OnboardingSessionData }>(
+        "/api/onboarding/company",
+        {
+          method: "POST",
+          body: JSON.stringify({ company: draft, finalize: true }),
+        }
+      )
+      saveOnboardingSessionClient(res.session)
       router.push(`/onboarding/branches${emailQuery}`)
-    }, 500)
+    } catch (e) {
+      form.setError("companyName", {
+        message:
+          e instanceof Error ? e.message : "Could not save company. Try again.",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  if (!hydrated) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Spinner size={24} variant="default" />
+      </div>
+    )
   }
 
   return (
@@ -170,7 +244,7 @@ export default function CompanyDetailsForm() {
         </h1>
         <p className="text-sm text-muted-foreground">
           Tell us about your business so we can set up your workspace. Next
-          you&apos;ll add your branches.
+          you&apos;ll add branches, then users.
         </p>
       </div>
 

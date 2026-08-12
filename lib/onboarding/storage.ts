@@ -58,13 +58,23 @@ function normalizePaymentMethod(method: unknown): PaymentMethodId {
   return DEFAULT_PAYMENT_METHOD_ID
 }
 
+function readPlanRaw(): string | null {
+  try {
+    return (
+      window.localStorage.getItem(ONBOARDING_PLAN_STORAGE_KEY) ??
+      window.sessionStorage.getItem(ONBOARDING_PLAN_STORAGE_KEY)
+    )
+  } catch {
+    return null
+  }
+}
+
 export function savePlanSelection(selection: OnboardingPlanSelection): void {
   if (typeof window === "undefined") return
   try {
-    sessionStorage.setItem(
-      ONBOARDING_PLAN_STORAGE_KEY,
-      JSON.stringify(selection)
-    )
+    const raw = JSON.stringify(selection)
+    window.localStorage.setItem(ONBOARDING_PLAN_STORAGE_KEY, raw)
+    window.sessionStorage.setItem(ONBOARDING_PLAN_STORAGE_KEY, raw)
   } catch {
     // ignore quota / private mode errors
   }
@@ -73,7 +83,7 @@ export function savePlanSelection(selection: OnboardingPlanSelection): void {
 export function loadPlanSelection(): OnboardingPlanSelection | null {
   if (typeof window === "undefined") return null
   try {
-    const raw = sessionStorage.getItem(ONBOARDING_PLAN_STORAGE_KEY)
+    const raw = readPlanRaw()
     if (!raw) return null
     const parsed = JSON.parse(raw) as Partial<OnboardingPlanSelection>
     return {
@@ -91,7 +101,8 @@ export function loadPlanSelection(): OnboardingPlanSelection | null {
 export function clearPlanSelection(): void {
   if (typeof window === "undefined") return
   try {
-    sessionStorage.removeItem(ONBOARDING_PLAN_STORAGE_KEY)
+    window.localStorage.removeItem(ONBOARDING_PLAN_STORAGE_KEY)
+    window.sessionStorage.removeItem(ONBOARDING_PLAN_STORAGE_KEY)
   } catch {
     // ignore
   }

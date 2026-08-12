@@ -9,7 +9,7 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import ProvidhyLogo from "@/components/providhy-logo"
+import { AppBrand } from "@/components/app-brand"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -20,6 +20,14 @@ import {
 } from "@/components/ui/form"
 import { OTPField, OTPHiddenInput, OTPInput } from "@/components/ui/otp-field"
 import { Spinner } from "@/components/ui/spinner"
+import {
+  apiJson,
+  saveAuthSessionClient,
+  saveOnboardingSessionClient,
+} from "@/lib/onboarding/client-session"
+import type { AuthSessionData } from "@/lib/onboarding/session-types"
+import type { OnboardingSessionData } from "@/lib/onboarding/session-types"
+import { resumePathForStatus } from "@/lib/onboarding/status"
 
 const DEMO_OTP = "111111"
 const RESEND_SECONDS = 60
@@ -53,7 +61,7 @@ export default function VerificationForm() {
     return () => window.clearTimeout(timer)
   }, [secondsLeft])
 
-  const onSubmit = (data: z.infer<typeof FormSchema>) => {
+  const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     if (data.pin !== DEMO_OTP) {
       form.setError("pin", {
         message: "Invalid verification code. Try 111111 for now.",
@@ -62,14 +70,27 @@ export default function VerificationForm() {
     }
 
     setIsLoading(true)
-    setTimeout(() => {
-      setIsLoading(false)
-      const emailParam = searchParams.get("email")?.trim()
+    const emailParam = searchParams.get("email")?.trim() ?? ""
+
+    try {
+      const res = await apiJson<{
+        auth: AuthSessionData
+        session: OnboardingSessionData
+      }>("/api/auth/session", {
+        method: "POST",
+        body: JSON.stringify({ email: emailParam || "user@example.com" }),
+      })
+      saveAuthSessionClient(res.auth)
+      saveOnboardingSessionClient(res.session)
+      router.push(resumePathForStatus(res.session.status, res.session.email))
+    } catch {
       const planPath = emailParam
         ? `/onboarding/plan?email=${encodeURIComponent(emailParam)}`
         : "/onboarding/plan"
       router.push(planPath)
-    }, 600)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   function handleResend() {
@@ -81,7 +102,7 @@ export default function VerificationForm() {
 
   return (
     <div className="flex w-full max-w-md flex-col gap-8 bg-background">
-      <ProvidhyLogo />
+      <AppBrand href="/signup" size={32} priority />
 
       <div className="flex flex-col gap-4">
         <div className="relative flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
