@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
 
 export default function AdminSettingsPage() {
-  redirect("/admin/settings/branch-management")
+  redirect("/admin/settings/users-permissions")
 }

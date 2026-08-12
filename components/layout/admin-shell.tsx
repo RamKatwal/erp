@@ -7,6 +7,7 @@ import { KeyboardShortcutsProvider } from "@/components/layout/keyboard-shortcut
 import { SettingsModal } from "@/components/settings/settings-modal"
 import { SettingsModalProvider } from "@/components/settings/settings-modal-provider"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import type * as React from "react"
 
 type AdminShellProps = {
   children: React.ReactNode
@@ -16,7 +17,14 @@ export function AdminShell({ children }: AdminShellProps) {
   return (
     <KeyboardShortcutsProvider>
       <SettingsModalProvider>
-        <SidebarProvider className="h-svh overflow-hidden">
+        <SidebarProvider
+          className="h-svh overflow-hidden"
+          style={
+            {
+              "--sidebar-width": "16.5rem",
+            } as React.CSSProperties
+          }
+        >
           <AdminSidebar />
           <SidebarInset className="h-svh overflow-y-auto">
             <AppNavbar />

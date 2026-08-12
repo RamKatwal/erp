@@ -1,10 +1,30 @@
 import {
+  DuoBranchIcon,
   DuoCompanyListsIcon,
+  DuoConfigurationsIcon,
   DuoHomeIcon,
+  DuoPaymentsIcon,
+  DuoPermissionsIcon,
   DuoSettingsIcon,
+  DuoUsersIcon,
 } from "@/components/icons/duo"
 
 import type { NavItem } from "@/types/navigation"
+
+export const organizationNavigation: NavItem[] = [
+  {
+    title: "Branch Management",
+    href: "/admin/organizations/branch-management",
+    icon: DuoBranchIcon,
+    description: "Create and manage company branches.",
+  },
+  {
+    title: "Permission Management",
+    href: "/admin/organizations/permissions",
+    icon: DuoPermissionsIcon,
+    description: "Configure module permissions per group and branch.",
+  },
+]
 
 export const adminNavigation: NavItem[] = [
   {
@@ -13,33 +33,35 @@ export const adminNavigation: NavItem[] = [
     icon: DuoHomeIcon,
   },
   {
-    title: "Company Lists",
-    href: "/admin/companies",
-    icon: DuoCompanyListsIcon,
-  },
-  {
     title: "Settings",
     href: "/admin/settings",
     icon: DuoSettingsIcon,
     children: [
       {
-        title: "Branch Management",
-        href: "/admin/settings/branch-management",
-        icon: DuoSettingsIcon,
-        description: "Create and manage company branches.",
-      },
-      {
         title: "Users & Permissions",
         href: "/admin/settings/users-permissions",
-        icon: DuoSettingsIcon,
-        description: "Manage groups, users, and entity permissions.",
+        icon: DuoUsersIcon,
+        description: "Manage groups and users.",
       },
     ],
   },
   {
+    title: "Subscriptions",
+    href: "/admin/subscriptions",
+    icon: DuoPaymentsIcon,
+    description:
+      "Manage software licensing and branch entitlement usage across companies.",
+  },
+  {
     title: "Configurations",
     href: "/admin/configurations",
-    icon: DuoSettingsIcon,
+    icon: DuoConfigurationsIcon,
+  },
+  {
+    title: "Organizations",
+    href: "/admin/organizations",
+    icon: DuoCompanyListsIcon,
+    children: organizationNavigation,
   },
 ]
 

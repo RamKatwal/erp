@@ -15,11 +15,6 @@ export const usersPermissionsNavigation: UsersPermissionsNavItem[] = [
     href: "/admin/settings/users-permissions/users",
     description: "Invite users and assign them to entities with a group.",
   },
-  {
-    title: "Permission Management",
-    href: "/admin/settings/users-permissions/permissions",
-    description: "Configure module permissions per group and branch.",
-  },
 ]
 
 export function getUsersPermissionsItemByHref(

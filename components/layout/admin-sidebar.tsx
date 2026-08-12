@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
 import { adminBrand, adminNavigation } from "@/config/admin-navigation"
+import { OrganizationSwitcher } from "@/components/layout/organization-switcher"
 import Logo from "@/components/logo"
 import {
   Collapsible,
@@ -17,6 +18,7 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -116,10 +118,56 @@ function NavMenuItem({ item, pathname }: { item: NavItem; pathname: string }) {
   )
 }
 
+function OrganizationsNavSection({
+  item,
+  pathname,
+}: {
+  item: NavItem
+  pathname: string
+}) {
+  return (
+    <SidebarGroup className="mt-1 border-t border-sidebar-border pt-2">
+      <SidebarGroupLabel className="px-2 text-[11px] font-medium text-sidebar-foreground/50">
+        Organizations
+      </SidebarGroupLabel>
+      <SidebarGroupContent className="flex flex-col gap-1.5">
+        <div className="group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
+          <OrganizationSwitcher />
+        </div>
+        <SidebarMenu className="gap-0.5">
+          {item.children?.map((child) => {
+            const ChildIcon = child.icon
+
+            return (
+              <SidebarMenuItem key={child.href}>
+                <SidebarMenuButton
+                  render={<Link href={child.href} />}
+                  tooltip={child.title}
+                  isActive={isNavItemActive(pathname, child.href)}
+                >
+                  <ChildIcon />
+                  <span>{child.title}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )
+          })}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
+  )
+}
+
 export function AdminSidebar() {
   const pathname = usePathname()
   const { state, isMobile, toggleSidebar } = useSidebar()
   const isCollapsed = state === "collapsed" && !isMobile
+
+  const organizationsItem = adminNavigation.find(
+    (item) => item.href === "/admin/organizations"
+  )
+  const primaryNavItems = adminNavigation.filter(
+    (item) => item.href !== "/admin/organizations"
+  )
 
   return (
     <Sidebar collapsible="icon" className="relative">
@@ -169,12 +217,23 @@ export function AdminSidebar() {
         <SidebarGroup className="py-1">
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
-              {adminNavigation.map((item) => (
-                <NavMenuItem key={item.title} item={item} pathname={pathname} />
+              {primaryNavItems.map((item) => (
+                <NavMenuItem
+                  key={item.title}
+                  item={item}
+                  pathname={pathname}
+                />
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {organizationsItem ? (
+          <OrganizationsNavSection
+            item={organizationsItem}
+            pathname={pathname}
+          />
+        ) : null}
       </SidebarContent>
 
       <SidebarRail />
