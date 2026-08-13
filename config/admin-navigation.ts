@@ -22,7 +22,7 @@ export const organizationNavigation: NavItem[] = [
     title: "Permission Management",
     href: "/admin/organizations/permissions",
     icon: DuoPermissionsIcon,
-    description: "Configure module permissions per group and branch.",
+    description: "Configure module permissions per role and branch.",
   },
 ]
 
@@ -38,10 +38,16 @@ export const adminNavigation: NavItem[] = [
     icon: DuoSettingsIcon,
     children: [
       {
-        title: "Users & Permissions",
-        href: "/admin/settings/users-permissions",
+        title: "User Roles",
+        href: "/admin/settings/users-permissions/groups",
+        icon: DuoPermissionsIcon,
+        description: "Create user roles scoped to a company and its branches.",
+      },
+      {
+        title: "User Management",
+        href: "/admin/settings/users-permissions/users",
         icon: DuoUsersIcon,
-        description: "Manage groups and users.",
+        description: "Invite users and assign them to entities with a role.",
       },
     ],
   },

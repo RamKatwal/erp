@@ -1,0 +1,100 @@
+import { mockSubscriptions } from "@/lib/mock/subscriptions"
+
+export type CompanyBranchOption = {
+  id: string
+  name: string
+  code: string
+  status: string
+  isHeadOffice: boolean
+}
+
+export type CompanyOption = {
+  id: string
+  name: string
+  branches: CompanyBranchOption[]
+}
+
+export function isHeadOfficeBranch(name: string, code: string) {
+  const label = `${name} ${code}`.toLowerCase()
+  return (
+    label.includes("head office") ||
+    label.includes("headoffice") ||
+    /\bhq\b/.test(label) ||
+    code.toUpperCase() === "HQ"
+  )
+}
+
+function sortBranches(branches: CompanyBranchOption[]) {
+  return [...branches].sort((a, b) => {
+    if (a.isHeadOffice !== b.isHeadOffice) {
+      return a.isHeadOffice ? -1 : 1
+    }
+    return a.name.localeCompare(b.name)
+  })
+}
+
+/** Companies and their branches from subscription seed data (admin mock). */
+export function getCompanyOptions(): CompanyOption[] {
+  return mockSubscriptions.map((subscription) => ({
+    id: subscription.companyId,
+    name: subscription.companyName,
+    branches: sortBranches(
+      subscription.assignedBranches.map((branch) => ({
+        id: branch.branchId,
+        name: branch.branchName,
+        code: branch.branchCode,
+        status: branch.status,
+        isHeadOffice: isHeadOfficeBranch(branch.branchName, branch.branchCode),
+      }))
+    ),
+  }))
+}
+
+export function getCompanyById(companyId: string): CompanyOption | undefined {
+  return getCompanyOptions().find((company) => company.id === companyId)
+}
+
+export function findCompanyForBranch(
+  branchId: string
+): CompanyOption | undefined {
+  return getCompanyOptions().find((company) =>
+    company.branches.some((branch) => branch.id === branchId)
+  )
+}
+
+export function getBranchLabel(branchId: string): string | undefined {
+  for (const company of getCompanyOptions()) {
+    const branch = company.branches.find((item) => item.id === branchId)
+    if (branch) {
+      return branch.isHeadOffice ? `${branch.name} (Head Office)` : branch.name
+    }
+  }
+  return undefined
+}
+
+export type ResolvedBranchOption = CompanyBranchOption & {
+  companyId: string
+  companyName: string
+}
+
+/** Resolve branch options (with company labels) for a list of branch IDs. */
+export function getBranchesByIds(branchIds: string[]): ResolvedBranchOption[] {
+  const companies = getCompanyOptions()
+  const resolved: ResolvedBranchOption[] = []
+
+  for (const branchId of branchIds) {
+    for (const company of companies) {
+      const branch = company.branches.find((item) => item.id === branchId)
+      if (branch) {
+        resolved.push({
+          ...branch,
+          companyId: company.id,
+          companyName: company.name,
+        })
+        break
+      }
+    }
+  }
+
+  return resolved
+}

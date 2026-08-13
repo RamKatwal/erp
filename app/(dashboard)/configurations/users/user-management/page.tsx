@@ -1,11 +1,5 @@
-import { ConfigurationsPlaceholderPage } from "@/components/settings/configurations-placeholder-page"
+import { UserManagementPage } from "@/components/settings/users-permissions/user-management-page"
 
-export default function UserManagementPage() {
-  return (
-    <ConfigurationsPlaceholderPage
-      href="/configurations/users/user-management"
-      fallbackTitle="User Management"
-      fallbackDescription="Invite, edit, and deactivate system users."
-    />
-  )
+export default function UserManagementRoute() {
+  return <UserManagementPage roleSource="configuration-roles" />
 }

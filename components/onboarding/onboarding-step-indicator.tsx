@@ -18,7 +18,7 @@ import {
 } from "@/lib/onboarding/status"
 import { cn } from "@/lib/utils"
 
-/** Post-payment setup stepper: Company → Branches → Users */
+/** Post-payment setup stepper: Company → Branches */
 export function OnboardingStepIndicator() {
   const pathname = usePathname()
   const searchParams = useSearchParams()

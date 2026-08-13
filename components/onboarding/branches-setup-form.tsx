@@ -7,6 +7,7 @@ import { HugeiconsIcon } from "@hugeicons/react"
 
 import { DemoFillFab } from "@/components/demo-fill-fab"
 import { QuickBranchesTable } from "@/components/onboarding/quick-branches-table"
+import { SettingUpScreen } from "@/components/onboarding/setting-up-screen"
 import { PageHeader } from "@/components/layout/page-header"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
@@ -23,16 +24,13 @@ import {
   buildDefaultBranchRows,
   companyCodePrefix,
   DEMO_BRANCH_LOCATIONS,
-  generateBranchCode,
   resequenceBranchCodes,
   type QuickBranchRow,
 } from "@/lib/onboarding/branch-draft"
-import {
-  loadCompanyDraft,
-  type OnboardingCompanyDraft,
-} from "@/lib/onboarding/company-storage"
+import { loadCompanyDraft } from "@/lib/onboarding/company-storage"
 import {
   apiJson,
+  clearOnboardingDraftsClient,
   saveOnboardingSessionClient,
 } from "@/lib/onboarding/client-session"
 import type { OnboardingSessionData } from "@/lib/onboarding/session-types"
@@ -48,8 +46,9 @@ function validateRows(rows: QuickBranchRow[]): RowErrors {
   const errors: RowErrors = {}
   const seenCodes = new Set<string>()
 
-  rows.forEach((row) => {
+  rows.forEach((row, index) => {
     const rowError: Partial<Record<keyof QuickBranchRow, string>> = {}
+    const isHeadOffice = index === 0
 
     if (!row.name.trim()) {
       rowError.name = "Required"
@@ -57,18 +56,25 @@ function validateRows(rows: QuickBranchRow[]): RowErrors {
     if (!row.location.trim()) {
       rowError.location = "Required"
     }
-    if (!row.code.trim()) {
-      rowError.code = "Required"
-    } else if (!/^[A-Za-z0-9_-]+$/.test(row.code.trim())) {
-      rowError.code = "Invalid"
-    } else {
-      const normalized = row.code.trim().toUpperCase()
-      if (seenCodes.has(normalized)) {
-        rowError.code = "Duplicate"
+
+    // Head office code is system-managed (shown as "-"); still unique under the hood.
+    if (!isHeadOffice) {
+      if (!row.code.trim()) {
+        rowError.code = "Required"
+      } else if (!/^[A-Za-z0-9_-]+$/.test(row.code.trim())) {
+        rowError.code = "Invalid"
       } else {
-        seenCodes.add(normalized)
+        const normalized = row.code.trim().toUpperCase()
+        if (seenCodes.has(normalized)) {
+          rowError.code = "Duplicate"
+        } else {
+          seenCodes.add(normalized)
+        }
       }
+    } else if (row.code.trim()) {
+      seenCodes.add(row.code.trim().toUpperCase())
     }
+
     if (row.contactEmail.trim() && !isValidEmail(row.contactEmail.trim())) {
       rowError.contactEmail = "Invalid email"
     }
@@ -103,46 +109,18 @@ function rowsToBranches(rows: QuickBranchRow[]): Branch[] {
   })
 }
 
-function headOfficeFromCompany(
-  company: OnboardingCompanyDraft,
-  prefix: string
-): Branch {
-  const name = "Head Office"
-  const location = [company.district || company.fullAddress, company.province]
-    .filter(Boolean)
-    .join(", ")
-  const code = generateBranchCode(prefix, location || "HQ", 0)
-  const slug = code
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "")
-
-  return {
-    id: `br-${slug || "hq"}-${Date.now()}`,
-    name,
-    code,
-    address: location || company.fullAddress,
-    contactNumber: "",
-    contactEmail: "",
-    status: "active",
-    createdAt: todayIsoDate(),
-  }
-}
-
 export default function BranchesSetupForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const email = searchParams.get("email")?.trim() ?? ""
   const emailQuery = email ? `?email=${encodeURIComponent(email)}` : ""
 
-  const [company, setCompany] = React.useState<OnboardingCompanyDraft | null>(
-    null
-  )
   const [companyPrefix, setCompanyPrefix] = React.useState("BRN")
   const [branchLimit, setBranchLimit] = React.useState(1)
   const [rows, setRows] = React.useState<QuickBranchRow[]>([])
   const [errors, setErrors] = React.useState<RowErrors>({})
   const [isLoading, setIsLoading] = React.useState(false)
+  const [isSettingUp, setIsSettingUp] = React.useState(false)
   const [hydrated, setHydrated] = React.useState(false)
 
   React.useEffect(() => {
@@ -169,7 +147,6 @@ export default function BranchesSetupForm() {
 
       const limit = getBranchLimit()
       const prefix = companyCodePrefix(draft.companyName)
-      setCompany(draft)
       setCompanyPrefix(prefix)
       setBranchLimit(limit)
       setRows(buildDefaultBranchRows(limit, draft))
@@ -209,18 +186,21 @@ export default function BranchesSetupForm() {
         }),
       })
       saveOnboardingSessionClient(res.session)
-      router.push(`/onboarding/users${emailQuery}`)
+      clearOnboardingDraftsClient()
+      setIsSettingUp(true)
+      window.setTimeout(() => {
+        router.push("/admin")
+      }, 2500)
     } catch {
-      // Demo resilience: still continue to users step with local branches
-      router.push(`/onboarding/users${emailQuery}`)
+      // Demo resilience: still enter the workspace with local branches
+      clearOnboardingDraftsClient()
+      setIsSettingUp(true)
+      window.setTimeout(() => {
+        router.push("/admin")
+      }, 2500)
     } finally {
       setIsLoading(false)
     }
-  }
-
-  function handleSkip() {
-    if (!company || isLoading) return
-    finishSetup([headOfficeFromCompany(company, companyPrefix)])
   }
 
   function handleCreateBranches() {
@@ -231,6 +211,20 @@ export default function BranchesSetupForm() {
     finishSetup(rowsToBranches(rows))
   }
 
+  function applySameAddressForAll() {
+    const hqLocation = rows[0]?.location?.trim()
+    if (!hqLocation) return
+    setRows((current) =>
+      resequenceBranchCodes(
+        current.map((row, index) =>
+          index === 0 ? row : { ...row, location: hqLocation, codeAuto: true }
+        ),
+        companyPrefix
+      )
+    )
+    setErrors({})
+  }
+
   function fillDemoBranches() {
     setRows((current) =>
       resequenceBranchCodes(
@@ -238,8 +232,6 @@ export default function BranchesSetupForm() {
           if (index === 0) {
             return {
               ...row,
-              contactNumber: "",
-              contactEmail: "",
               codeAuto: true,
             }
           }
@@ -263,68 +255,34 @@ export default function BranchesSetupForm() {
     return null
   }
 
+  if (isSettingUp) {
+    return <SettingUpScreen open />
+  }
+
+  const canSameAddress = Boolean(rows[0]?.location?.trim()) && rows.length > 1
+
   return (
     <>
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
         <PageHeader
           title="Quick branch setup"
           count={`${branchLimit} / ${branchLimit}`}
-          description="Fill each branch from your plan. Next you’ll invite users to your workspace."
-          actions={
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                disabled={isLoading}
-                onClick={handleSkip}
-              >
-                Skip — add later
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                disabled={isLoading || rows.length === 0}
-                onClick={handleCreateBranches}
-              >
-                {isLoading ? (
-                  <Spinner size={16} variant="default" />
-                ) : (
-                  <>
-                    Save all
-                    <HugeiconsIcon
-                      icon={ArrowRight01Icon}
-                      className="size-4"
-                      data-icon="inline-end"
-                    />
-                  </>
-                )}
-              </Button>
-            </div>
-          }
+          description="Fill each branch from your plan. After this, your workspace will be ready."
         />
 
         <div className="flex max-h-[min(36rem,65svh)] min-h-0 flex-col overflow-hidden rounded-xl border bg-card shadow-xs">
-          <div className="flex flex-col gap-2 border-b px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="border-b px-3 py-2.5">
             <p className="text-xs text-muted-foreground">
-              Codes use company prefix{" "}
-              <span className="font-mono font-medium text-foreground">
-                {companyPrefix}
-              </span>
-              , e.g.{" "}
-              <span className="font-mono text-foreground">
-                {companyPrefix}-KTM-01
-              </span>
+              Row 1 is your head office from company details.
             </p>
-            <span className="text-xs text-muted-foreground">
-              Contact &amp; email optional · Paste from spreadsheet supported
-            </span>
           </div>
 
           <QuickBranchesTable
             rows={rows}
             companyPrefix={companyPrefix}
             disabled={isLoading}
+            onSameAddressForAll={applySameAddressForAll}
+            sameAddressDisabled={!canSameAddress}
             onChange={(next) => {
               setRows(next)
               setErrors({})
@@ -337,36 +295,25 @@ export default function BranchesSetupForm() {
             <p className="text-xs text-muted-foreground">
               {rows.length} branch{rows.length === 1 ? "" : "es"} ready to create
             </p>
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={isLoading}
-                onClick={handleSkip}
-              >
-                Skip — add later
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                disabled={isLoading || rows.length === 0}
-                onClick={handleCreateBranches}
-              >
-                {isLoading ? (
-                  <Spinner size={16} variant="default" />
-                ) : (
-                  <>
-                    Save all ({rows.length})
-                    <HugeiconsIcon
-                      icon={ArrowRight01Icon}
-                      className="size-4"
-                      data-icon="inline-end"
-                    />
-                  </>
-                )}
-              </Button>
-            </div>
+            <Button
+              type="button"
+              size="sm"
+              disabled={isLoading || rows.length === 0}
+              onClick={handleCreateBranches}
+            >
+              {isLoading ? (
+                <Spinner size={16} variant="default" />
+              ) : (
+                <>
+                  Save all ({rows.length})
+                  <HugeiconsIcon
+                    icon={ArrowRight01Icon}
+                    className="size-4"
+                    data-icon="inline-end"
+                  />
+                </>
+              )}
+            </Button>
           </div>
         </div>
       </div>

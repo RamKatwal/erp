@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     existing.status === "complete"
       ? "complete"
       : existing.status === "users_pending"
-        ? "users_pending"
+        ? "complete"
       : existing.status === "branches_pending"
         ? "branches_pending"
       : body?.finalize === false

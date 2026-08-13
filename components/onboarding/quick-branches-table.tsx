@@ -7,6 +7,8 @@ import {
   getDataTableHeaderCellClass,
   type DataTableRowSize,
 } from "@/components/data-table/data-table-styles"
+import { CityLocationInput } from "@/components/onboarding/city-location-input"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   generateBranchCode,
@@ -14,6 +16,7 @@ import {
   type QuickBranchRow,
 } from "@/lib/onboarding/branch-draft"
 import { cn } from "@/lib/utils"
+import { MoreVerticalIcon } from "lucide-react"
 
 export type QuickBranchErrors = Record<
   string,
@@ -28,6 +31,8 @@ type QuickBranchesTableProps = {
   disabled?: boolean
   rowSize?: DataTableRowSize
   className?: string
+  onSameAddressForAll?: () => void
+  sameAddressDisabled?: boolean
 }
 
 const COL_ORDER = [
@@ -39,6 +44,9 @@ const COL_ORDER = [
 
 const cellInputClass =
   "h-7 w-full min-w-[6rem] rounded-md border border-input bg-input/20 px-2 text-xs shadow-none md:text-xs dark:bg-input/30"
+
+const lockedCellClass =
+  "h-7 w-full min-w-[6rem] rounded-md border border-transparent bg-muted/40 px-2 text-xs text-muted-foreground md:text-xs"
 
 function FieldCell({
   className,
@@ -74,6 +82,8 @@ export function QuickBranchesTable({
   disabled = false,
   rowSize = "sm",
   className,
+  onSameAddressForAll,
+  sameAddressDisabled = false,
 }: QuickBranchesTableProps) {
   function updateRow(
     id: string,
@@ -82,6 +92,8 @@ export function QuickBranchesTable({
   ) {
     const next = rows.map((row, index) => {
       if (row.id !== id) return row
+      // Head office row is always locked.
+      if (index === 0) return row
 
       const updated: QuickBranchRow = { ...row, ...patch }
 
@@ -131,7 +143,8 @@ export function QuickBranchesTable({
 
     pasted.forEach((cells, rowOffset) => {
       const rowIndex = startRow + rowOffset
-      if (rowIndex >= next.length) return
+      // Never overwrite locked head office.
+      if (rowIndex === 0 || rowIndex >= next.length) return
 
       const row = { ...next[rowIndex] }
       cells.forEach((value, colOffset) => {
@@ -164,27 +177,81 @@ export function QuickBranchesTable({
               <th className={getDataTableHeaderCellClass(rowSize)}>
                 Branch Name
               </th>
-              <th className={getDataTableHeaderCellClass(rowSize)}>Location</th>
+              <th className={getDataTableHeaderCellClass(rowSize)}>
+                <div className="flex items-center justify-between gap-1">
+                  <span>Location</span>
+                  {onSameAddressForAll ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className="size-6 shrink-0 text-muted-foreground hover:text-foreground"
+                      disabled={disabled || sameAddressDisabled}
+                      title="Same address for all"
+                      aria-label="Same address for all"
+                      onClick={onSameAddressForAll}
+                    >
+                      <MoreVerticalIcon className="size-3.5" />
+                    </Button>
+                  ) : null}
+                </div>
+              </th>
               <th className={getDataTableHeaderCellClass(rowSize)}>
                 Branch Code
               </th>
-              <th className={getDataTableHeaderCellClass(rowSize)}>
-                Contact{" "}
-                <span className="font-normal text-muted-foreground/80">
-                  (optional)
-                </span>
-              </th>
-              <th className={getDataTableHeaderCellClass(rowSize)}>
-                Email{" "}
-                <span className="font-normal text-muted-foreground/80">
-                  (optional)
-                </span>
-              </th>
+              <th className={getDataTableHeaderCellClass(rowSize)}>Contact</th>
+              <th className={getDataTableHeaderCellClass(rowSize)}>Email</th>
             </tr>
           </thead>
           <tbody onPaste={handlePaste}>
             {rows.map((row, index) => {
               const rowErrors = errors[row.id]
+              const isHeadOffice = index === 0
+
+              if (isHeadOffice) {
+                return (
+                  <tr
+                    key={row.id}
+                    className="border-b border-border bg-muted/30"
+                  >
+                    <td className="h-auto min-h-8 w-12 border-r border-border px-2 py-1.5 align-middle text-muted-foreground tabular-nums">
+                      {index + 1}
+                    </td>
+                    <FieldCell>
+                      <div className={lockedCellClass}>{row.name}</div>
+                      <p className="text-[10px] leading-tight text-muted-foreground">
+                        This is head office — can&apos;t be edited now.
+                      </p>
+                    </FieldCell>
+                    <FieldCell>
+                      <div className={cn(lockedCellClass, "min-w-[9rem]")}>
+                        {row.location || "—"}
+                      </div>
+                    </FieldCell>
+                    <FieldCell>
+                      <div
+                        className={cn(
+                          lockedCellClass,
+                          "font-mono text-center"
+                        )}
+                      >
+                        -
+                      </div>
+                    </FieldCell>
+                    <FieldCell>
+                      <div className={lockedCellClass}>
+                        {row.contactNumber || "—"}
+                      </div>
+                    </FieldCell>
+                    <FieldCell>
+                      <div className={cn(lockedCellClass, "min-w-[9rem]")}>
+                        {row.contactEmail || "—"}
+                      </div>
+                    </FieldCell>
+                  </tr>
+                )
+              }
+
               return (
                 <tr
                   key={row.id}
@@ -204,23 +271,19 @@ export function QuickBranchesTable({
                       onChange={(event) =>
                         updateRow(row.id, { name: event.target.value })
                       }
-                      placeholder={
-                        index === 0 ? "Head Office" : `Branch-${index + 1}`
-                      }
+                      placeholder={`Branch-${index}`}
                     />
                   </FieldCell>
                   <FieldCell error={rowErrors?.location}>
-                    <Input
+                    <CityLocationInput
                       data-row-index={index}
                       data-col="location"
                       className={cn(cellInputClass, "min-w-[9rem]")}
                       disabled={disabled}
-                      aria-invalid={Boolean(rowErrors?.location)}
+                      invalid={Boolean(rowErrors?.location)}
                       value={row.location}
-                      onChange={(event) =>
-                        updateRow(row.id, {
-                          location: event.target.value,
-                        })
+                      onChange={(location) =>
+                        updateRow(row.id, { location })
                       }
                       placeholder="City / address"
                     />

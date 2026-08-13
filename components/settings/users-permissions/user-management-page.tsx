@@ -18,8 +18,8 @@ import {
   type UserFormValues,
 } from "@/components/settings/users-permissions/user-form-dialog"
 import { Button } from "@/components/ui/button"
-import { readBranches } from "@/lib/branches/storage"
-import { mockBranches } from "@/lib/mock/branches"
+import { readCustomGroups } from "@/lib/groups/storage"
+import { mockGroups } from "@/lib/mock/groups"
 import { mockPermissionGroups } from "@/lib/mock/permission-groups"
 import { mockUsers } from "@/lib/mock/users"
 import { readPermissionGroups } from "@/lib/users/groups-storage"
@@ -30,14 +30,40 @@ import {
   todayIsoDate,
 } from "@/lib/users/storage"
 import { cn } from "@/lib/utils"
-import type { Branch } from "@/types/branch"
-import type { Group } from "@/types/group"
+import { normalizeGroupCompanies, type Group } from "@/types/group"
 import type { AppUser } from "@/types/user"
 
-export function UserManagementPage() {
+export type UserRoleSource = "permission-groups" | "configuration-roles"
+
+type UserManagementPageProps = {
+  /** Where role options come from. Defaults to admin permission groups. */
+  roleSource?: UserRoleSource
+}
+
+function readConfigurationRoles(): Group[] {
+  const byId = new Map<string, Group>()
+  for (const role of [...mockGroups, ...readCustomGroups()]) {
+    byId.set(role.id, normalizeGroupCompanies(role))
+  }
+  return Array.from(byId.values())
+}
+
+function loadRoles(roleSource: UserRoleSource): Group[] {
+  if (roleSource === "configuration-roles") {
+    return readConfigurationRoles()
+  }
+  return readPermissionGroups().map((role) => normalizeGroupCompanies(role))
+}
+
+export function UserManagementPage({
+  roleSource = "permission-groups",
+}: UserManagementPageProps) {
   const [users, setUsers] = React.useState<AppUser[]>(mockUsers)
-  const [branches, setBranches] = React.useState<Branch[]>(mockBranches)
-  const [groups, setGroups] = React.useState<Group[]>(mockPermissionGroups)
+  const [roles, setRoles] = React.useState<Group[]>(
+    roleSource === "configuration-roles"
+      ? mockGroups.map((role) => normalizeGroupCompanies(role))
+      : mockPermissionGroups.map((role) => normalizeGroupCompanies(role))
+  )
   const [rowSize, setRowSize] = React.useState<DataTableRowSize>("md")
   const { isFullscreen, toggleFullscreen } = useDataTableFullscreen()
   const [dialogOpen, setDialogOpen] = React.useState(false)
@@ -47,9 +73,8 @@ export function UserManagementPage() {
   React.useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setUsers(readUsers())
-    setBranches(readBranches().filter((branch) => branch.status === "active"))
-    setGroups(readPermissionGroups())
-  }, [])
+    setRoles(loadRoles(roleSource))
+  }, [roleSource])
 
   const persist = React.useCallback((next: AppUser[]) => {
     setUsers(next)
@@ -57,12 +82,14 @@ export function UserManagementPage() {
   }, [])
 
   function openCreate() {
+    setRoles(loadRoles(roleSource))
     setDialogMode("create")
     setEditingUser(null)
     setDialogOpen(true)
   }
 
   function openEdit(user: AppUser) {
+    setRoles(loadRoles(roleSource))
     setDialogMode("edit")
     setEditingUser(user)
     setDialogOpen(true)
@@ -113,14 +140,13 @@ export function UserManagementPage() {
   const columns = React.useMemo(
     () =>
       createUserColumns({
-        branches,
-        groups,
+        groups: roles,
         onEdit: openEdit,
         onActivate: (user) => setStatus(user, "active"),
         onDeactivate: (user) => setStatus(user, "inactive"),
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [users, branches, groups]
+    [users, roles]
   )
 
   const table = useDataTable({
@@ -139,19 +165,19 @@ export function UserManagementPage() {
     },
   })
 
-  const canAddUser = branches.length > 0 && groups.length > 0
+  const canAddUser = roles.length > 0
 
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
         title="User Management"
         count={`${users.length} users`}
-        description="Assign users to one or more entities. Each entity uses an independently selected group for permissions."
+        description="Pick a role, then grant access to that role’s companies and branches."
         actions={
           <div className="flex items-center gap-2">
             {!canAddUser ? (
               <span className="text-xs text-muted-foreground">
-                Need an active branch and a group
+                Create a user role first
               </span>
             ) : null}
             <Button size="sm" disabled={!canAddUser} onClick={openCreate}>
@@ -192,8 +218,7 @@ export function UserManagementPage() {
         onOpenChange={setDialogOpen}
         mode={dialogMode}
         user={editingUser}
-        branches={branches}
-        groups={groups}
+        roles={roles}
         existingEmails={users.map((user) => user.email)}
         onSubmit={handleFormSubmit}
       />

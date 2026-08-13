@@ -15,7 +15,7 @@ type BranchPayload = {
 }
 
 /**
- * Save branches during setup — advances to users_pending (not complete).
+ * Save branches during setup — completes onboarding.
  * Idempotent via provisionToken for branch save retries.
  */
 export async function POST(request: Request) {
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     `prov_${existing.companyId}_${Date.now().toString(36)}`
 
   const session = await patchOnboardingSession({
-    status: "users_pending",
+    status: "complete",
     provisionToken: token,
   })
 

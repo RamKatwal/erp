@@ -6,14 +6,14 @@ export type UsersPermissionsNavItem = {
 
 export const usersPermissionsNavigation: UsersPermissionsNavItem[] = [
   {
-    title: "Groups",
+    title: "User Roles",
     href: "/admin/settings/users-permissions/groups",
-    description: "Create user groups used for permission assignment.",
+    description: "Create user roles used for permission assignment.",
   },
   {
     title: "User Management",
     href: "/admin/settings/users-permissions/users",
-    description: "Invite users and assign them to entities with a group.",
+    description: "Invite users and assign them to entities with a role.",
   },
 ]
 

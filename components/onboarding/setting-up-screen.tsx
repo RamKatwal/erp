@@ -9,7 +9,6 @@ const SETUP_MESSAGES = [
   "Creating your workspace…",
   "Saving company details…",
   "Configuring branches…",
-  "Adding users…",
   "Preparing your admin portal…",
 ] as const
 

@@ -37,9 +37,9 @@ export const configurationsNavigation: ConfigurationsNavItem[] = [
     href: "/configurations/users",
     children: [
       {
-        title: "Group Management",
+        title: "User Roles",
         href: "/configurations/users/group-management",
-        description: "Create and manage user groups and roles.",
+        description: "Create and manage user roles and access.",
       },
       {
         title: "User Management",

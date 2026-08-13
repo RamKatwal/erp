@@ -18,13 +18,12 @@ function mergePermissions(
 }
 
 /**
- * Example group × branch matrices matching the reference permission model.
  * Branch Cashier @ HQ and Branch Manager @ HQ are pre-seeded.
  */
 export const mockGroupBranchPermissions: GroupBranchPermissionAssignment[] = [
   {
     groupId: "grp-branch-cashier",
-    branchId: "br-hq",
+    branchId: "br_hq_01",
     updatedAt: "2026-05-01T10:00:00.000Z",
     permissions: mergePermissions({
       "sales.orders": actions("view", "create", "edit"),
@@ -44,7 +43,7 @@ export const mockGroupBranchPermissions: GroupBranchPermissionAssignment[] = [
   },
   {
     groupId: "grp-branch-manager",
-    branchId: "br-hq",
+    branchId: "br_hq_01",
     updatedAt: "2026-05-01T10:00:00.000Z",
     permissions: mergePermissions({
       "sales.returns": actions("view", "create", "edit", "delete", "approve"),

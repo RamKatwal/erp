@@ -1,15 +1,21 @@
 import type { Group } from "@/types/group"
 
-/** Seed groups for Users & Permissions. Permissions live on group × branch, not here. */
+/** Seed user roles for Settings. Permissions live on role × branch, not here. */
 export const mockPermissionGroups: Group[] = [
   {
     id: "grp-branch-cashier",
     name: "Branch Cashier",
     description: "Counter staff and cashiers.",
+    companyIds: ["comp_10294"],
+    companyNames: ["Omniverse"],
+    branchIds: ["br_hq_01"],
   },
   {
     id: "grp-branch-manager",
     name: "Branch Manager",
     description: "Store managers and branch heads.",
+    companyIds: ["comp_10294", "comp_10881"],
+    companyNames: ["Omniverse", "Himalayan Traders"],
+    branchIds: ["br_hq_01", "br_ht_01", "br_ht_02"],
   },
 ]

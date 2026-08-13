@@ -10,6 +10,7 @@ import {
 import {
   canAccessSetupStep,
   isAppShellPath,
+  isOnboardingComplete,
   isOnboardingPath,
   isPlanOrPaymentPath,
   isSetupPath,
@@ -54,8 +55,9 @@ export function middleware(req: NextRequest) {
       return NextResponse.redirect(url)
     }
 
-    // Completed: leave plan/branches/users; allow company for admin add-company
-    if (session.status === "complete") {
+    // Completed (incl. legacy users_pending): leave plan/branches/users;
+    // allow company for admin add-company
+    if (isOnboardingComplete(session.status)) {
       if (
         pathname.includes("/plan") ||
         pathname.includes("/branches") ||
@@ -64,6 +66,12 @@ export function middleware(req: NextRequest) {
         return NextResponse.redirect(new URL("/admin", req.url))
       }
       return NextResponse.next()
+    }
+
+    if (pathname.includes("/users")) {
+      return NextResponse.redirect(
+        new URL(resumePathForStatus(session.status, session.email), req.url)
+      )
     }
 
     // Plan/payment is standalone — only before setup entitlement is done,
@@ -101,7 +109,7 @@ export function middleware(req: NextRequest) {
       return NextResponse.next()
     }
 
-    if (session.status !== "complete") {
+    if (!isOnboardingComplete(session.status)) {
       return NextResponse.redirect(
         new URL(resumePathForStatus(session.status, session.email), req.url)
       )

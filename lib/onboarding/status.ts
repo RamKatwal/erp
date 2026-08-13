@@ -1,7 +1,8 @@
 /**
  * Onboarding state machine.
  * Plan/Payment is a standalone entitlement gate (no stepper).
- * After plan_active: setup stepper = Company → Branches → Users.
+ * After plan_active: setup stepper = Company → Branches.
+ * `users_pending` is a legacy status treated as complete.
  */
 
 export const ONBOARDING_STATUSES = [
@@ -18,13 +19,16 @@ export const ONBOARDING_STATUSES = [
 export type OnboardingStatus = (typeof ONBOARDING_STATUSES)[number]
 
 /** Steps shown in the post-payment setup stepper (not Plan). */
-export type SetupStepId = "company" | "branches" | "users"
+export type SetupStepId = "company" | "branches"
 
 export const SETUP_STEPS: { id: SetupStepId; label: string }[] = [
   { id: "company", label: "Company" },
   { id: "branches", label: "Branches" },
-  { id: "users", label: "Users" },
 ]
+
+export function isOnboardingComplete(status: OnboardingStatus): boolean {
+  return status === "complete" || status === "users_pending"
+}
 
 export function isPlanOrPaymentPath(pathname: string): boolean {
   return (
@@ -36,17 +40,15 @@ export function isPlanOrPaymentPath(pathname: string): boolean {
 export function isSetupPath(pathname: string): boolean {
   return (
     pathname.includes("/onboarding/company") ||
-    pathname.includes("/onboarding/branches") ||
-    pathname.includes("/onboarding/users")
+    pathname.includes("/onboarding/branches")
   )
 }
 
 /**
- * Setup stepper index: 0=company, 1=branches, 2=users.
+ * Setup stepper index: 0=company, 1=branches.
  * Returns -1 for plan/payment (not in stepper).
  */
 export function setupStepIndexFromPath(pathname: string): number {
-  if (pathname.includes("/users")) return 2
   if (pathname.includes("/branches")) return 1
   if (pathname.includes("/company")) return 0
   return -1
@@ -62,7 +64,7 @@ export function maxReachableSetupStepIndex(status: OnboardingStatus): number {
       return 1
     case "users_pending":
     case "complete":
-      return 2
+      return 1
     default:
       // Before entitlement: no setup steps
       return -1
@@ -73,8 +75,7 @@ export function isSetupStepComplete(
   status: OnboardingStatus,
   stepIndex: number
 ): boolean {
-  if (status === "complete") return true
-  if (status === "users_pending") return stepIndex < 2
+  if (isOnboardingComplete(status)) return true
   if (status === "branches_pending") return stepIndex < 1
   return false
 }
@@ -83,7 +84,7 @@ export function canAccessSetupStep(
   status: OnboardingStatus,
   stepIndex: number
 ): boolean {
-  if (status === "complete") return true
+  if (isOnboardingComplete(status)) return true
   const max = maxReachableSetupStepIndex(status)
   if (max < 0) return false
   return stepIndex <= max
@@ -121,7 +122,6 @@ export function resumePathForStatus(
     case "branches_pending":
       return `/onboarding/branches${q}`
     case "users_pending":
-      return `/onboarding/users${q}`
     case "complete":
       return "/admin"
     default:

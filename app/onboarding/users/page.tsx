@@ -1,18 +1,6 @@
-import { Suspense } from "react"
+import { redirect } from "next/navigation"
 
-import UsersSetupForm from "@/components/onboarding/users-setup-form"
-import { Spinner } from "@/components/ui/spinner"
-
+/** Users is no longer an onboarding step; resume into the app. */
 export default function OnboardingUsersPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex flex-1 items-center justify-center py-24">
-          <Spinner size={24} variant="default" />
-        </div>
-      }
-    >
-      <UsersSetupForm />
-    </Suspense>
-  )
+  redirect("/admin")
 }

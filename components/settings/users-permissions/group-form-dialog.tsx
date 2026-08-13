@@ -5,6 +5,10 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
+import {
+  CompanyBranchMultiselect,
+  getCompanyNamesForIds,
+} from "@/components/settings/users-permissions/company-branch-multiselect"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -25,20 +29,26 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import type { Group } from "@/types/group"
+import { normalizeGroupCompanies, type Group } from "@/types/group"
 
 const groupFormSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(1, { message: "Group name is required" })
-    .max(100, { message: "Group name is too long" }),
+    .min(1, { message: "Role name is required" })
+    .max(100, { message: "Role name is too long" }),
   description: z
     .string()
     .trim()
     .max(250, { message: "Description is too long" })
     .optional()
     .or(z.literal("")),
+  companyIds: z
+    .array(z.string())
+    .min(1, { message: "Select at least one company branch" }),
+  branchIds: z
+    .array(z.string())
+    .min(1, { message: "Select at least one branch or head office" }),
 })
 
 export type PermissionGroupFormValues = z.infer<typeof groupFormSchema>
@@ -49,12 +59,16 @@ type PermissionGroupFormDialogProps = {
   mode: "create" | "edit"
   group?: Group | null
   existingNames: string[]
-  onSubmit: (values: PermissionGroupFormValues) => void
+  onSubmit: (
+    values: PermissionGroupFormValues & { companyNames: string[] }
+  ) => void
 }
 
 const emptyValues: PermissionGroupFormValues = {
   name: "",
   description: "",
+  companyIds: [],
+  branchIds: [],
 }
 
 export function PermissionGroupFormDialog({
@@ -78,9 +92,12 @@ export function PermissionGroupFormDialog({
     if (!open) return
 
     if (isEdit && group) {
+      const normalized = normalizeGroupCompanies(group)
       form.reset({
-        name: group.name,
-        description: group.description,
+        name: normalized.name,
+        description: normalized.description,
+        companyIds: normalized.companyIds ?? [],
+        branchIds: normalized.branchIds ?? [],
       })
       return
     }
@@ -93,32 +110,39 @@ export function PermissionGroupFormDialog({
     const nameTaken = existingNames.some(
       (name) =>
         name.toLowerCase() === normalizedName.toLowerCase() &&
-        (!isEdit || !group || group.name.toLowerCase() !== normalizedName.toLowerCase())
+        (!isEdit ||
+          !group ||
+          group.name.toLowerCase() !== normalizedName.toLowerCase())
     )
 
     if (nameTaken) {
-      form.setError("name", { message: "A group with this name already exists" })
+      form.setError("name", {
+        message: "A role with this name already exists",
+      })
       return
     }
 
     onSubmit({
       name: normalizedName,
       description: values.description?.trim() ?? "",
+      companyIds: values.companyIds,
+      companyNames: getCompanyNamesForIds(values.companyIds),
+      branchIds: values.branchIds,
     })
     onOpenChange(false)
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[min(720px,calc(100svh-2rem))] w-full max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-md">
+      <DialogContent className="flex max-h-[min(720px,calc(100svh-2rem))] w-full max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
         <DialogHeader className="shrink-0 border-b px-5 py-4 pr-12">
           <DialogTitle className="text-base font-semibold">
-            {isEdit ? "Edit Group" : "Add Group"}
+            {isEdit ? "Edit User Role" : "Add User Role"}
           </DialogTitle>
           <DialogDescription>
             {isEdit
-              ? "Update the group name. Permissions are configured per branch in Permission Management."
-              : "Create a group with no permissions. Assign module access later per branch."}
+              ? "Update the role and company branches. Module permissions are configured in Permission Management."
+              : "Create a user role and select any companies, head offices, and branches it applies to."}
           </DialogDescription>
         </DialogHeader>
 
@@ -133,11 +157,52 @@ export function PermissionGroupFormDialog({
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Group Name</FormLabel>
+                    <FormLabel>Role Name</FormLabel>
                     <FormControl>
                       <Input placeholder="e.g. Branch Cashier" {...field} />
                     </FormControl>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="branchIds"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Companies & branches</FormLabel>
+                    <FormControl>
+                      <CompanyBranchMultiselect
+                        active={open}
+                        value={{
+                          companyIds: form.watch("companyIds"),
+                          branchIds: field.value,
+                        }}
+                        onChange={(next) => {
+                          form.setValue("companyIds", next.companyIds, {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                          })
+                          field.onChange(next.branchIds)
+                        }}
+                        aria-invalid={
+                          Boolean(form.formState.errors.branchIds) ||
+                          Boolean(form.formState.errors.companyIds)
+                        }
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Select branches and head offices across one or more
+                      companies.
+                    </FormDescription>
+                    <FormMessage />
+                    {form.formState.errors.companyIds &&
+                    !form.formState.errors.branchIds ? (
+                      <p className="text-sm text-destructive">
+                        {form.formState.errors.companyIds.message}
+                      </p>
+                    ) : null}
                   </FormItem>
                 )}
               />
@@ -150,12 +215,12 @@ export function PermissionGroupFormDialog({
                     <FormLabel>Description</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Who typically belongs to this group?"
+                        placeholder="Who typically has this role?"
                         {...field}
                       />
                     </FormControl>
                     <FormDescription>
-                      Optional. Helps others know when to use this group.
+                      Optional. Helps others know when to use this role.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

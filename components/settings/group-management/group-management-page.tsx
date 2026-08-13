@@ -58,9 +58,9 @@ export function GroupManagementPage() {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Group Management"
-        count={`${groups.length} groups`}
-        description="Create groups and assign shared access across modules."
+        title="User Roles"
+        count={`${groups.length} roles`}
+        description="Create roles and assign shared access across modules."
         actions={
           <Button
             size="sm"
@@ -68,7 +68,7 @@ export function GroupManagementPage() {
             render={<Link href="/configurations/users/group-management/new" />}
           >
             <PlusIcon />
-            New Group
+            New Role
           </Button>
         }
       />
@@ -82,7 +82,7 @@ export function GroupManagementPage() {
         <div className="flex flex-col gap-3 border-b px-3 py-2.5 sm:flex-row sm:items-center sm:justify-end">
           <DataTableToolbar
             table={table}
-            searchPlaceholder="Search groups..."
+            searchPlaceholder="Search roles..."
             rowSize={rowSize}
             onRowSizeChange={setRowSize}
             isFullscreen={isFullscreen}
@@ -94,7 +94,7 @@ export function GroupManagementPage() {
           table={table}
           columnCount={groupColumns.length}
           rowSize={rowSize}
-          emptyMessage="No groups found."
+          emptyMessage="No roles found."
         />
       </div>
     </div>

@@ -18,40 +18,40 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import type { Branch } from "@/types/branch"
+import {
+  findCompanyForBranch,
+  getBranchLabel,
+} from "@/lib/companies/options"
 import type { Group } from "@/types/group"
 import type { AppUser } from "@/types/user"
 
 type UserColumnHandlers = {
-  branches: Branch[]
   groups: Group[]
   onEdit: (user: AppUser) => void
   onActivate: (user: AppUser) => void
   onDeactivate: (user: AppUser) => void
 }
 
-function assignmentLabel(
-  user: AppUser,
-  branches: Branch[],
-  groups: Group[]
-) {
-  if (user.assignments.length === 0) return "No entities"
+function roleLabel(user: AppUser, roles: Group[]) {
+  const roleId = user.assignments[0]?.groupId
+  if (!roleId) return "—"
+  return roles.find((role) => role.id === roleId)?.name ?? roleId
+}
+
+function accessLabel(user: AppUser) {
+  if (user.assignments.length === 0) return "No access"
 
   return user.assignments
     .map((assignment) => {
+      const company = findCompanyForBranch(assignment.branchId)
       const branch =
-        branches.find((item) => item.id === assignment.branchId)?.name ??
-        assignment.branchId
-      const group =
-        groups.find((item) => item.id === assignment.groupId)?.name ??
-        assignment.groupId
-      return `${branch} · ${group}`
+        getBranchLabel(assignment.branchId) ?? assignment.branchId
+      return company ? `${company.name} · ${branch}` : branch
     })
     .join(", ")
 }
 
 export function createUserColumns({
-  branches,
   groups,
   onEdit,
   onActivate,
@@ -83,14 +83,24 @@ export function createUserColumns({
       ),
     },
     {
-      id: "assignments",
+      id: "role",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Entity assignments" />
+        <DataTableColumnHeader column={column} title="Role" />
       ),
-      accessorFn: (row) => assignmentLabel(row, branches, groups),
+      accessorFn: (row) => roleLabel(row, groups),
+      cell: ({ row }) => (
+        <span className="text-sm">{roleLabel(row.original, groups)}</span>
+      ),
+    },
+    {
+      id: "access",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Companies & branches" />
+      ),
+      accessorFn: (row) => accessLabel(row),
       cell: ({ row }) => (
         <span className="line-clamp-2 text-sm text-muted-foreground">
-          {assignmentLabel(row.original, branches, groups)}
+          {accessLabel(row.original)}
         </span>
       ),
     },

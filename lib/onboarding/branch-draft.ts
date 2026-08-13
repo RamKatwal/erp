@@ -79,7 +79,7 @@ export function generateBranchCode(
 
 export function defaultBranchName(index: number): string {
   if (index === 0) return "Head Office"
-  return `Branch-${index + 1}`
+  return `Branch-${index}`
 }
 
 export function createDraftRowId() {
@@ -120,27 +120,32 @@ export function resequenceBranchCodes(
   })
 }
 
+export function headOfficeLocationFromCompany(
+  company: OnboardingCompanyDraft | null
+): string {
+  if (!company) return ""
+  return [company.district || company.fullAddress, company.province]
+    .filter(Boolean)
+    .join(", ")
+}
+
 export function buildDefaultBranchRows(
   count: number,
   company: OnboardingCompanyDraft | null
 ): QuickBranchRow[] {
   const safeCount = Math.max(1, count)
   const prefix = companyCodePrefix(company?.companyName ?? "Branch")
-  const hqLocation = company
-    ? [company.district || company.fullAddress, company.province]
-        .filter(Boolean)
-        .join(", ")
-    : ""
+  const hqLocation = headOfficeLocationFromCompany(company)
 
   return Array.from({ length: safeCount }, (_, index) => {
     const name = defaultBranchName(index)
-    const location = index === 0 ? hqLocation : ""
+    const isHeadOffice = index === 0
     return createEmptyBranchRow(index, prefix, {
       id: `draft-${index + 1}`,
       name,
-      location,
-      contactNumber: "",
-      contactEmail: "",
+      location: isHeadOffice ? hqLocation : "",
+      contactNumber: isHeadOffice ? (company?.contact ?? "") : "",
+      contactEmail: isHeadOffice ? (company?.email ?? "") : "",
       codeAuto: true,
     })
   })

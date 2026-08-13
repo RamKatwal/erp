@@ -16,11 +16,35 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import type { Group } from "@/types/group"
+import { getBranchLabel } from "@/lib/companies/options"
+import { normalizeGroupCompanies, type Group } from "@/types/group"
 
 type GroupColumnHandlers = {
   onEdit: (group: Group) => void
   onDelete: (group: Group) => void
+}
+
+function formatCompanies(group: Group) {
+  const normalized = normalizeGroupCompanies(group)
+  const names = normalized.companyNames ?? []
+  if (names.length === 0) return "—"
+  if (names.length <= 2) return names.join(", ")
+  return `${names.slice(0, 2).join(", ")} +${names.length - 2}`
+}
+
+function formatBranches(group: Group) {
+  const branchIds = group.branchIds ?? []
+  if (branchIds.length === 0) return "—"
+
+  const names = branchIds
+    .map((id) => getBranchLabel(id) ?? id)
+    .filter(Boolean)
+
+  if (names.length <= 2) {
+    return names.join(", ")
+  }
+
+  return `${names.slice(0, 2).join(", ")} +${names.length - 2}`
 }
 
 export function createPermissionGroupColumns({
@@ -31,7 +55,7 @@ export function createPermissionGroupColumns({
     {
       accessorKey: "name",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Group Name" />
+        <DataTableColumnHeader column={column} title="Role Name" />
       ),
       cell: ({ row }) => (
         <button
@@ -41,6 +65,30 @@ export function createPermissionGroupColumns({
         >
           {row.getValue("name")}
         </button>
+      ),
+    },
+    {
+      id: "companies",
+      accessorFn: (row) => formatCompanies(row),
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Companies" />
+      ),
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          {formatCompanies(row.original)}
+        </span>
+      ),
+    },
+    {
+      id: "branches",
+      accessorFn: (row) => formatBranches(row),
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Branches" />
+      ),
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          {formatBranches(row.original)}
+        </span>
       ),
     },
     {
@@ -77,7 +125,7 @@ export function createPermissionGroupColumns({
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => onEdit(row.original)}>
                 <PencilIcon />
-                Edit group
+                Edit role
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem

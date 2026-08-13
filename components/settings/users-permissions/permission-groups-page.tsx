@@ -29,7 +29,7 @@ import {
   saveGroupBranchPermissions,
 } from "@/lib/users/permission-storage"
 import { cn } from "@/lib/utils"
-import type { Group } from "@/types/group"
+import { normalizeGroupCompanies, type Group } from "@/types/group"
 
 export function PermissionGroupsPage() {
   const [groups, setGroups] = React.useState<Group[]>(mockPermissionGroups)
@@ -41,12 +41,13 @@ export function PermissionGroupsPage() {
 
   React.useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setGroups(readPermissionGroups())
+    setGroups(readPermissionGroups().map(normalizeGroupCompanies))
   }, [])
 
   const persist = React.useCallback((next: Group[]) => {
-    setGroups(next)
-    savePermissionGroups(next)
+    const normalized = next.map(normalizeGroupCompanies)
+    setGroups(normalized)
+    savePermissionGroups(normalized)
   }, [])
 
   function openCreate() {
@@ -61,13 +62,18 @@ export function PermissionGroupsPage() {
     setDialogOpen(true)
   }
 
-  function handleFormSubmit(values: PermissionGroupFormValues) {
+  function handleFormSubmit(
+    values: PermissionGroupFormValues & { companyNames: string[] }
+  ) {
     if (dialogMode === "create") {
-      const nextGroup: Group = {
+      const nextGroup = normalizeGroupCompanies({
         id: createPermissionGroupId(values.name),
         name: values.name,
         description: values.description ?? "",
-      }
+        companyIds: values.companyIds,
+        companyNames: values.companyNames,
+        branchIds: values.branchIds,
+      })
       persist([nextGroup, ...groups])
       return
     }
@@ -77,11 +83,14 @@ export function PermissionGroupsPage() {
     persist(
       groups.map((group) =>
         group.id === editingGroup.id
-          ? {
+          ? normalizeGroupCompanies({
               ...group,
               name: values.name,
               description: values.description ?? "",
-            }
+              companyIds: values.companyIds,
+              companyNames: values.companyNames,
+              branchIds: values.branchIds,
+            })
           : group
       )
     )
@@ -112,11 +121,15 @@ export function PermissionGroupsPage() {
     pageSize: 10,
     globalFilterFn: (row, _columnId, filterValue) => {
       const query = filterValue.toLowerCase()
-      const item = row.original
+      const item = normalizeGroupCompanies(row.original)
 
       return (
         item.name.toLowerCase().includes(query) ||
-        item.description.toLowerCase().includes(query)
+        item.description.toLowerCase().includes(query) ||
+        (item.companyNames?.some((name) =>
+          name.toLowerCase().includes(query)
+        ) ??
+          false)
       )
     },
   })
@@ -124,13 +137,13 @@ export function PermissionGroupsPage() {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Groups"
-        count={`${groups.length} groups`}
-        description="Create groups with no permissions by default. Configure access per branch in Permission Management."
+        title="User Roles"
+        count={`${groups.length} roles`}
+        description="Create roles across companies and branches. Configure module access in Permission Management."
         actions={
           <Button size="sm" onClick={openCreate}>
             <PlusIcon />
-            Add Group
+            Add User Role
           </Button>
         }
       />
@@ -144,7 +157,7 @@ export function PermissionGroupsPage() {
         <div className="flex flex-col gap-3 border-b px-3 py-2.5 sm:flex-row sm:items-center sm:justify-end">
           <DataTableToolbar
             table={table}
-            searchPlaceholder="Search groups..."
+            searchPlaceholder="Search roles..."
             rowSize={rowSize}
             onRowSizeChange={setRowSize}
             isFullscreen={isFullscreen}
@@ -156,7 +169,7 @@ export function PermissionGroupsPage() {
           table={table}
           columnCount={columns.length}
           rowSize={rowSize}
-          emptyMessage="No groups yet. Add a group to start assigning permissions."
+          emptyMessage="No user roles yet. Add a role to start assigning permissions."
         />
       </div>
 

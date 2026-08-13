@@ -244,7 +244,7 @@ export default function CompanyDetailsForm() {
         </h1>
         <p className="text-sm text-muted-foreground">
           Tell us about your business so we can set up your workspace. Next
-          you&apos;ll add branches, then users.
+          you&apos;ll add branches.
         </p>
       </div>
 
