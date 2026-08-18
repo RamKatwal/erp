@@ -1,5 +1,7 @@
 "use client"
 
+import type { ReactNode } from "react"
+
 import { cn } from "@/lib/utils"
 
 type CapacityMeterProps = {
@@ -8,6 +10,7 @@ type CapacityMeterProps = {
   limit: number
   usageLabel: string
   remainingLabel: string
+  action?: ReactNode
   className?: string
 }
 
@@ -17,6 +20,7 @@ export function CapacityMeter({
   limit,
   usageLabel,
   remainingLabel,
+  action,
   className,
 }: CapacityMeterProps) {
   const pct = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0
@@ -46,9 +50,12 @@ export function CapacityMeter({
           style={{ width: `${pct}%` }}
         />
       </div>
-      <p className="text-xs text-muted-foreground">
-        {remaining} {remainingLabel}
-      </p>
+      <div className="mt-auto flex items-center justify-between gap-3">
+        <p className="text-xs text-muted-foreground">
+          {remaining} {remainingLabel}
+        </p>
+        {action}
+      </div>
     </div>
   )
 }

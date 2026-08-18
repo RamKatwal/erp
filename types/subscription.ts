@@ -16,6 +16,11 @@ export const INVOICE_STATUSES = ["Paid", "Open", "Past due", "Void"] as const
 
 export type InvoiceStatus = (typeof INVOICE_STATUSES)[number]
 
+export const SUBSCRIPTION_PAYMENT_PROVIDERS = ["esewa", "fonepay"] as const
+
+export type SubscriptionPaymentProvider =
+  (typeof SUBSCRIPTION_PAYMENT_PROVIDERS)[number]
+
 export type SubscriptionAssignedBranch = {
   branchId: string
   branchName: string
@@ -23,11 +28,15 @@ export type SubscriptionAssignedBranch = {
   status: "Active" | "Inactive"
 }
 
+export type SubscriptionMember = {
+  id: string
+  name: string
+  initials: string
+  color: string
+}
+
 export type SubscriptionPaymentMethod = {
-  brand: string
-  last4: string
-  expiryMonth: number
-  expiryYear: number
+  provider: SubscriptionPaymentProvider
   billingEmail: string
 }
 
@@ -41,12 +50,19 @@ export type SubscriptionInvoice = {
   currency: string
   status: InvoiceStatus
   pdfDownloadUrl: string
+  planName: string
+  paymentMethod: SubscriptionPaymentMethod | null
+  usersUsed: number
+  usersLimit: number
+  branchesUsed: number
+  branchesLimit: number
 }
 
 export type Subscription = {
   id: string
   companyId: string
   companyName: string
+  companyLogoUrl?: string | null
   planId: string
   planName: string
   planTier: string
@@ -67,6 +83,7 @@ export type Subscription = {
   autoRenew: boolean
   paymentMethod: SubscriptionPaymentMethod | null
   features: string[]
+  members: SubscriptionMember[]
   assignedBranches: SubscriptionAssignedBranch[]
   invoices: SubscriptionInvoice[]
 }
@@ -84,9 +101,22 @@ export const billingIntervalLabels: Record<BillingInterval, string> = {
   year: "Annual",
 }
 
+export const billingIntervalUnits: Record<BillingInterval, string> = {
+  month: "Month",
+  year: "Year",
+}
+
+export const paymentProviderLabels: Record<
+  SubscriptionPaymentProvider,
+  string
+> = {
+  esewa: "eSewa",
+  fonepay: "Fonepay",
+}
+
 export function formatPaymentMethodSummary(
   method: SubscriptionPaymentMethod | null
 ): string {
   if (!method) return "—"
-  return `${method.brand} •••• ${method.last4}`
+  return paymentProviderLabels[method.provider]
 }

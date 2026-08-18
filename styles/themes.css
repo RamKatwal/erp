@@ -212,7 +212,7 @@
   --fg-disabled: oklch(0.5 0.019 264.393);
   --fg-inverse: oklch(0.234 0.007 264.437);
 
-  --border: oklch(0.275 0.009 264.424);
+  --border: oklch(0.35 0.009 264.424);
   --alpha: color-mix(in srgb, oklch(0.86 0.029 264.41), transparent 84%);
   --soft: oklch(0.234 0.007 264.437);
   --soft-alpha: color-mix(in srgb, oklch(0.86 0.029 264.41), transparent 88%);

@@ -1,11 +1,19 @@
 "use client"
 
-import { CreditCardIcon } from "lucide-react"
+import Image from "next/image"
 
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
-import { formatPaymentMethodSummary } from "@/types/subscription"
-import type { SubscriptionPaymentMethod } from "@/types/subscription"
+import {
+  formatPaymentMethodSummary,
+  paymentProviderLabels,
+  type SubscriptionPaymentMethod,
+} from "@/types/subscription"
+
+const providerLogos = {
+  esewa: "/images/payment/esewa.png",
+  fonepay: "/images/payment/fonepay.png",
+} as const
 
 type PaymentMethodSectionProps = {
   paymentMethod: SubscriptionPaymentMethod | null
@@ -25,7 +33,7 @@ export function PaymentMethodSection({
           <div>
             <h2 className="text-sm font-semibold">Payment method</h2>
             <p className="text-xs text-muted-foreground">
-              Card on file used for recurring charges.
+              Digital wallet used for recurring charges (eSewa or Fonepay).
             </p>
           </div>
           <Button type="button" size="sm" variant="outline">
@@ -35,26 +43,27 @@ export function PaymentMethodSection({
 
         {paymentMethod ? (
           <div className="mt-4 flex items-start gap-3 rounded-lg border bg-muted/30 p-4">
-            <div className="flex size-10 items-center justify-center rounded-md border bg-background">
-              <CreditCardIcon className="size-4 text-muted-foreground" />
+            <div className="flex size-10 items-center justify-center rounded-md border bg-background p-1.5">
+              <Image
+                src={providerLogos[paymentMethod.provider]}
+                alt={paymentProviderLabels[paymentMethod.provider]}
+                width={28}
+                height={28}
+                className="size-7 object-contain"
+              />
             </div>
             <dl className="grid flex-1 gap-2 text-sm sm:grid-cols-2">
               <div>
-                <dt className="text-xs text-muted-foreground">Card</dt>
+                <dt className="text-xs text-muted-foreground">Provider</dt>
                 <dd className="font-medium">
                   {formatPaymentMethodSummary(paymentMethod)}
                 </dd>
               </div>
-              <div>
-                <dt className="text-xs text-muted-foreground">Expiry</dt>
-                <dd className="font-medium tabular-nums">
-                  {String(paymentMethod.expiryMonth).padStart(2, "0")}/
-                  {paymentMethod.expiryYear}
-                </dd>
-              </div>
               <div className="sm:col-span-2">
                 <dt className="text-xs text-muted-foreground">Billing email</dt>
-                <dd className="font-medium">{paymentMethod.billingEmail}</dd>
+                <dd className="font-medium">
+                  {paymentMethod.billingEmail || "—"}
+                </dd>
               </div>
             </dl>
           </div>

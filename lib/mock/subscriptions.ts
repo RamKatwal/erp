@@ -1,10 +1,36 @@
 import type { Subscription } from "@/types/subscription"
 
+const memberColors = [
+  "bg-violet-500 text-white",
+  "bg-sky-500 text-white",
+  "bg-emerald-500 text-white",
+  "bg-amber-500 text-white",
+  "bg-rose-500 text-white",
+  "bg-indigo-500 text-white",
+  "bg-teal-500 text-white",
+  "bg-fuchsia-500 text-white",
+] as const
+
+function member(
+  id: string,
+  name: string,
+  initials: string,
+  colorIndex: number
+) {
+  return {
+    id,
+    name,
+    initials,
+    color: memberColors[colorIndex % memberColors.length],
+  }
+}
+
 export const mockSubscriptions: Subscription[] = [
   {
     id: "SUB-10294",
     companyId: "comp_10294",
     companyName: "Omniverse",
+    companyLogoUrl: "/omniverse-logo.png",
     planId: "plan_ent_01",
     planName: "Enterprise Plan",
     planTier: "Enterprise Custom",
@@ -16,18 +42,15 @@ export const mockSubscriptions: Subscription[] = [
     usersUsed: 12,
     usersLimit: 50,
     amount: 1200,
-    currency: "USD",
+    currency: "NPR",
     interval: "year",
     createdAt: "2024-01-15",
-    periodEnd: "2026-12-31",
-    nextBillingDate: "2026-12-31",
-    remainingDays: 142,
+    periodEnd: "2026-12-16",
+    nextBillingDate: "2026-12-16",
+    remainingDays: 120,
     autoRenew: true,
     paymentMethod: {
-      brand: "Visa",
-      last4: "4242",
-      expiryMonth: 12,
-      expiryYear: 2028,
+      provider: "esewa",
       billingEmail: "billing@abccompany.com",
     },
     features: [
@@ -37,6 +60,13 @@ export const mockSubscriptions: Subscription[] = [
       "24/7 Dedicated Support",
       "Priority Onboarding",
       "Audit Logs",
+    ],
+    members: [
+      member("u1", "Asha Thapa", "AT", 0),
+      member("u2", "Bikash Rai", "BR", 1),
+      member("u3", "Chitra Gurung", "CG", 2),
+      member("u4", "Deepa Shrestha", "DS", 3),
+      member("u5", "Eshan Magar", "EM", 4),
     ],
     assignedBranches: [
       {
@@ -54,9 +84,18 @@ export const mockSubscriptions: Subscription[] = [
         periodStart: "2026-01-01",
         periodEnd: "2026-12-31",
         amountPaid: 1200,
-        currency: "USD",
+        currency: "NPR",
         status: "Paid",
-        pdfDownloadUrl: "https://api.providhy.com/v1/invoices/inv_2026_001.pdf",
+        pdfDownloadUrl: "/inv_demo/inv_2026_001",
+        planName: "Enterprise Plan",
+        paymentMethod: {
+          provider: "esewa",
+          billingEmail: "billing@abccompany.com",
+        },
+        usersUsed: 12,
+        usersLimit: 50,
+        branchesUsed: 1,
+        branchesLimit: 15,
       },
       {
         invoiceId: "inv_2025_001",
@@ -65,9 +104,18 @@ export const mockSubscriptions: Subscription[] = [
         periodStart: "2025-01-01",
         periodEnd: "2025-12-31",
         amountPaid: 1200,
-        currency: "USD",
+        currency: "NPR",
         status: "Paid",
-        pdfDownloadUrl: "https://api.providhy.com/v1/invoices/inv_2025_001.pdf",
+        pdfDownloadUrl: "/inv_demo/inv_2025_001",
+        planName: "Enterprise Plan",
+        paymentMethod: {
+          provider: "esewa",
+          billingEmail: "billing@abccompany.com",
+        },
+        usersUsed: 10,
+        usersLimit: 50,
+        branchesUsed: 1,
+        branchesLimit: 15,
       },
     ],
   },
@@ -75,6 +123,7 @@ export const mockSubscriptions: Subscription[] = [
     id: "SUB-10881",
     companyId: "comp_10881",
     companyName: "Himalayan Traders",
+    companyLogoUrl: null,
     planId: "plan_std_01",
     planName: "Standard Plan",
     planTier: "Standard",
@@ -86,7 +135,7 @@ export const mockSubscriptions: Subscription[] = [
     usersUsed: 5,
     usersLimit: 10,
     amount: 0,
-    currency: "USD",
+    currency: "NPR",
     interval: "month",
     createdAt: "2026-07-20",
     periodEnd: "2026-08-19",
@@ -99,6 +148,11 @@ export const mockSubscriptions: Subscription[] = [
       "Sales & Purchase",
       "Basic Reports",
       "Email Support",
+    ],
+    members: [
+      member("u6", "Farah Khan", "FK", 5),
+      member("u7", "Gopal Adhikari", "GA", 6),
+      member("u8", "Hira Lama", "HL", 7),
     ],
     assignedBranches: [
       {
@@ -120,6 +174,7 @@ export const mockSubscriptions: Subscription[] = [
     id: "SUB-11002",
     companyId: "comp_11002",
     companyName: "Everest Retail Group",
+    companyLogoUrl: "/abc-company-logo.png",
     planId: "plan_del_01",
     planName: "De-lite Plan",
     planTier: "De-lite",
@@ -131,7 +186,7 @@ export const mockSubscriptions: Subscription[] = [
     usersUsed: 18,
     usersLimit: 25,
     amount: 99,
-    currency: "USD",
+    currency: "NPR",
     interval: "month",
     createdAt: "2025-03-10",
     periodEnd: "2026-07-10",
@@ -139,10 +194,7 @@ export const mockSubscriptions: Subscription[] = [
     remainingDays: 0,
     autoRenew: true,
     paymentMethod: {
-      brand: "Mastercard",
-      last4: "5555",
-      expiryMonth: 6,
-      expiryYear: 2027,
+      provider: "fonepay",
       billingEmail: "accounts@everestretail.com",
     },
     features: [
@@ -150,6 +202,12 @@ export const mockSubscriptions: Subscription[] = [
       "Inventory & Stock",
       "Sales & Purchase",
       "Standard Reports",
+    ],
+    members: [
+      member("u9", "Indira Basnet", "IB", 0),
+      member("u10", "Jivan KC", "JK", 1),
+      member("u11", "Kabita Poudel", "KP", 2),
+      member("u12", "Laxman Yadav", "LY", 3),
     ],
     assignedBranches: [
       {
@@ -185,9 +243,18 @@ export const mockSubscriptions: Subscription[] = [
         periodStart: "2026-07-01",
         periodEnd: "2026-07-31",
         amountPaid: 99,
-        currency: "USD",
+        currency: "NPR",
         status: "Past due",
-        pdfDownloadUrl: "https://api.providhy.com/v1/invoices/inv_2026_072.pdf",
+        pdfDownloadUrl: "/inv_demo/inv_2026_072",
+        planName: "De-lite Plan",
+        paymentMethod: {
+          provider: "fonepay",
+          billingEmail: "accounts@everestretail.com",
+        },
+        usersUsed: 18,
+        usersLimit: 25,
+        branchesUsed: 4,
+        branchesLimit: 5,
       },
       {
         invoiceId: "inv_2026_061",
@@ -196,9 +263,18 @@ export const mockSubscriptions: Subscription[] = [
         periodStart: "2026-06-01",
         periodEnd: "2026-06-30",
         amountPaid: 99,
-        currency: "USD",
+        currency: "NPR",
         status: "Paid",
-        pdfDownloadUrl: "https://api.providhy.com/v1/invoices/inv_2026_061.pdf",
+        pdfDownloadUrl: "/inv_demo/inv_2026_061",
+        planName: "De-lite Plan",
+        paymentMethod: {
+          provider: "fonepay",
+          billingEmail: "accounts@everestretail.com",
+        },
+        usersUsed: 16,
+        usersLimit: 25,
+        branchesUsed: 4,
+        branchesLimit: 5,
       },
     ],
   },
@@ -206,6 +282,7 @@ export const mockSubscriptions: Subscription[] = [
     id: "SUB-11140",
     companyId: "comp_11140",
     companyName: "Nova Logistics",
+    companyLogoUrl: null,
     planId: "plan_std_01",
     planName: "Standard Plan",
     planTier: "Standard",
@@ -217,7 +294,7 @@ export const mockSubscriptions: Subscription[] = [
     usersUsed: 0,
     usersLimit: 20,
     amount: 199,
-    currency: "USD",
+    currency: "NPR",
     interval: "month",
     createdAt: "2026-08-05",
     periodEnd: "2026-09-05",
@@ -225,10 +302,7 @@ export const mockSubscriptions: Subscription[] = [
     remainingDays: 25,
     autoRenew: true,
     paymentMethod: {
-      brand: "Visa",
-      last4: "1881",
-      expiryMonth: 3,
-      expiryYear: 2029,
+      provider: "esewa",
       billingEmail: "finance@novalogistics.io",
     },
     features: [
@@ -237,6 +311,7 @@ export const mockSubscriptions: Subscription[] = [
       "Basic Reports",
       "Email Support",
     ],
+    members: [],
     assignedBranches: [],
     invoices: [
       {
@@ -246,9 +321,18 @@ export const mockSubscriptions: Subscription[] = [
         periodStart: "2026-08-05",
         periodEnd: "2026-09-05",
         amountPaid: 199,
-        currency: "USD",
+        currency: "NPR",
         status: "Open",
-        pdfDownloadUrl: "https://api.providhy.com/v1/invoices/inv_2026_088.pdf",
+        pdfDownloadUrl: "/inv_demo/inv_2026_088",
+        planName: "Standard Plan",
+        paymentMethod: {
+          provider: "esewa",
+          billingEmail: "finance@novalogistics.io",
+        },
+        usersUsed: 0,
+        usersLimit: 20,
+        branchesUsed: 0,
+        branchesLimit: 5,
       },
     ],
   },

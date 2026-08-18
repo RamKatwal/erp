@@ -4,17 +4,17 @@ import * as React from "react"
 import Link from "next/link"
 import {
   ArrowLeft,
-  Building2,
   ChevronDown,
-  CreditCard,
-  FileText,
-  LayoutDashboard,
+  RefreshCwIcon,
+  Settings2Icon,
+  TriangleAlertIcon,
 } from "lucide-react"
 
-import { BranchAllocationsSection } from "@/components/admin/subscriptions/sections/branch-allocations-section"
+import { CancelSubscriptionDialog } from "@/components/admin/subscriptions/cancel-subscription-dialog"
+import { RenewPlanDialog } from "@/components/admin/subscriptions/renew-plan-dialog"
+import { CurrentPlanSection } from "@/components/admin/subscriptions/sections/current-plan-section"
 import { InvoicesSection } from "@/components/admin/subscriptions/sections/invoices-section"
-import { OverviewSection } from "@/components/admin/subscriptions/sections/overview-section"
-import { PaymentMethodSection } from "@/components/admin/subscriptions/sections/payment-method-section"
+import { UpdatePlanLimitsDialog } from "@/components/admin/subscriptions/update-plan-limits-dialog"
 import { PageHeader } from "@/components/layout/page-header"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -25,33 +25,28 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { formatLongDate } from "@/lib/format"
 import { getSubscriptionById } from "@/lib/mock/subscriptions"
-import { cn } from "@/lib/utils"
+import { invoiceReceiptPath } from "@/lib/mock/invoice-receipt"
 import {
   subscriptionStatusLabels,
+  type Subscription,
   type SubscriptionStatus,
 } from "@/types/subscription"
+import type { PaymentMethodId } from "@/lib/onboarding/plans"
 
-type DetailSection =
-  | "overview"
-  | "branches"
-  | "invoices"
-  | "payment"
-
-function statusBadgeVariant(
-  status: SubscriptionStatus
-): "default" | "secondary" | "destructive" | "outline" {
+function statusBadgeClassName(status: SubscriptionStatus) {
   switch (status) {
     case "active":
-      return "default"
+      return "border-transparent bg-success/15 text-success"
     case "trialing":
-      return "secondary"
+      return "border-transparent bg-secondary text-secondary-foreground"
     case "past_due":
-      return "destructive"
+      return "border-transparent bg-destructive/10 text-destructive"
     case "pending":
-      return "outline"
+      return "border-border text-foreground"
     default:
-      return "outline"
+      return "border-border text-muted-foreground"
   }
 }
 
@@ -60,16 +55,13 @@ export function SubscriptionDetailPage({
 }: {
   subscriptionId: string
 }) {
-  const subscription = getSubscriptionById(subscriptionId)
-  const [activeSection, setActiveSection] =
-    React.useState<DetailSection>("overview")
-  const [autoRenew, setAutoRenew] = React.useState(
-    subscription?.autoRenew ?? false
-  )
-
-  React.useEffect(() => {
-    setAutoRenew(subscription?.autoRenew ?? false)
-  }, [subscription?.autoRenew, subscriptionId])
+  const [subscription, setSubscription] = React.useState<
+    Subscription | undefined
+  >(() => getSubscriptionById(subscriptionId))
+  const [renewOpen, setRenewOpen] = React.useState(false)
+  const [cancelOpen, setCancelOpen] = React.useState(false)
+  const [branchLimitsOpen, setBranchLimitsOpen] = React.useState(false)
+  const [userLimitsOpen, setUserLimitsOpen] = React.useState(false)
 
   if (!subscription) {
     return (
@@ -89,16 +81,100 @@ export function SubscriptionDetailPage({
     )
   }
 
+  function handleRenewConfirm() {
+    setSubscription((prev) => {
+      if (!prev) return prev
+      const end = new Date(prev.periodEnd)
+      if (prev.interval === "year") {
+        end.setFullYear(end.getFullYear() + 1)
+      } else {
+        end.setMonth(end.getMonth() + 1)
+      }
+      const newEnd = end.toISOString().slice(0, 10)
+      const remaining = Math.max(
+        0,
+        Math.ceil((end.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+      )
+      return {
+        ...prev,
+        periodEnd: newEnd,
+        nextBillingDate: newEnd,
+        remainingDays: remaining,
+        status: "active",
+      }
+    })
+  }
+
+  function handleCancelConfirm() {
+    setSubscription((prev) =>
+      prev ? { ...prev, status: "canceled" } : prev
+    )
+  }
+
+  function handleLimitsConfirm(
+    branchesLimit: number,
+    usersLimit: number,
+    paymentMethod: PaymentMethodId,
+    amountPaid: number
+  ) {
+    setSubscription((prev) => {
+      if (!prev) return prev
+
+      const today = new Date().toISOString().slice(0, 10)
+      const invoiceId = `inv_${prev.id}_${Date.now()}`
+      const pdfDownloadUrl = invoiceReceiptPath(invoiceId)
+      const invoiceNumber = `INV-${prev.companyName
+        .slice(0, 3)
+        .toUpperCase()}-${Date.now().toString().slice(-6)}`
+
+      return {
+        ...prev,
+        branchesLimit,
+        usersLimit,
+        paymentMethod: {
+          provider: paymentMethod,
+          billingEmail: prev.paymentMethod?.billingEmail ?? "",
+        },
+        invoices: [
+          {
+            invoiceId,
+            invoiceNumber,
+            issueDate: today,
+            periodStart: today,
+            periodEnd: prev.periodEnd,
+            amountPaid,
+            currency: prev.currency,
+            status: "Paid",
+            pdfDownloadUrl,
+            planName: prev.planName,
+            paymentMethod: {
+              provider: paymentMethod,
+              billingEmail: prev.paymentMethod?.billingEmail ?? "",
+            },
+            usersUsed: prev.usersUsed,
+            usersLimit,
+            branchesUsed: prev.branchesUsed,
+            branchesLimit,
+          },
+          ...prev.invoices,
+        ],
+      }
+    })
+  }
+
   return (
     <div className="flex flex-col gap-5">
       <PageHeader
         title={`${subscription.planName} - ${subscription.companyName}`}
         badge={
-          <Badge variant={statusBadgeVariant(subscription.status)}>
+          <Badge
+            variant="outline"
+            className={statusBadgeClassName(subscription.status)}
+          >
             {subscriptionStatusLabels[subscription.status]}
           </Badge>
         }
-        description={`Subscription ID: ${subscription.id} | Created: ${subscription.createdAt}`}
+        description={`Subscription ID: ${subscription.id} | Created: ${formatLongDate(subscription.createdAt)}`}
         breadcrumb={
           <Button
             variant="link"
@@ -116,14 +192,25 @@ export function SubscriptionDetailPage({
             <DropdownMenuTrigger
               render={<Button size="sm" variant="outline" />}
             >
+              <Settings2Icon className="mr-1 size-4" />
               Manage Plan
               <ChevronDown />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>Change plan</DropdownMenuItem>
-              <DropdownMenuItem>Renew now</DropdownMenuItem>
+            <DropdownMenuContent align="end" className="w-auto min-w-52">
+              <DropdownMenuItem
+                className="whitespace-nowrap"
+                onClick={() => setRenewOpen(true)}
+              >
+                <RefreshCwIcon className="mr-2 size-4" />
+                Renew plan
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem variant="destructive">
+              <DropdownMenuItem
+                className="whitespace-nowrap"
+                variant="destructive"
+                onClick={() => setCancelOpen(true)}
+              >
+                <TriangleAlertIcon className="mr-2 size-4" />
                 Cancel subscription
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -131,89 +218,44 @@ export function SubscriptionDetailPage({
         }
       />
 
-      <div className="flex w-fit flex-wrap rounded-lg bg-muted p-1">
-        <button
-          type="button"
-          className={cn(
-            "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-            activeSection === "overview"
-              ? "bg-background text-foreground shadow-xs"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-          onClick={() => setActiveSection("overview")}
-        >
-          <LayoutDashboard className="size-4" />
-          Overview
-        </button>
-        <button
-          type="button"
-          className={cn(
-            "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-            activeSection === "branches"
-              ? "bg-background text-foreground shadow-xs"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-          onClick={() => setActiveSection("branches")}
-        >
-          <Building2 className="size-4" />
-          Branch Allocations
-        </button>
-        <button
-          type="button"
-          className={cn(
-            "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-            activeSection === "invoices"
-              ? "bg-background text-foreground shadow-xs"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-          onClick={() => setActiveSection("invoices")}
-        >
-          <FileText className="size-4" />
-          Invoices & History
-        </button>
-        <button
-          type="button"
-          className={cn(
-            "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-            activeSection === "payment"
-              ? "bg-background text-foreground shadow-xs"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-          onClick={() => setActiveSection("payment")}
-        >
-          <CreditCard className="size-4" />
-          Payment Method
-        </button>
-      </div>
+      <CurrentPlanSection
+        subscription={subscription}
+        onRenew={() => setRenewOpen(true)}
+        onUpdateBranchLimits={() => setBranchLimitsOpen(true)}
+        onUpdateUserLimits={() => setUserLimitsOpen(true)}
+      />
 
-      {activeSection === "overview" ? (
-        <OverviewSection
-          subscription={subscription}
-          autoRenew={autoRenew}
-          onAutoRenewChange={setAutoRenew}
-          onShowInvoices={() => setActiveSection("invoices")}
-        />
-      ) : null}
+      <InvoicesSection subscription={subscription} />
 
-      {activeSection === "branches" ? (
-        <BranchAllocationsSection
-          branches={subscription.assignedBranches}
-          used={subscription.branchesUsed}
-          limit={subscription.branchesLimit}
-        />
-      ) : null}
+      <RenewPlanDialog
+        open={renewOpen}
+        onOpenChange={setRenewOpen}
+        subscription={subscription}
+        onConfirm={handleRenewConfirm}
+      />
 
-      {activeSection === "invoices" ? (
-        <InvoicesSection invoices={subscription.invoices} />
-      ) : null}
+      <CancelSubscriptionDialog
+        open={cancelOpen}
+        onOpenChange={setCancelOpen}
+        subscription={subscription}
+        onConfirm={handleCancelConfirm}
+      />
 
-      {activeSection === "payment" ? (
-        <PaymentMethodSection
-          paymentMethod={subscription.paymentMethod}
-          autoRenew={autoRenew}
-          onAutoRenewChange={setAutoRenew}
-        />
-      ) : null}
+      <UpdatePlanLimitsDialog
+        mode="branches"
+        open={branchLimitsOpen}
+        onOpenChange={setBranchLimitsOpen}
+        subscription={subscription}
+        onConfirm={handleLimitsConfirm}
+      />
+
+      <UpdatePlanLimitsDialog
+        mode="users"
+        open={userLimitsOpen}
+        onOpenChange={setUserLimitsOpen}
+        subscription={subscription}
+        onConfirm={handleLimitsConfirm}
+      />
     </div>
   )
 }

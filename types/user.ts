@@ -11,6 +11,10 @@ export type AppUser = {
   id: string
   name: string
   email: string
+  username: string
+  contact: string
+  address: string
+  designation: string
   status: UserStatus
   /** A user may belong to one or more entities; each has its own role. */
   assignments: UserEntityAssignment[]

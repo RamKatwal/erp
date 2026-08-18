@@ -71,6 +71,7 @@ export function entitlementToSubscription(
     id: entitlement.subscriptionId,
     companyId: company.id,
     companyName: company.name,
+    companyLogoUrl: null,
     planId: entitlement.planId,
     planName: entitlement.planName,
     planTier: entitlement.planName,
@@ -91,14 +92,12 @@ export function entitlementToSubscription(
     autoRenew: !entitlement.isTrial,
     paymentMethod: entitlement.paymentMethod
       ? {
-          brand: entitlement.paymentMethod === "esewa" ? "eSewa" : "Fonepay",
-          last4: "0000",
-          expiryMonth: 12,
-          expiryYear: periodEnd.getFullYear() + 1,
+          provider: entitlement.paymentMethod,
           billingEmail: "",
         }
       : null,
     features: planDef?.includes ?? [],
+    members: [],
     assignedBranches: [],
     invoices: entitlement.isTrial
       ? []
@@ -112,7 +111,18 @@ export function entitlementToSubscription(
             amountPaid: 0,
             currency: "NPR",
             status: "Paid",
-            pdfDownloadUrl: "#",
+            pdfDownloadUrl: "/inv_demo/inv_2026_001",
+            planName: entitlement.planName,
+            paymentMethod: entitlement.paymentMethod
+              ? {
+                  provider: entitlement.paymentMethod,
+                  billingEmail: "",
+                }
+              : null,
+            usersUsed: 1,
+            usersLimit: entitlement.users,
+            branchesUsed: 0,
+            branchesLimit: entitlement.branchCount,
           },
         ],
   }

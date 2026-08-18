@@ -1,11 +1,17 @@
 "use client"
 
 import * as React from "react"
-import { Save } from "lucide-react"
+import { Check, ChevronsUpDown, Save } from "lucide-react"
 
 import { PageHeader } from "@/components/layout/page-header"
 import { PermissionMatrix } from "@/components/settings/group-management/permission-matrix"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Label } from "@/components/ui/label"
 import {
   getBranchesByIds,
@@ -18,10 +24,72 @@ import {
   readGroupBranchPermission,
   upsertGroupBranchPermission,
 } from "@/lib/users/permission-storage"
+import { cn } from "@/lib/utils"
 import { normalizeGroupCompanies, type Group, type GroupPermissions } from "@/types/group"
 
-const selectClassName =
-  "h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
+type AccessSelectOption = {
+  value: string
+  label: string
+}
+
+function AccessSelect({
+  id,
+  value,
+  onValueChange,
+  disabled,
+  placeholder,
+  options,
+}: {
+  id: string
+  value: string
+  onValueChange: (value: string) => void
+  disabled?: boolean
+  placeholder: string
+  options: AccessSelectOption[]
+}) {
+  const selected = options.find((option) => option.value === value)
+  const isDisabled = disabled || options.length === 0
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        disabled={isDisabled}
+        render={
+          <Button
+            id={id}
+            type="button"
+            variant="outline"
+            disabled={isDisabled}
+            className="h-9 w-full justify-between px-3 font-normal"
+          />
+        }
+      >
+        <span
+          className={cn(
+            "min-w-0 truncate",
+            !selected && "text-muted-foreground"
+          )}
+        >
+          {selected?.label ?? placeholder}
+        </span>
+        <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="max-h-64">
+        {options.map((option) => (
+          <DropdownMenuItem
+            key={option.value}
+            onClick={() => onValueChange(option.value)}
+          >
+            <span className="min-w-0 flex-1 truncate">{option.label}</span>
+            {option.value === value ? (
+              <Check className="ml-auto size-4 shrink-0" />
+            ) : null}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
 
 function roleAllowedBranchIds(role: Group | undefined): string[] {
   if (!role) return []
@@ -142,48 +210,36 @@ export function PermissionManagementPage() {
       <section className="grid gap-4 rounded-xl border bg-card p-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label htmlFor="permission-group">Group</Label>
-          <select
+          <AccessSelect
             id="permission-group"
-            className={selectClassName}
             value={groupId}
-            onChange={(event) => handleGroupChange(event.target.value)}
+            onValueChange={handleGroupChange}
             disabled={groups.length === 0}
-          >
-            {groups.length === 0 ? (
-              <option value="">No groups available</option>
-            ) : (
-              groups.map((group) => (
-                <option key={group.id} value={group.id}>
-                  {group.name}
-                </option>
-              ))
-            )}
-          </select>
+            placeholder="No groups available"
+            options={groups.map((group) => ({
+              value: group.id,
+              label: group.name,
+            }))}
+          />
         </div>
 
         <div className="space-y-1.5">
           <Label htmlFor="permission-branch">Branch access</Label>
-          <select
+          <AccessSelect
             id="permission-branch"
-            className={selectClassName}
             value={branchId}
-            onChange={(event) => handleBranchChange(event.target.value)}
+            onValueChange={handleBranchChange}
             disabled={allowedBranches.length === 0}
-          >
-            {allowedBranches.length === 0 ? (
-              <option value="">
-                {selectedGroup
-                  ? "No branches assigned to this group"
-                  : "Select a group first"}
-              </option>
-            ) : (
-              allowedBranches.map((branch) => (
-                <option key={branch.id} value={branch.id}>
-                  {formatBranchOption(branch)}
-                </option>
-              ))
-            )}
-          </select>
+            placeholder={
+              selectedGroup
+                ? "No branches assigned to this group"
+                : "Select a group first"
+            }
+            options={allowedBranches.map((branch) => ({
+              value: branch.id,
+              label: formatBranchOption(branch),
+            }))}
+          />
         </div>
 
         {selectedGroup && selectedBranch ? (

@@ -2,10 +2,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import {
-  ArrowDown01Icon,
-  Building01Icon,
-} from "@hugeicons/core-free-icons"
+import { ArrowDown01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
 import { Button } from "@/components/ui/button"
@@ -75,7 +72,6 @@ export function AdminGoToCompany() {
               />
             }
           >
-            <HugeiconsIcon icon={Building01Icon} strokeWidth={2} />
             Go to Company
           </TooltipTrigger>
           <TooltipContent side="bottom" className="flex items-center gap-1.5">

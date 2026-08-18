@@ -12,12 +12,27 @@ import { DataTableColumnHeader } from "@/components/data-table/data-table-column
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar"
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import {
+  branchAvatarItems,
+  StackedAvatars,
+  userAvatarItems,
+} from "@/components/admin/subscriptions/stacked-avatars"
 import { formatCurrency } from "@/lib/format"
 import {
   billingIntervalLabels,
@@ -27,20 +42,25 @@ import {
   type SubscriptionStatus,
 } from "@/types/subscription"
 
-function statusBadgeVariant(
-  status: SubscriptionStatus
-): "default" | "secondary" | "destructive" | "outline" {
+function companyInitials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return "?"
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return `${parts[0][0] ?? ""}${parts[1][0] ?? ""}`.toUpperCase()
+}
+
+function statusBadgeClassName(status: SubscriptionStatus) {
   switch (status) {
     case "active":
-      return "default"
+      return "border-transparent bg-success/15 text-success"
     case "trialing":
-      return "secondary"
+      return "border-transparent bg-secondary text-secondary-foreground"
     case "past_due":
-      return "destructive"
+      return "border-transparent bg-destructive/10 text-destructive"
     case "pending":
-      return "outline"
+      return "border-border text-foreground"
     default:
-      return "outline"
+      return "border-border text-muted-foreground"
   }
 }
 
@@ -68,32 +88,49 @@ export const subscriptionColumns: ColumnDef<Subscription>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Company Name" />
     ),
-    cell: ({ row }) => (
-      <Button
-        variant="link"
-        className="h-auto px-0 font-medium"
-        nativeButton={false}
-        render={
-          <Link href={`/admin/subscriptions/${row.original.id}`} />
-        }
-      >
-        {row.getValue("companyName")}
-      </Button>
-    ),
+    cell: ({ row }) => {
+      const { companyName, companyLogoUrl, id } = row.original
+      return (
+        <div className="flex min-w-0 items-center gap-2">
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Avatar
+                  size="sm"
+                  className="after:border-border/60"
+                  aria-label={companyName}
+                />
+              }
+            >
+              {companyLogoUrl ? (
+                <AvatarImage src={companyLogoUrl} alt="" />
+              ) : null}
+              <AvatarFallback className="bg-muted text-[10px] font-semibold text-foreground">
+                {companyInitials(companyName)}
+              </AvatarFallback>
+            </TooltipTrigger>
+            <TooltipContent side="top">{companyName}</TooltipContent>
+          </Tooltip>
+          <Button
+            variant="link"
+            className="h-auto min-w-0 truncate px-0 font-medium"
+            nativeButton={false}
+            render={<Link href={`/admin/subscriptions/${id}`} />}
+          >
+            {companyName}
+          </Button>
+        </div>
+      )
+    },
   },
   {
     id: "plan",
     accessorFn: (row) => row.planName,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Trial Plan" />
+      <DataTableColumnHeader column={column} title="Trial" />
     ),
     cell: ({ row }) => (
-      <div className="flex items-center gap-1.5">
-        <span className="font-medium">{row.original.planName}</span>
-        {row.original.isTrial ? (
-          <Badge variant="secondary">Trial</Badge>
-        ) : null}
-      </div>
+      <span className="font-medium">{row.original.planName}</span>
     ),
   },
   {
@@ -102,7 +139,10 @@ export const subscriptionColumns: ColumnDef<Subscription>[] = [
       <DataTableColumnHeader column={column} title="Status" />
     ),
     cell: ({ row }) => (
-      <Badge variant={statusBadgeVariant(row.original.status)}>
+      <Badge
+        variant="outline"
+        className={statusBadgeClassName(row.original.status)}
+      >
         {subscriptionStatusLabels[row.original.status]}
       </Badge>
     ),
@@ -114,9 +154,10 @@ export const subscriptionColumns: ColumnDef<Subscription>[] = [
       <DataTableColumnHeader column={column} title="Branches" />
     ),
     cell: ({ row }) => (
-      <span className="tabular-nums text-muted-foreground">
-        {row.original.branchesUsed} / {row.original.branchesLimit}
-      </span>
+      <StackedAvatars
+        items={branchAvatarItems(row.original.assignedBranches)}
+        total={row.original.branchesUsed}
+      />
     ),
   },
   {
@@ -126,9 +167,10 @@ export const subscriptionColumns: ColumnDef<Subscription>[] = [
       <DataTableColumnHeader column={column} title="Users" />
     ),
     cell: ({ row }) => (
-      <span className="tabular-nums text-muted-foreground">
-        {row.original.usersUsed} / {row.original.usersLimit}
-      </span>
+      <StackedAvatars
+        items={userAvatarItems(row.original.members, row.original.usersUsed)}
+        total={row.original.usersUsed}
+      />
     ),
   },
   {

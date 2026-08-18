@@ -8,6 +8,7 @@ import {
 } from "lucide-react"
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -16,35 +17,73 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { getBranchLabel } from "@/lib/companies/options"
-import { normalizeGroupCompanies, type Group } from "@/types/group"
+import {
+  getBranchesByIds,
+  type ResolvedBranchOption,
+} from "@/lib/companies/options"
+import { cn } from "@/lib/utils"
+import { type Group } from "@/types/group"
 
 type GroupColumnHandlers = {
   onEdit: (group: Group) => void
   onDelete: (group: Group) => void
 }
 
-function formatCompanies(group: Group) {
-  const normalized = normalizeGroupCompanies(group)
-  const names = normalized.companyNames ?? []
-  if (names.length === 0) return "—"
-  if (names.length <= 2) return names.join(", ")
-  return `${names.slice(0, 2).join(", ")} +${names.length - 2}`
+const companyChipClass = [
+  "bg-sky-500/12 text-sky-800 dark:text-sky-300",
+  "bg-violet-500/12 text-violet-800 dark:text-violet-300",
+  "bg-emerald-500/12 text-emerald-800 dark:text-emerald-300",
+  "bg-amber-500/12 text-amber-800 dark:text-amber-300",
+  "bg-rose-500/12 text-rose-800 dark:text-rose-300",
+  "bg-teal-500/12 text-teal-800 dark:text-teal-300",
+] as const
+
+function companyChipTone(companyId: string) {
+  let hash = 0
+  for (const char of companyId) {
+    hash = (hash + char.charCodeAt(0)) % companyChipClass.length
+  }
+  return companyChipClass[hash]
 }
 
-function formatBranches(group: Group) {
-  const branchIds = group.branchIds ?? []
-  if (branchIds.length === 0) return "—"
+function branchChipLabel(branch: ResolvedBranchOption) {
+  return branch.isHeadOffice ? "Head Office" : branch.name
+}
 
-  const names = branchIds
-    .map((id) => getBranchLabel(id) ?? id)
-    .filter(Boolean)
+function accessSearchText(group: Group) {
+  return getBranchesByIds(group.branchIds ?? [])
+    .map(
+      (branch) =>
+        `${branch.companyName} ${branchChipLabel(branch)} ${branch.code}`
+    )
+    .join(" ")
+}
 
-  if (names.length <= 2) {
-    return names.join(", ")
+function RoleAccessChips({ group }: { group: Group }) {
+  const branches = getBranchesByIds(group.branchIds ?? [])
+
+  if (branches.length === 0) {
+    return <span className="text-muted-foreground">—</span>
   }
 
-  return `${names.slice(0, 2).join(", ")} +${names.length - 2}`
+  return (
+    <div className="flex flex-wrap items-center gap-1 whitespace-normal">
+      {branches.map((branch) => (
+        <Badge
+          key={branch.id}
+          variant="outline"
+          className={cn(
+            "h-4 rounded-md border-transparent px-1.5 text-[10px] font-normal",
+            branch.isHeadOffice
+              ? "bg-primary/12 text-primary"
+              : companyChipTone(branch.companyId)
+          )}
+        >
+          {branchChipLabel(branch)}
+        </Badge>
+      ))}
+    </div>
+  )
 }
 
 export function createPermissionGroupColumns({
@@ -68,28 +107,12 @@ export function createPermissionGroupColumns({
       ),
     },
     {
-      id: "companies",
-      accessorFn: (row) => formatCompanies(row),
+      id: "access",
+      accessorFn: (row) => accessSearchText(row),
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Companies" />
+        <DataTableColumnHeader column={column} title="Branch access" />
       ),
-      cell: ({ row }) => (
-        <span className="text-muted-foreground">
-          {formatCompanies(row.original)}
-        </span>
-      ),
-    },
-    {
-      id: "branches",
-      accessorFn: (row) => formatBranches(row),
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Branches" />
-      ),
-      cell: ({ row }) => (
-        <span className="text-muted-foreground">
-          {formatBranches(row.original)}
-        </span>
-      ),
+      cell: ({ row }) => <RoleAccessChips group={row.original} />,
     },
     {
       accessorKey: "description",

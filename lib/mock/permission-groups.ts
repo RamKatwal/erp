@@ -11,6 +11,14 @@ export const mockPermissionGroups: Group[] = [
     branchIds: ["br_hq_01"],
   },
   {
+    id: "grp-store-associate",
+    name: "Store Associate",
+    description: "Floor staff at a single outlet.",
+    companyIds: ["comp_10881"],
+    companyNames: ["Himalayan Traders"],
+    branchIds: ["br_ht_02"],
+  },
+  {
     id: "grp-branch-manager",
     name: "Branch Manager",
     description: "Store managers and branch heads.",

@@ -2,19 +2,11 @@
 
 import * as React from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { PlusIcon, Trash2Icon } from "lucide-react"
-import { useFieldArray, useForm } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import { z } from "zod"
 
+import { CompanyBranchMultiselect } from "@/components/settings/users-permissions/company-branch-multiselect"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import {
   Form,
   FormControl,
@@ -26,36 +18,54 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import {
-  findCompanyForBranch,
-  getCompanyById,
-  getCompanyOptions,
-} from "@/lib/companies/options"
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
 import { normalizeGroupCompanies, type Group } from "@/types/group"
 import type { AppUser } from "@/types/user"
 
 const selectClassName =
   "h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
 
-const accessSchema = z.object({
-  companyId: z.string().min(1, { message: "Select a company" }),
-  branchId: z.string().min(1, { message: "Select a branch" }),
-})
-
 const userFormSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(1, { message: "Name is required" })
-    .max(100, { message: "Name is too long" }),
+    .min(1, { message: "Full name is required" })
+    .max(100, { message: "Full name is too long" }),
   email: z
     .string()
     .trim()
     .min(1, { message: "Email is required" })
     .email({ message: "Please enter a valid email address" }),
+  address: z.string().trim().max(250, { message: "Address is too long" }),
+  contact: z
+    .string()
+    .trim()
+    .min(1, { message: "Contact is required" })
+    .min(7, { message: "Please enter a valid contact number" })
+    .max(30, { message: "Contact is too long" }),
+  designation: z
+    .string()
+    .trim()
+    .max(100, { message: "Designation is too long" }),
+  username: z
+    .string()
+    .trim()
+    .min(1, { message: "Username is required" })
+    .min(3, { message: "Username must be at least 3 characters" })
+    .max(50, { message: "Username is too long" }),
   groupId: z.string().min(1, { message: "Select a role" }),
-  access: z
-    .array(accessSchema)
-    .min(1, { message: "Grant access to at least one branch" }),
+  companyIds: z
+    .array(z.string())
+    .min(1, { message: "Select at least one company branch" }),
+  branchIds: z
+    .array(z.string())
+    .min(1, { message: "Select at least one branch or head office" }),
 })
 
 type UserFormInput = z.infer<typeof userFormSchema>
@@ -71,47 +81,38 @@ type UserFormDialogProps = {
   user?: AppUser | null
   roles: Group[]
   existingEmails: string[]
+  existingUsernames: string[]
   onSubmit: (values: UserFormValues) => void
 }
 
-function roleCompanies(role: Group | undefined) {
+function RequiredMark() {
+  return <span className="text-destructive"> *</span>
+}
+
+function roleAllowedBranchIds(role: Group | undefined): string[] {
   if (!role) return []
-  const normalized = normalizeGroupCompanies(role)
-  const allowedIds = new Set(normalized.companyIds ?? [])
-  return getCompanyOptions().filter((company) => allowedIds.has(company.id))
+  return normalizeGroupCompanies(role).branchIds ?? []
 }
 
-function roleBranchesForCompany(
-  role: Group | undefined,
-  companyId: string
-) {
-  if (!role || !companyId) return []
-  const normalized = normalizeGroupCompanies(role)
-  const allowedBranchIds = new Set(normalized.branchIds ?? [])
-  const company = getCompanyById(companyId)
-  if (!company) return []
+function valuesFromUser(user: AppUser) {
+  const groupId = user.assignments[0]?.groupId ?? ""
+  const branchIds = user.assignments
+    .filter((assignment) => !groupId || assignment.groupId === groupId)
+    .map((assignment) => assignment.branchId)
 
-  return company.branches.filter((branch) => allowedBranchIds.has(branch.id))
+  return { groupId, branchIds }
 }
 
-function accessFromUser(user: AppUser) {
-  return user.assignments.map((assignment) => ({
-    companyId: findCompanyForBranch(assignment.branchId)?.id ?? "",
-    branchId: assignment.branchId,
-  }))
-}
-
-function emptyAccessRow(role: Group | undefined) {
-  const companies = roleCompanies(role)
-  const firstCompany = companies[0]
-  const branches = firstCompany
-    ? roleBranchesForCompany(role, firstCompany.id)
-    : []
-
-  return {
-    companyId: firstCompany?.id ?? "",
-    branchId: branches[0]?.id ?? "",
-  }
+const emptyValues: UserFormInput = {
+  name: "",
+  email: "",
+  address: "",
+  contact: "",
+  designation: "",
+  username: "",
+  groupId: "",
+  companyIds: [],
+  branchIds: [],
 }
 
 export function UserFormDialog({
@@ -121,27 +122,20 @@ export function UserFormDialog({
   user,
   roles,
   existingEmails,
+  existingUsernames,
   onSubmit,
 }: UserFormDialogProps) {
   const isEdit = mode === "edit"
   const defaultRoleId = roles[0]?.id ?? ""
-  const defaultRole = roles.find((role) => role.id === defaultRoleId)
 
   const form = useForm<UserFormInput>({
     resolver: zodResolver(userFormSchema),
     mode: "onSubmit",
     reValidateMode: "onChange",
     defaultValues: {
-      name: "",
-      email: "",
+      ...emptyValues,
       groupId: defaultRoleId,
-      access: [emptyAccessRow(defaultRole)],
     },
-  })
-
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "access",
   })
 
   const selectedRoleId = form.watch("groupId")
@@ -149,58 +143,59 @@ export function UserFormDialog({
     () => roles.find((role) => role.id === selectedRoleId),
     [roles, selectedRoleId]
   )
-  const companiesForRole = React.useMemo(
-    () => roleCompanies(selectedRole),
+  const allowedBranchIds = React.useMemo(
+    () => roleAllowedBranchIds(selectedRole),
     [selectedRole]
   )
-  const roleHasAccess = companiesForRole.length > 0
+  const roleHasAccess = allowedBranchIds.length > 0
 
   React.useEffect(() => {
     if (!open) return
 
     if (isEdit && user) {
-      const groupId = user.assignments[0]?.groupId ?? defaultRoleId
-      const role = roles.find((item) => item.id === groupId)
-      const access = accessFromUser(user)
+      const fromUser = valuesFromUser(user)
       form.reset({
         name: user.name,
         email: user.email,
-        groupId,
-        access:
-          access.length > 0 && access.every((item) => item.companyId)
-            ? access
-            : [emptyAccessRow(role)],
+        address: user.address ?? "",
+        contact: user.contact ?? "",
+        designation: user.designation ?? "",
+        username: user.username ?? "",
+        groupId: fromUser.groupId || defaultRoleId,
+        companyIds: [],
+        branchIds: fromUser.branchIds,
       })
       return
     }
 
     form.reset({
-      name: "",
-      email: "",
+      ...emptyValues,
       groupId: defaultRoleId,
-      access: [emptyAccessRow(defaultRole)],
     })
-  }, [open, isEdit, user, form, defaultRoleId, defaultRole, roles])
+  }, [open, isEdit, user, form, defaultRoleId])
+
+  React.useEffect(() => {
+    if (!open) return
+
+    const current = form.getValues("branchIds")
+    if (allowedBranchIds.length === 0) {
+      if (current.length > 0) {
+        form.setValue("branchIds", [], { shouldValidate: true })
+        form.setValue("companyIds", [], { shouldValidate: true })
+      }
+      return
+    }
+
+    const next = current.filter((id) => allowedBranchIds.includes(id))
+    if (next.length !== current.length) {
+      form.setValue("branchIds", next, { shouldValidate: true })
+    }
+  }, [allowedBranchIds, form, open])
 
   function handleRoleChange(roleId: string) {
-    const role = roles.find((item) => item.id === roleId)
     form.setValue("groupId", roleId, { shouldDirty: true, shouldValidate: true })
-    form.setValue("access", [emptyAccessRow(role)], {
-      shouldDirty: true,
-      shouldValidate: true,
-    })
-  }
-
-  function handleCompanyChange(index: number, companyId: string) {
-    const branches = roleBranchesForCompany(selectedRole, companyId)
-    form.setValue(`access.${index}.companyId`, companyId, {
-      shouldDirty: true,
-      shouldValidate: true,
-    })
-    form.setValue(`access.${index}.branchId`, branches[0]?.id ?? "", {
-      shouldDirty: true,
-      shouldValidate: true,
-    })
+    form.setValue("branchIds", [], { shouldDirty: true, shouldValidate: true })
+    form.setValue("companyIds", [], { shouldDirty: true, shouldValidate: true })
   }
 
   function handleSubmit(values: UserFormInput) {
@@ -212,75 +207,82 @@ export function UserFormDialog({
     )
 
     if (emailTaken) {
-      form.setError("email", { message: "A user with this email already exists" })
-      return
-    }
-
-    const branchIds = values.access.map((item) => item.branchId)
-    if (new Set(branchIds).size !== branchIds.length) {
-      form.setError("access", {
-        message: "Each branch can only be assigned once",
+      form.setError("email", {
+        message: "A user with this email already exists",
       })
       return
     }
 
-    for (const entry of values.access) {
-      const allowed = roleBranchesForCompany(selectedRole, entry.companyId)
-      if (!allowed.some((branch) => branch.id === entry.branchId)) {
-        form.setError("access", {
-          message: "Selected branch must belong to this role and company",
-        })
-        return
-      }
+    const normalizedUsername = values.username.trim().toLowerCase()
+    const usernameTaken = existingUsernames.some(
+      (username) =>
+        username.toLowerCase() === normalizedUsername &&
+        (!isEdit ||
+          !user ||
+          (user.username ?? "").toLowerCase() !== normalizedUsername)
+    )
+
+    if (usernameTaken) {
+      form.setError("username", {
+        message: "A user with this username already exists",
+      })
+      return
+    }
+
+    if (
+      values.branchIds.some((branchId) => !allowedBranchIds.includes(branchId))
+    ) {
+      form.setError("branchIds", {
+        message: "Selected branches must belong to this role",
+      })
+      return
     }
 
     onSubmit({
       ...values,
       email: normalizedEmail,
-      assignments: values.access.map((item) => ({
-        branchId: item.branchId,
+      username: values.username.trim(),
+      assignments: values.branchIds.map((branchId) => ({
+        branchId,
         groupId: values.groupId,
       })),
     })
     onOpenChange(false)
   }
 
-  const canAddAccess =
-    roleHasAccess &&
-    fields.length <
-      companiesForRole.reduce(
-        (total, company) =>
-          total + roleBranchesForCompany(selectedRole, company.id).length,
-        0
-      )
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[min(720px,calc(100svh-2rem))] w-full max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
-        <DialogHeader className="shrink-0 border-b px-5 py-4 pr-12">
-          <DialogTitle className="text-base font-semibold">
-            {isEdit ? "Edit User" : "Add User"}
-          </DialogTitle>
-          <DialogDescription>
-            Select a role first, then choose the company and branch this user
-            can access.
-          </DialogDescription>
-        </DialogHeader>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        className="flex w-full flex-col gap-0 p-0 sm:max-w-lg"
+      >
+        <SheetHeader className="shrink-0 border-b px-5 py-4 pr-12">
+          <SheetTitle className="text-base font-semibold">
+            {isEdit ? "Edit User" : "Create User"}
+          </SheetTitle>
+          <SheetDescription>
+            Select a role first, then choose companies and branches from what
+            that role can access.
+          </SheetDescription>
+        </SheetHeader>
 
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
             className="flex min-h-0 flex-1 flex-col"
           >
-            <div className="flex flex-col gap-4 overflow-y-auto px-5 py-4">
+            <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto px-5 py-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Full name</FormLabel>
+                    <FormLabel>
+                      Full Name
+                      <RequiredMark />
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. Anita Sharma" {...field} />
+                      <Input placeholder="Full Name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -292,11 +294,76 @@ export function UserFormDialog({
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>
+                      Email
+                      <RequiredMark />
+                    </FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="Email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem className="sm:col-span-2">
+                    <FormLabel>Address</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Address" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="contact"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Contact
+                      <RequiredMark />
+                    </FormLabel>
+                    <FormControl>
+                      <Input placeholder="Contact" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="designation"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Designation</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Designation" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Username
+                      <RequiredMark />
+                    </FormLabel>
                     <FormControl>
                       <Input
-                        type="email"
-                        placeholder="user@company.com"
+                        placeholder="Username"
+                        autoComplete="username"
                         {...field}
                       />
                     </FormControl>
@@ -309,13 +376,18 @@ export function UserFormDialog({
                 control={form.control}
                 name="groupId"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Role</FormLabel>
+                  <FormItem className="sm:col-span-2">
+                    <FormLabel>
+                      Role
+                      <RequiredMark />
+                    </FormLabel>
                     <FormControl>
                       <select
                         className={selectClassName}
                         value={field.value}
-                        onChange={(event) => handleRoleChange(event.target.value)}
+                        onChange={(event) =>
+                          handleRoleChange(event.target.value)
+                        }
                         onBlur={field.onBlur}
                         name={field.name}
                         ref={field.ref}
@@ -338,137 +410,62 @@ export function UserFormDialog({
                 )}
               />
 
-              <div className="space-y-3">
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-medium">Company & branch access</p>
-                    <p className="text-muted-foreground text-sm">
-                      Pick a company, then a branch allowed for the selected
-                      role.
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    disabled={!canAddAccess}
-                    onClick={() => append(emptyAccessRow(selectedRole))}
-                  >
-                    <PlusIcon />
-                    Add
-                  </Button>
-                </div>
-
-                {!roleHasAccess ? (
-                  <p className="text-muted-foreground rounded-lg border border-dashed px-3 py-2 text-sm">
-                    This role has no companies or branches. Edit the role first.
-                  </p>
-                ) : null}
-
-                {fields.map((field, index) => {
-                  const companyId = form.watch(`access.${index}.companyId`)
-                  const branches = roleBranchesForCompany(
-                    selectedRole,
-                    companyId
-                  )
-
-                  return (
-                    <div
-                      key={field.id}
-                      className="grid gap-3 rounded-lg border p-3 sm:grid-cols-[1fr_1fr_auto]"
-                    >
-                      <FormField
-                        control={form.control}
-                        name={`access.${index}.companyId`}
-                        render={({ field: companyField }) => (
-                          <FormItem>
-                            <FormLabel>Company</FormLabel>
-                            <FormControl>
-                              <select
-                                className={selectClassName}
-                                value={companyField.value}
-                                disabled={!selectedRoleId || !roleHasAccess}
-                                onChange={(event) =>
-                                  handleCompanyChange(index, event.target.value)
-                                }
-                                onBlur={companyField.onBlur}
-                                name={companyField.name}
-                                ref={companyField.ref}
-                              >
-                                {companiesForRole.length === 0 ? (
-                                  <option value="">No companies</option>
-                                ) : null}
-                                {companiesForRole.map((company) => (
-                                  <option key={company.id} value={company.id}>
-                                    {company.name}
-                                  </option>
-                                ))}
-                              </select>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+              <FormField
+                control={form.control}
+                name="branchIds"
+                render={({ field }) => (
+                  <FormItem className="sm:col-span-2">
+                    <FormLabel>
+                      Companies & branches
+                      <RequiredMark />
+                    </FormLabel>
+                    <FormControl>
+                      <CompanyBranchMultiselect
+                        active={open}
+                        allowedBranchIds={allowedBranchIds}
+                        disabled={!selectedRoleId || !roleHasAccess}
+                        placeholder={
+                          !selectedRoleId
+                            ? "Select a role first…"
+                            : !roleHasAccess
+                              ? "This role has no companies or branches"
+                              : "Select companies & branches…"
+                        }
+                        value={{
+                          companyIds: form.watch("companyIds"),
+                          branchIds: field.value,
+                        }}
+                        onChange={(next) => {
+                          form.setValue("companyIds", next.companyIds, {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                          })
+                          field.onChange(next.branchIds)
+                        }}
+                        aria-invalid={
+                          Boolean(form.formState.errors.branchIds) ||
+                          Boolean(form.formState.errors.companyIds)
+                        }
                       />
-
-                      <FormField
-                        control={form.control}
-                        name={`access.${index}.branchId`}
-                        render={({ field: branchField }) => (
-                          <FormItem>
-                            <FormLabel>Branch</FormLabel>
-                            <FormControl>
-                              <select
-                                className={selectClassName}
-                                {...branchField}
-                                disabled={
-                                  !selectedRoleId ||
-                                  !companyId ||
-                                  branches.length === 0
-                                }
-                              >
-                                {branches.length === 0 ? (
-                                  <option value="">No branches</option>
-                                ) : null}
-                                {branches.map((branch) => (
-                                  <option key={branch.id} value={branch.id}>
-                                    {branch.name}
-                                    {branch.isHeadOffice ? " · Head Office" : ""}
-                                  </option>
-                                ))}
-                              </select>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <div className="flex items-end">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          disabled={fields.length <= 1}
-                          aria-label="Remove access"
-                          onClick={() => remove(index)}
-                        >
-                          <Trash2Icon />
-                        </Button>
-                      </div>
-                    </div>
-                  )
-                })}
-
-                {form.formState.errors.access?.root?.message ||
-                form.formState.errors.access?.message ? (
-                  <p className="text-sm text-destructive">
-                    {form.formState.errors.access?.root?.message ??
-                      form.formState.errors.access?.message}
-                  </p>
-                ) : null}
-              </div>
+                    </FormControl>
+                    <FormDescription>
+                      {roleHasAccess
+                        ? "Select branches and head offices across companies allowed for this role."
+                        : "Edit the role to assign companies and branches first."}
+                    </FormDescription>
+                    <FormMessage />
+                    {form.formState.errors.companyIds &&
+                    !form.formState.errors.branchIds ? (
+                      <p className="text-sm text-destructive">
+                        {form.formState.errors.companyIds.message}
+                      </p>
+                    ) : null}
+                  </FormItem>
+                )}
+              />
             </div>
 
-            <DialogFooter className="shrink-0 border-t px-5 py-4">
+            <SheetFooter className="shrink-0 flex-row justify-end border-t px-5 py-4">
               <Button
                 type="button"
                 variant="outline"
@@ -477,12 +474,12 @@ export function UserFormDialog({
                 Cancel
               </Button>
               <Button type="submit" disabled={roles.length === 0}>
-                {isEdit ? "Save changes" : "Add User"}
+                {isEdit ? "Save changes" : "Save"}
               </Button>
-            </DialogFooter>
+            </SheetFooter>
           </form>
         </Form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   )
 }

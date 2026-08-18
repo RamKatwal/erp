@@ -18,6 +18,7 @@ import {
   type PermissionGroupFormValues,
 } from "@/components/settings/users-permissions/group-form-dialog"
 import { Button } from "@/components/ui/button"
+import { getBranchesByIds } from "@/lib/companies/options"
 import { mockPermissionGroups } from "@/lib/mock/permission-groups"
 import {
   createPermissionGroupId,
@@ -123,13 +124,17 @@ export function PermissionGroupsPage() {
       const query = filterValue.toLowerCase()
       const item = normalizeGroupCompanies(row.original)
 
+      const accessMatches = getBranchesByIds(item.branchIds ?? []).some(
+        (branch) =>
+          `${branch.companyName} ${branch.name} ${branch.code}`
+            .toLowerCase()
+            .includes(query)
+      )
+
       return (
         item.name.toLowerCase().includes(query) ||
         item.description.toLowerCase().includes(query) ||
-        (item.companyNames?.some((name) =>
-          name.toLowerCase().includes(query)
-        ) ??
-          false)
+        accessMatches
       )
     },
   })

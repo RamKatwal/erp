@@ -24,6 +24,7 @@ type DataTableViewProps<TData> = {
   showPagination?: boolean
   emptyMessage?: string
   rowSize?: DataTableRowSize
+  onRowClick?: (row: TData) => void
 }
 
 export function DataTableView<TData>({
@@ -34,6 +35,7 @@ export function DataTableView<TData>({
   showPagination = true,
   emptyMessage = "No results found.",
   rowSize = "md",
+  onRowClick,
 }: DataTableViewProps<TData>) {
   return (
     <div
@@ -78,6 +80,10 @@ export function DataTableView<TData>({
                   onClick={(event) => {
                     const target = event.target as HTMLElement
                     if (target.closest(interactiveSelector)) return
+                    if (onRowClick) {
+                      onRowClick(row.original)
+                      return
+                    }
                     row.toggleSelected()
                   }}
                 >

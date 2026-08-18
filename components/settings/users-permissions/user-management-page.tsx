@@ -101,6 +101,10 @@ export function UserManagementPage({
         id: createUserId(values.email),
         name: values.name.trim(),
         email: values.email.trim().toLowerCase(),
+        username: values.username.trim(),
+        contact: values.contact.trim(),
+        address: values.address.trim(),
+        designation: values.designation.trim(),
         status: "active",
         assignments: values.assignments.map((assignment) => ({
           ...assignment,
@@ -120,6 +124,10 @@ export function UserManagementPage({
               ...user,
               name: values.name.trim(),
               email: values.email.trim().toLowerCase(),
+              username: values.username.trim(),
+              contact: values.contact.trim(),
+              address: values.address.trim(),
+              designation: values.designation.trim(),
               assignments: values.assignments.map((assignment) => ({
                 ...assignment,
               })),
@@ -160,6 +168,7 @@ export function UserManagementPage({
       return (
         item.name.toLowerCase().includes(query) ||
         item.email.toLowerCase().includes(query) ||
+        item.username?.toLowerCase().includes(query) ||
         item.status.toLowerCase().includes(query)
       )
     },
@@ -210,6 +219,7 @@ export function UserManagementPage({
           columnCount={columns.length}
           rowSize={rowSize}
           emptyMessage="No users found."
+          onRowClick={openEdit}
         />
       </div>
 
@@ -220,6 +230,7 @@ export function UserManagementPage({
         user={editingUser}
         roles={roles}
         existingEmails={users.map((user) => user.email)}
+        existingUsernames={users.map((user) => user.username ?? "")}
         onSubmit={handleFormSubmit}
       />
     </div>
