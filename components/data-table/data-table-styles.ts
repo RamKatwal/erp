@@ -22,6 +22,14 @@ const rowSizeHeightClass: Record<DataTableRowSize, string> = {
   xl: "h-14",
 }
 
+const rowSizeMinHeightClass: Record<DataTableRowSize, string> = {
+  xs: "min-h-6",
+  sm: "min-h-8",
+  md: "min-h-10",
+  lg: "min-h-12",
+  xl: "min-h-14",
+}
+
 export const dataTableClassNames = {
   table: "w-full caption-bottom border-collapse text-xs",
   headerRow: "border-b border-border bg-muted/50 text-muted-foreground",
@@ -41,10 +49,16 @@ export function getDataTableHeaderCellClass(
   )
 }
 
-export function getDataTableBodyCellClass(rowSize: DataTableRowSize = "md") {
+export function getDataTableBodyCellClass(
+  rowSize: DataTableRowSize = "md",
+  wrap = false
+) {
   return cn(
-    rowSizeHeightClass[rowSize],
-    "border-r border-border px-3 whitespace-nowrap last:border-r-0",
-    rowSize === "xl" ? "align-top pt-4" : "align-middle"
+    rowSizeMinHeightClass[rowSize],
+    "border-r border-border px-3 py-2 last:border-r-0",
+    wrap
+      ? "align-top whitespace-normal"
+      : "align-middle whitespace-nowrap",
+    rowSize === "xl" && !wrap ? "pt-4" : null
   )
 }

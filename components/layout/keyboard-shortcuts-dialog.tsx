@@ -3,13 +3,14 @@
 import * as React from "react"
 import { ChevronDownIcon, ChevronUpIcon, KeyboardIcon } from "lucide-react"
 import {
-  motion,
+  m,
   useDragControls,
   useReducedMotion,
   type PanInfo,
 } from "framer-motion"
 
 import { ShortcutsBrowser } from "@/components/keyboard/shortcuts-browser"
+import { transitions, withReducedMotion } from "@/lib/motion"
 import { useKeyboardShortcuts } from "@/components/layout/keyboard-shortcuts-provider"
 import { Button } from "@/components/ui/button"
 import {
@@ -71,9 +72,7 @@ export function KeyboardShortcutsDialog() {
       : collapsedHeight
     : undefined
 
-  const spring = reduceMotion
-    ? { duration: 0 }
-    : { type: "spring" as const, stiffness: 420, damping: 40, mass: 0.9 }
+  const spring = withReducedMotion(transitions.spring, reduceMotion)
 
   function startDrag(event: React.PointerEvent<HTMLElement>) {
     if (event.button !== 0) return
@@ -116,7 +115,7 @@ export function KeyboardShortcutsDialog() {
         )}
         showCloseButton={false}
         render={
-          <motion.div
+          <m.div
             drag="y"
             dragControls={dragControls}
             dragListener={false}
@@ -157,7 +156,7 @@ export function KeyboardShortcutsDialog() {
             }
             className="group flex w-full cursor-[inherit] items-center justify-center pt-3 pb-2 outline-none"
           >
-            <motion.span
+            <m.span
               animate={{ scaleX: dragging ? 1.4 : 1 }}
               transition={spring}
               className="h-1.5 w-12 rounded-full bg-border transition-colors group-hover:bg-muted-foreground/40 group-focus-visible:bg-ring"

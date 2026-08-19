@@ -1,11 +1,12 @@
 export const organizations = [
   {
     id: "abc",
-    name: "Omniverse",
+    name: "ABC Company",
     plan: "De-lite Plan",
-    initials: "O",
+    initials: "A",
     location: "Suryabinayak, Bhaktapur",
     color: "bg-muted text-foreground",
+    logo: "/abc-company-logo.png",
   },
   {
     id: "notion",
@@ -14,6 +15,7 @@ export const organizations = [
     initials: "N",
     location: "Pulchowk, Lalitpur",
     color: "bg-muted text-foreground",
+    logo: "/providhy-icon.png",
   },
 ] as const
 

@@ -3,6 +3,7 @@
 import * as React from "react"
 import { type ColumnDef, flexRender } from "@tanstack/react-table"
 
+import "@/types/data-table"
 import { cn } from "@/lib/utils"
 
 import { DataTablePagination } from "./data-table-pagination"
@@ -90,7 +91,10 @@ export function DataTable<TData, TValue>({
                     <td
                       key={cell.id}
                       className={cn(
-                        getDataTableBodyCellClass(rowSize),
+                        getDataTableBodyCellClass(
+                          rowSize,
+                          cell.column.columnDef.meta?.wrapCell
+                        ),
                         cell.column.id === "select" &&
                           dataTableClassNames.selectCell
                       )}

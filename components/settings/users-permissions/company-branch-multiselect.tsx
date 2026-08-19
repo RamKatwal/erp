@@ -3,8 +3,13 @@
 import * as React from "react"
 import { ChevronsUpDownIcon, XIcon } from "lucide-react"
 
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  branchChipLabel,
+  getCompanyTone,
+  RemovableStatusChip,
+  StatusChip,
+} from "@/components/settings/users-permissions/grouped-branch-chips"
 import {
   Command,
   CommandEmpty,
@@ -24,6 +29,7 @@ import {
   getBranchLabel,
   getCompanyById,
   getCompanyOptions,
+  groupBranchesByCompany,
 } from "@/lib/companies/options"
 import { cn } from "@/lib/utils"
 
@@ -90,14 +96,10 @@ export function CompanyBranchMultiselect({
     }
   }, [active])
 
-  const selectedLabels = value.branchIds.map((branchId) => {
-    const company = findCompanyForBranch(branchId)
-    const branchLabel = getBranchLabel(branchId) ?? branchId
-    return {
-      id: branchId,
-      label: company ? `${company.name} · ${branchLabel}` : branchLabel,
-    }
-  })
+  const selectedGroups = React.useMemo(
+    () => groupBranchesByCompany(value.branchIds),
+    [value.branchIds]
+  )
 
   function applyBranchIds(nextBranchIds: string[]) {
     const filtered = allowedSet
@@ -143,41 +145,34 @@ export function CompanyBranchMultiselect({
             aria-haspopup="dialog"
             className={cn(
               "h-auto min-h-9 w-full justify-between gap-2 px-3 py-1.5 font-normal",
-              selectedLabels.length === 0 && "text-muted-foreground",
+              selectedGroups.length === 0 && "text-muted-foreground",
               className
             )}
           />
         }
       >
-        <span className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
-          {selectedLabels.length === 0 ? (
+        <span className="flex min-w-0 flex-1 flex-col gap-1.5 py-0.5">
+          {selectedGroups.length === 0 ? (
             <span>{placeholder}</span>
           ) : (
-            selectedLabels.map((item) => (
-              <Badge
-                key={item.id}
-                variant="secondary"
-                className="max-w-full gap-1 rounded-md px-1.5 font-normal"
-              >
-                <span className="truncate">{item.label}</span>
-                <span
-                  role="button"
-                  tabIndex={-1}
-                  aria-label={`Remove ${item.label}`}
-                  className="rounded-sm opacity-70 hover:opacity-100"
-                  onClick={(event) => removeBranch(item.id, event)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      removeBranch(
-                        item.id,
-                        event as unknown as React.MouseEvent
-                      )
-                    }
-                  }}
-                >
-                  <XIcon className="size-3" />
+            selectedGroups.map((group) => (
+              <span key={group.companyId} className="flex flex-col gap-1">
+                <StatusChip
+                  label={group.companyName}
+                  tone={getCompanyTone(group.companyId)}
+                />
+                <span className="flex flex-wrap items-center gap-1">
+                  {group.branches.map((branch) => (
+                    <RemovableStatusChip
+                      key={branch.id}
+                      label={branchChipLabel(branch)}
+                      tone={getCompanyTone(branch.companyId)}
+                      removeLabel={`Remove ${group.companyName} ${branchChipLabel(branch)}`}
+                      onRemove={(event) => removeBranch(branch.id, event)}
+                    />
+                  ))}
                 </span>
-              </Badge>
+              </span>
             ))
           )}
         </span>

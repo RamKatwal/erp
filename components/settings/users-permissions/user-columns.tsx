@@ -2,6 +2,7 @@
 
 import type { ColumnDef } from "@tanstack/react-table"
 import {
+  EyeIcon,
   MoreVerticalIcon,
   PencilIcon,
   UserRoundCheckIcon,
@@ -9,6 +10,11 @@ import {
 } from "lucide-react"
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
+import {
+  BranchAccessChips,
+  CompanyAccessChips,
+  groupedBranchAccessSearchText,
+} from "@/components/settings/users-permissions/grouped-branch-chips"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -18,41 +24,33 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  findCompanyForBranch,
-  getBranchLabel,
-} from "@/lib/companies/options"
 import type { Group } from "@/types/group"
 import type { AppUser } from "@/types/user"
 
 type UserColumnHandlers = {
   groups: Group[]
+  onView: (user: AppUser) => void
   onEdit: (user: AppUser) => void
   onActivate: (user: AppUser) => void
   onDeactivate: (user: AppUser) => void
 }
 
-function roleLabel(user: AppUser, roles: Group[]) {
+export function getUserRoleLabel(user: AppUser, roles: Group[]) {
   const roleId = user.assignments[0]?.groupId
   if (!roleId) return "—"
   return roles.find((role) => role.id === roleId)?.name ?? roleId
 }
 
-function accessLabel(user: AppUser) {
+export function getUserAccessLabel(user: AppUser) {
   if (user.assignments.length === 0) return "No access"
-
-  return user.assignments
-    .map((assignment) => {
-      const company = findCompanyForBranch(assignment.branchId)
-      const branch =
-        getBranchLabel(assignment.branchId) ?? assignment.branchId
-      return company ? `${company.name} · ${branch}` : branch
-    })
-    .join(", ")
+  return groupedBranchAccessSearchText(
+    user.assignments.map((assignment) => assignment.branchId)
+  )
 }
 
 export function createUserColumns({
   groups,
+  onView,
   onEdit,
   onActivate,
   onDeactivate,
@@ -81,22 +79,48 @@ export function createUserColumns({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Role" />
       ),
-      accessorFn: (row) => roleLabel(row, groups),
+      accessorFn: (row) => getUserRoleLabel(row, groups),
       cell: ({ row }) => (
-        <span className="text-sm">{roleLabel(row.original, groups)}</span>
+        <span className="text-sm">{getUserRoleLabel(row.original, groups)}</span>
       ),
     },
     {
-      id: "access",
+      id: "companies",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Companies & branches" />
+        <DataTableColumnHeader column={column} title="Company" />
       ),
-      accessorFn: (row) => accessLabel(row),
+      accessorFn: (row) =>
+        groupedBranchAccessSearchText(
+          row.assignments.map((assignment) => assignment.branchId)
+        ),
       cell: ({ row }) => (
-        <span className="line-clamp-2 text-sm text-muted-foreground">
-          {accessLabel(row.original)}
-        </span>
+        <CompanyAccessChips
+          branchIds={row.original.assignments.map(
+            (assignment) => assignment.branchId
+          )}
+          emptyLabel="No access"
+        />
       ),
+      meta: { wrapCell: true },
+    },
+    {
+      id: "branches",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Branches" />
+      ),
+      accessorFn: (row) =>
+        groupedBranchAccessSearchText(
+          row.assignments.map((assignment) => assignment.branchId)
+        ),
+      cell: ({ row }) => (
+        <BranchAccessChips
+          branchIds={row.original.assignments.map(
+            (assignment) => assignment.branchId
+          )}
+          emptyLabel="No access"
+        />
+      ),
+      meta: { wrapCell: true },
     },
     {
       accessorKey: "status",
@@ -132,6 +156,10 @@ export function createUserColumns({
                 <MoreVerticalIcon />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onView(user)}>
+                  <EyeIcon />
+                  View
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onEdit(user)}>
                   <PencilIcon />
                   Edit user

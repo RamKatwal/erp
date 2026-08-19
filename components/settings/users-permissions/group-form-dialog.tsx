@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -21,7 +20,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -139,11 +137,6 @@ export function PermissionGroupFormDialog({
           <DialogTitle className="text-base font-semibold">
             {isEdit ? "Edit User Role" : "Add User Role"}
           </DialogTitle>
-          <DialogDescription>
-            {isEdit
-              ? "Update the role and company branches. Module permissions are configured in Permission Management."
-              : "Create a user role and select any companies, head offices, and branches it applies to."}
-          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -192,10 +185,6 @@ export function PermissionGroupFormDialog({
                         }
                       />
                     </FormControl>
-                    <FormDescription>
-                      Select branches and head offices across one or more
-                      companies.
-                    </FormDescription>
                     <FormMessage />
                     {form.formState.errors.companyIds &&
                     !form.formState.errors.branchIds ? (
@@ -219,9 +208,6 @@ export function PermissionGroupFormDialog({
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription>
-                      Optional. Helps others know when to use this role.
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

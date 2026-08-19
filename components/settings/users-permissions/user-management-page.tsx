@@ -13,6 +13,7 @@ import {
 } from "@/components/data-table/data-table"
 import { PageHeader } from "@/components/layout/page-header"
 import { createUserColumns } from "@/components/settings/users-permissions/user-columns"
+import { UserDetailSheet } from "@/components/settings/users-permissions/user-detail-sheet"
 import {
   UserFormDialog,
   type UserFormValues,
@@ -69,6 +70,7 @@ export function UserManagementPage({
   const [dialogOpen, setDialogOpen] = React.useState(false)
   const [dialogMode, setDialogMode] = React.useState<"create" | "edit">("create")
   const [editingUser, setEditingUser] = React.useState<AppUser | null>(null)
+  const [viewingUser, setViewingUser] = React.useState<AppUser | null>(null)
 
   React.useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -83,13 +85,20 @@ export function UserManagementPage({
 
   function openCreate() {
     setRoles(loadRoles(roleSource))
+    setViewingUser(null)
     setDialogMode("create")
     setEditingUser(null)
     setDialogOpen(true)
   }
 
+  function openView(user: AppUser) {
+    setDialogOpen(false)
+    setViewingUser(user)
+  }
+
   function openEdit(user: AppUser) {
     setRoles(loadRoles(roleSource))
+    setViewingUser(null)
     setDialogMode("edit")
     setEditingUser(user)
     setDialogOpen(true)
@@ -149,6 +158,7 @@ export function UserManagementPage({
     () =>
       createUserColumns({
         groups: roles,
+        onView: openView,
         onEdit: openEdit,
         onActivate: (user) => setStatus(user, "active"),
         onDeactivate: (user) => setStatus(user, "inactive"),
@@ -219,7 +229,7 @@ export function UserManagementPage({
           columnCount={columns.length}
           rowSize={rowSize}
           emptyMessage="No users found."
-          onRowClick={openEdit}
+          onRowClick={openView}
         />
       </div>
 
@@ -232,6 +242,16 @@ export function UserManagementPage({
         existingEmails={users.map((user) => user.email)}
         existingUsernames={users.map((user) => user.username ?? "")}
         onSubmit={handleFormSubmit}
+      />
+
+      <UserDetailSheet
+        user={viewingUser}
+        roles={roles}
+        open={Boolean(viewingUser)}
+        onOpenChange={(open) => {
+          if (!open) setViewingUser(null)
+        }}
+        onEdit={openEdit}
       />
     </div>
   )

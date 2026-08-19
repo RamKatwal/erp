@@ -3,7 +3,6 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { AnimatePresence, motion } from "framer-motion"
 import {
   Check,
   ChevronLeft,
@@ -18,6 +17,10 @@ import {
 } from "lucide-react"
 
 import { AppBrand } from "@/components/app-brand"
+import {
+  SidebarSubmenuItem,
+  SidebarSubmenuPanel,
+} from "@/components/motion/sidebar-submenu"
 import {
   mainNavigation,
 } from "@/config/navigation"
@@ -51,9 +54,7 @@ import {
   SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
   SidebarMenuSubButton,
-  SidebarMenuSubItem,
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar"
@@ -68,11 +69,6 @@ import { getNavShortcutKeys } from "@/lib/keyboard/shortcuts"
 import { formatShortcutLabel } from "@/lib/keyboard/utils"
 import { cn } from "@/lib/utils"
 import type { NavItem } from "@/types/navigation"
-
-const submenuTransition = {
-  duration: 0.22,
-  ease: [0.4, 0, 0.2, 1] as const,
-}
 
 function isNavItemActive(pathname: string, href: string) {
   if (href === "/") {
@@ -237,76 +233,51 @@ function NavMenuItem({ item, pathname }: { item: NavItem; pathname: string }) {
           <ChevronRight className="ml-auto size-3.5! text-sidebar-foreground/40 transition-transform group-data-[open]/collapsible:rotate-90" />
         </CollapsibleTrigger>
 
-        <AnimatePresence initial={false}>
-          {expanded ? (
-            <motion.div
-              key={`${item.href}-submenu`}
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={submenuTransition}
-              className="overflow-hidden"
-            >
-              <SidebarMenuSub>
-                {item.children?.map((child, index) => {
-                  const ChildIcon = child.icon
-                  const shortcutKeys = getNavShortcutKeys(child.href)
+        <SidebarSubmenuPanel open={expanded} panelKey={`${item.href}-submenu`}>
+          {item.children?.map((child, index) => {
+            const ChildIcon = child.icon
+            const shortcutKeys = getNavShortcutKeys(child.href)
 
-                  const content = (
-                    <>
-                      <ChildIcon />
-                      <span>{child.title}</span>
-                    </>
-                  )
+            const content = (
+              <>
+                <ChildIcon />
+                <span>{child.title}</span>
+              </>
+            )
 
-                  return (
-                    <SidebarMenuSubItem key={child.href}>
-                      <motion.div
-                        initial={{ opacity: 0, x: -6 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{
-                          ...submenuTransition,
-                          delay: index * 0.03,
-                        }}
-                      >
-                        {shortcutKeys ? (
-                          <Tooltip>
-                            <TooltipTrigger
-                              render={
-                                <SidebarMenuSubButton
-                                  render={<Link href={child.href} />}
-                                  isActive={isNavItemActive(
-                                    pathname,
-                                    child.href
-                                  )}
-                                />
-                              }
-                            >
-                              {content}
-                            </TooltipTrigger>
-                            <TooltipContent side="right" align="center">
-                              <NavShortcutTooltipLabel
-                                title={child.title}
-                                shortcutKeys={shortcutKeys}
-                              />
-                            </TooltipContent>
-                          </Tooltip>
-                        ) : (
-                          <SidebarMenuSubButton
-                            render={<Link href={child.href} />}
-                            isActive={isNavItemActive(pathname, child.href)}
-                          >
-                            {content}
-                          </SidebarMenuSubButton>
-                        )}
-                      </motion.div>
-                    </SidebarMenuSubItem>
-                  )
-                })}
-              </SidebarMenuSub>
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
+            return (
+              <SidebarSubmenuItem key={child.href} index={index}>
+                {shortcutKeys ? (
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <SidebarMenuSubButton
+                          render={<Link href={child.href} />}
+                          isActive={isNavItemActive(pathname, child.href)}
+                        />
+                      }
+                    >
+                      {content}
+                    </TooltipTrigger>
+                    <TooltipContent side="right" align="center">
+                      <NavShortcutTooltipLabel
+                        title={child.title}
+                        shortcutKeys={shortcutKeys}
+                      />
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <SidebarMenuSubButton
+                    render={<Link href={child.href} />}
+                    isActive={isNavItemActive(pathname, child.href)}
+                  >
+                    {content}
+                  </SidebarMenuSubButton>
+                )}
+              </SidebarSubmenuItem>
+            )
+          })}
+        </SidebarSubmenuPanel>
       </SidebarMenuItem>
     </Collapsible>
   )

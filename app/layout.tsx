@@ -6,6 +6,7 @@ import Script from "next/script"
 import { Analytics } from "@vercel/analytics/next"
 
 import { AppearanceProvider } from "@/components/appearance/appearance-provider"
+import { MotionProvider } from "@/components/motion/motion-provider"
 import { ThemeProvider } from "@/components/theme-provider"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { appearanceInitScript } from "@/lib/appearance/init-script"
@@ -66,7 +67,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AppearanceProvider>
-            <TooltipProvider>{children}</TooltipProvider>
+            <MotionProvider>
+              <TooltipProvider>{children}</TooltipProvider>
+            </MotionProvider>
           </AppearanceProvider>
         </ThemeProvider>
         <Analytics />

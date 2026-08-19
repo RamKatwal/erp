@@ -6,30 +6,26 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 
 import { CompanyBranchMultiselect } from "@/components/settings/users-permissions/company-branch-multiselect"
+import { RoleSelect } from "@/components/settings/users-permissions/role-select"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
 import { normalizeGroupCompanies, type Group } from "@/types/group"
 import type { AppUser } from "@/types/user"
-
-const selectClassName =
-  "h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
 
 const userFormSchema = z.object({
   name: z
@@ -251,27 +247,20 @@ export function UserFormDialog({
   }
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        className="flex w-full flex-col gap-0 p-0 sm:max-w-lg"
-      >
-        <SheetHeader className="shrink-0 border-b px-5 py-4 pr-12">
-          <SheetTitle className="text-base font-semibold">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="flex max-h-[min(720px,calc(100svh-2rem))] w-full max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
+        <DialogHeader className="shrink-0 border-b px-5 py-4 pr-12">
+          <DialogTitle className="text-base font-semibold">
             {isEdit ? "Edit User" : "Create User"}
-          </SheetTitle>
-          <SheetDescription>
-            Select a role first, then choose companies and branches from what
-            that role can access.
-          </SheetDescription>
-        </SheetHeader>
+          </DialogTitle>
+        </DialogHeader>
 
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
             className="flex min-h-0 flex-1 flex-col"
           >
-            <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto px-5 py-4 sm:grid-cols-2">
+            <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto px-5 py-4 sm:grid-cols-2 lg:grid-cols-3">
               <FormField
                 control={form.control}
                 name="name"
@@ -310,7 +299,7 @@ export function UserFormDialog({
                 control={form.control}
                 name="address"
                 render={({ field }) => (
-                  <FormItem className="sm:col-span-2">
+                  <FormItem>
                     <FormLabel>Address</FormLabel>
                     <FormControl>
                       <Input placeholder="Address" {...field} />
@@ -376,35 +365,23 @@ export function UserFormDialog({
                 control={form.control}
                 name="groupId"
                 render={({ field }) => (
-                  <FormItem className="sm:col-span-2">
+                  <FormItem className="sm:col-span-2 lg:col-span-3">
                     <FormLabel>
                       Role
                       <RequiredMark />
                     </FormLabel>
                     <FormControl>
-                      <select
-                        className={selectClassName}
+                      <RoleSelect
+                        active={open}
                         value={field.value}
-                        onChange={(event) =>
-                          handleRoleChange(event.target.value)
-                        }
+                        onChange={handleRoleChange}
                         onBlur={field.onBlur}
-                        name={field.name}
-                        ref={field.ref}
-                      >
-                        {roles.length === 0 ? (
-                          <option value="">No roles available</option>
-                        ) : null}
-                        {roles.map((role) => (
-                          <option key={role.id} value={role.id}>
-                            {role.name}
-                          </option>
-                        ))}
-                      </select>
+                        roles={roles}
+                        disabled={roles.length === 0}
+                        placeholder="Select role…"
+                        aria-invalid={Boolean(form.formState.errors.groupId)}
+                      />
                     </FormControl>
-                    <FormDescription>
-                      Permissions come from this role — no per-user overrides.
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -414,7 +391,7 @@ export function UserFormDialog({
                 control={form.control}
                 name="branchIds"
                 render={({ field }) => (
-                  <FormItem className="sm:col-span-2">
+                  <FormItem className="sm:col-span-2 lg:col-span-3">
                     <FormLabel>
                       Companies & branches
                       <RequiredMark />
@@ -448,11 +425,6 @@ export function UserFormDialog({
                         }
                       />
                     </FormControl>
-                    <FormDescription>
-                      {roleHasAccess
-                        ? "Select branches and head offices across companies allowed for this role."
-                        : "Edit the role to assign companies and branches first."}
-                    </FormDescription>
                     <FormMessage />
                     {form.formState.errors.companyIds &&
                     !form.formState.errors.branchIds ? (
@@ -465,7 +437,7 @@ export function UserFormDialog({
               />
             </div>
 
-            <SheetFooter className="shrink-0 flex-row justify-end border-t px-5 py-4">
+            <DialogFooter className="shrink-0 border-t px-5 py-4">
               <Button
                 type="button"
                 variant="outline"
@@ -476,10 +448,10 @@ export function UserFormDialog({
               <Button type="submit" disabled={roles.length === 0}>
                 {isEdit ? "Save changes" : "Save"}
               </Button>
-            </SheetFooter>
+            </DialogFooter>
           </form>
         </Form>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   )
 }

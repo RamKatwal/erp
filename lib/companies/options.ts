@@ -98,3 +98,32 @@ export function getBranchesByIds(branchIds: string[]): ResolvedBranchOption[] {
 
   return resolved
 }
+
+export type CompanyBranchGroup = {
+  companyId: string
+  companyName: string
+  branches: ResolvedBranchOption[]
+}
+
+/** Group resolved branches by company, preserving branch order within each company. */
+export function groupBranchesByCompany(
+  branchIds: string[]
+): CompanyBranchGroup[] {
+  const groups = new Map<string, CompanyBranchGroup>()
+
+  for (const branch of getBranchesByIds(branchIds)) {
+    const existing = groups.get(branch.companyId)
+    if (existing) {
+      existing.branches.push(branch)
+      continue
+    }
+
+    groups.set(branch.companyId, {
+      companyId: branch.companyId,
+      companyName: branch.companyName,
+      branches: [branch],
+    })
+  }
+
+  return Array.from(groups.values())
+}

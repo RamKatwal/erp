@@ -7,10 +7,13 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 
 import { adminNavigation } from "@/config/admin-navigation"
 import { AppBrand } from "@/components/app-brand"
-import { OrganizationSwitcher } from "@/components/layout/organization-switcher"
+import {
+  SidebarSubmenuItem,
+  SidebarSubmenuPanel,
+} from "@/components/motion/sidebar-submenu"
+import { OrganizationsNavList } from "@/components/layout/organization-switcher"
 import {
   Collapsible,
-  CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import {
@@ -23,9 +26,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
   SidebarMenuSubButton,
-  SidebarMenuSubItem,
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar"
@@ -94,25 +95,23 @@ function NavMenuItem({ item, pathname }: { item: NavItem; pathname: string }) {
           <ChevronRight className="ml-auto size-3.5! text-sidebar-foreground/40 transition-transform group-data-[open]/collapsible:rotate-90" />
         </CollapsibleTrigger>
 
-        <CollapsibleContent>
-          <SidebarMenuSub>
-            {item.children?.map((child) => {
-              const ChildIcon = child.icon
+        <SidebarSubmenuPanel open={expanded} panelKey={`${item.href}-submenu`}>
+          {item.children?.map((child, index) => {
+            const ChildIcon = child.icon
 
-              return (
-                <SidebarMenuSubItem key={child.href}>
-                  <SidebarMenuSubButton
-                    render={<Link href={child.href} />}
-                    isActive={isNavItemActive(pathname, child.href)}
-                  >
-                    <ChildIcon />
-                    <span>{child.title}</span>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-              )
-            })}
-          </SidebarMenuSub>
-        </CollapsibleContent>
+            return (
+              <SidebarSubmenuItem key={child.href} index={index}>
+                <SidebarMenuSubButton
+                  render={<Link href={child.href} />}
+                  isActive={isNavItemActive(pathname, child.href)}
+                >
+                  <ChildIcon />
+                  <span>{child.title}</span>
+                </SidebarMenuSubButton>
+              </SidebarSubmenuItem>
+            )
+          })}
+        </SidebarSubmenuPanel>
       </SidebarMenuItem>
     </Collapsible>
   )
@@ -130,28 +129,11 @@ function OrganizationsNavSection({
       <SidebarGroupLabel className="px-2 text-[11px] font-medium text-sidebar-foreground/50">
         Organizations
       </SidebarGroupLabel>
-      <SidebarGroupContent className="flex flex-col gap-1.5">
-        <div className="group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
-          <OrganizationSwitcher />
-        </div>
-        <SidebarMenu className="gap-0.5">
-          {item.children?.map((child) => {
-            const ChildIcon = child.icon
-
-            return (
-              <SidebarMenuItem key={child.href}>
-                <SidebarMenuButton
-                  render={<Link href={child.href} />}
-                  tooltip={child.title}
-                  isActive={isNavItemActive(pathname, child.href)}
-                >
-                  <ChildIcon />
-                  <span>{child.title}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            )
-          })}
-        </SidebarMenu>
+      <SidebarGroupContent>
+        <OrganizationsNavList
+          navItems={item.children ?? []}
+          pathname={pathname}
+        />
       </SidebarGroupContent>
     </SidebarGroup>
   )
