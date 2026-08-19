@@ -55,9 +55,9 @@ export function getDataTableBodyCellClass(
 ) {
   return cn(
     rowSizeMinHeightClass[rowSize],
-    "border-r border-border px-3 py-2 last:border-r-0",
+    "border-r border-border px-3 last:border-r-0",
     wrap
-      ? "align-top whitespace-normal"
+      ? "align-middle whitespace-normal"
       : "align-middle whitespace-nowrap",
     rowSize === "xl" && !wrap ? "pt-4" : null
   )
