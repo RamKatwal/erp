@@ -21,7 +21,7 @@ export function AdminShell({ children }: AdminShellProps) {
           className="h-svh overflow-hidden"
           style={
             {
-              "--sidebar-width": "16.5rem",
+              "--sidebar-width": "15rem",
             } as React.CSSProperties
           }
         >

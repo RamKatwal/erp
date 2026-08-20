@@ -127,6 +127,7 @@ export function DataTable<TData, TValue>({
 }
 
 export { DataTableView } from "./data-table-view"
+export { DataTableCard } from "./data-table-card"
 export { DataTableColumnHeader } from "./data-table-column-header"
 export { DataTablePagination } from "./data-table-pagination"
 export { DataTableToolbar } from "./data-table-toolbar"
@@ -136,4 +137,8 @@ export {
   useDataTableFullscreen,
 } from "./use-data-table-fullscreen"
 export type { DataTableRowSize } from "./data-table-styles"
+export type {
+  DataTableFilterOption,
+  DataTableFilters,
+} from "./data-table-toolbar"
 export type { ColumnDef }

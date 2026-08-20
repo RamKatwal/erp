@@ -2,13 +2,12 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { PlusIcon } from "lucide-react"
 
 import {
   type DataTableRowSize,
-  dataTableFullscreenClassName,
-  DataTableToolbar,
-  DataTableView,
+  DataTableCard,
   useDataTable,
   useDataTableFullscreen,
 } from "@/components/data-table/data-table"
@@ -20,9 +19,9 @@ import {
   readGroupConfiguration,
 } from "@/lib/groups/storage"
 import { mockGroups } from "@/lib/mock/groups"
-import { cn } from "@/lib/utils"
 
 export function GroupManagementPage() {
+  const router = useRouter()
   const [groups, setGroups] = React.useState(mockGroups)
   const [rowSize, setRowSize] = React.useState<DataTableRowSize>("md")
   const { isFullscreen, toggleFullscreen } = useDataTableFullscreen()
@@ -73,30 +72,19 @@ export function GroupManagementPage() {
         }
       />
 
-      <div
-        className={cn(
-          "overflow-hidden rounded-xl border bg-card shadow-xs",
-          dataTableFullscreenClassName(isFullscreen)
-        )}
-      >
-        <div className="flex flex-col gap-3 border-b px-3 py-2.5 sm:flex-row sm:items-center sm:justify-end">
-          <DataTableToolbar
-            table={table}
-            searchPlaceholder="Search roles..."
-            rowSize={rowSize}
-            onRowSizeChange={setRowSize}
-            isFullscreen={isFullscreen}
-            onToggleFullscreen={toggleFullscreen}
-          />
-        </div>
-
-        <DataTableView
-          table={table}
-          columnCount={groupColumns.length}
-          rowSize={rowSize}
-          emptyMessage="No roles found."
-        />
-      </div>
+      <DataTableCard
+        table={table}
+        columnCount={groupColumns.length}
+        searchPlaceholder="Search roles..."
+        rowSize={rowSize}
+        onRowSizeChange={setRowSize}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={toggleFullscreen}
+        emptyMessage="No roles found."
+        onRowClick={(group) =>
+          router.push(`/configurations/users/group-management/${group.id}`)
+        }
+      />
     </div>
   )
 }

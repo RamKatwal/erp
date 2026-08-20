@@ -33,6 +33,18 @@ import {
   dataTableRowSizes,
 } from "./data-table-styles"
 
+export type DataTableFilterOption = {
+  value: string
+  label: string
+  count?: number
+}
+
+export type DataTableFilters = {
+  value: string
+  options: DataTableFilterOption[]
+  onValueChange: (value: string) => void
+}
+
 type DataTableToolbarProps<TData> = {
   table: Table<TData>
   searchPlaceholder?: string
@@ -41,6 +53,7 @@ type DataTableToolbarProps<TData> = {
   onRowSizeChange?: (size: DataTableRowSize) => void
   isFullscreen?: boolean
   onToggleFullscreen?: () => void
+  filters?: DataTableFilters
 }
 
 export function DataTableToolbar<TData>({
@@ -51,8 +64,12 @@ export function DataTableToolbar<TData>({
   onRowSizeChange,
   isFullscreen = false,
   onToggleFullscreen,
+  filters,
 }: DataTableToolbarProps<TData>) {
   const globalFilter = (table.getState().globalFilter as string) ?? ""
+  const isFiltered = Boolean(
+    filters && filters.value !== filters.options[0]?.value
+  )
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
@@ -126,10 +143,54 @@ export function DataTableToolbar<TData>({
           </TooltipContent>
         </Tooltip>
 
-        <Button variant="outline" size="sm">
-          <FilterIcon />
-          Filter
-        </Button>
+        {filters ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  aria-label="Filter"
+                  aria-pressed={isFiltered}
+                  className={cn(isFiltered && "border-foreground/20 bg-muted")}
+                />
+              }
+            >
+              <FilterIcon />
+              Filter
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-44">
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>Filter</DropdownMenuLabel>
+                {filters.options.map((option) => (
+                  <DropdownMenuItem
+                    key={option.value}
+                    onClick={() => filters.onValueChange(option.value)}
+                  >
+                    <span>{option.label}</span>
+                    <span className="ml-auto flex items-center gap-2">
+                      {option.count != null ? (
+                        <span className="text-xs text-muted-foreground tabular-nums">
+                          {option.count}
+                        </span>
+                      ) : null}
+                      {filters.value === option.value ? (
+                        <CheckIcon className="size-4" />
+                      ) : (
+                        <span className="size-4" aria-hidden />
+                      )}
+                    </span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Button variant="outline" size="sm">
+            <FilterIcon />
+            Filter
+          </Button>
+        )}
       </ButtonGroup>
     </div>
   )

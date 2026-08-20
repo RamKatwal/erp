@@ -6,14 +6,15 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 
 import { Button } from "@/components/ui/button"
+import { Dialog } from "@/components/ui/dialog"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+  FormDialogBody,
+  FormDialogContent,
+  FormDialogDescription,
+  FormDialogFooter,
+  FormDialogHeader,
+  FormDialogTitle,
+} from "@/components/ui/form-dialog"
 import {
   Form,
   FormControl,
@@ -133,24 +134,24 @@ export function BranchFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[min(720px,calc(100svh-2rem))] w-full max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
-        <DialogHeader className="shrink-0 border-b px-5 py-4 pr-12">
-          <DialogTitle className="text-base font-semibold">
+      <FormDialogContent size="md">
+        <FormDialogHeader>
+          <FormDialogTitle>
             {isEdit ? "Edit Branch" : "Add Branch"}
-          </DialogTitle>
-          <DialogDescription>
+          </FormDialogTitle>
+          <FormDialogDescription>
             {isEdit
               ? "Update branch details. Branch code cannot be changed."
               : "Create a new branch. It will be Active by default."}
-          </DialogDescription>
-        </DialogHeader>
+          </FormDialogDescription>
+        </FormDialogHeader>
 
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
             className="flex min-h-0 flex-1 flex-col"
           >
-            <div className="flex flex-col gap-4 overflow-y-auto px-5 py-4">
+            <FormDialogBody>
               <FormField
                 control={form.control}
                 name="name"
@@ -238,9 +239,9 @@ export function BranchFormDialog({
                   )}
                 />
               </div>
-            </div>
+            </FormDialogBody>
 
-            <DialogFooter className="shrink-0 border-t px-5 py-4">
+            <FormDialogFooter>
               <Button
                 type="button"
                 variant="outline"
@@ -251,10 +252,10 @@ export function BranchFormDialog({
               <Button type="submit">
                 {isEdit ? "Save changes" : "Add Branch"}
               </Button>
-            </DialogFooter>
+            </FormDialogFooter>
           </form>
         </Form>
-      </DialogContent>
+      </FormDialogContent>
     </Dialog>
   )
 }

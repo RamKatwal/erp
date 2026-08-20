@@ -8,6 +8,7 @@ import {
 import type { OnboardingPlanSelection } from "@/lib/onboarding/storage"
 import type { OnboardingEntitlement } from "@/lib/onboarding/session-types"
 import type { BillingInterval, Subscription } from "@/types/subscription"
+import { normalizeDomain } from "@/lib/brand/favicon"
 
 export const ENTITLEMENT_STORAGE_KEY = "providhy_entitlement"
 export const WORKSPACE_SUBSCRIPTION_STORAGE_KEY = "providhy_workspace_subscription"
@@ -44,7 +45,7 @@ function periodToInterval(period: PaymentPeriod): BillingInterval {
 
 export function entitlementToSubscription(
   entitlement: OnboardingEntitlement,
-  company: { id: string; name: string }
+  company: { id: string; name: string; website?: string | null }
 ): Subscription {
   const activated = new Date(entitlement.activatedAt)
   const periodEnd = new Date(activated)
@@ -71,7 +72,9 @@ export function entitlementToSubscription(
     id: entitlement.subscriptionId,
     companyId: company.id,
     companyName: company.name,
-    companyLogoUrl: null,
+    companyDomain: company.website
+      ? normalizeDomain(company.website)
+      : null,
     planId: entitlement.planId,
     planName: entitlement.planName,
     planTier: entitlement.planName,

@@ -32,7 +32,6 @@ export type SubscriptionMember = {
   id: string
   name: string
   initials: string
-  color: string
 }
 
 export type SubscriptionPaymentMethod = {
@@ -62,7 +61,8 @@ export type Subscription = {
   id: string
   companyId: string
   companyName: string
-  companyLogoUrl?: string | null
+  /** Company website domain for Google favicon logos (e.g. stripe.com). */
+  companyDomain?: string | null
   planId: string
   planName: string
   planTier: string

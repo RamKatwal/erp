@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { NativeSelect } from "@/components/ui/native-select"
 import { Textarea } from "@/components/ui/textarea"
 import { getCurrentUser } from "@/lib/auth/current-user"
 import { cn } from "@/lib/utils"
@@ -47,7 +48,7 @@ export function ProfileSettingsPanel({ className }: ProfileSettingsPanelProps) {
       </SettingsField>
 
       <SettingsField label="Full name" description="Your display name in the workspace.">
-        <Input defaultValue={currentUser.name} className="h-9" />
+        <Input defaultValue={currentUser.name} />
       </SettingsField>
 
       <SettingsField
@@ -55,7 +56,7 @@ export function ProfileSettingsPanel({ className }: ProfileSettingsPanelProps) {
         description="Used for sign-in and notifications."
         badge={<Badge className="bg-success/10 text-success">Verified</Badge>}
       >
-        <Input defaultValue={currentUser.email} type="email" className="h-9" />
+        <Input defaultValue={currentUser.email} type="email" />
       </SettingsField>
 
       <SettingsField label="Username" description="Your unique handle across the workspace.">
@@ -63,7 +64,7 @@ export function ProfileSettingsPanel({ className }: ProfileSettingsPanelProps) {
           <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
             @
           </span>
-          <Input defaultValue={username} className="h-9 pl-7" />
+          <Input defaultValue={username} className="pl-7" />
         </div>
       </SettingsField>
 
@@ -76,25 +77,25 @@ export function ProfileSettingsPanel({ className }: ProfileSettingsPanelProps) {
         </div>
 
         <SettingsField label="Role" description="Your position within the organization.">
-          <select className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30">
+          <NativeSelect defaultValue="Staff Product Lead">
             <option>Staff Product Lead</option>
             <option>Administrator</option>
             <option>Accountant</option>
             <option>Sales Manager</option>
-          </select>
+          </NativeSelect>
         </SettingsField>
 
         <SettingsField label="Time zone" description="Used for scheduling and timestamps.">
-          <select className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30">
+          <NativeSelect defaultValue="(GMT+5:45) Kathmandu">
             <option>(GMT-5) New York</option>
             <option>(GMT+0) London</option>
             <option>(GMT+5:45) Kathmandu</option>
             <option>(GMT+8) Singapore</option>
-          </select>
+          </NativeSelect>
         </SettingsField>
 
         <SettingsField label="Website" description="Optional link to your personal site.">
-          <Input placeholder="https://" className="h-9" />
+          <Input placeholder="https://" />
         </SettingsField>
       </div>
 

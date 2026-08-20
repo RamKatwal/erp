@@ -5,9 +5,7 @@ import { PlusIcon } from "lucide-react"
 
 import {
   type DataTableRowSize,
-  dataTableFullscreenClassName,
-  DataTableToolbar,
-  DataTableView,
+  DataTableCard,
   useDataTable,
   useDataTableFullscreen,
 } from "@/components/data-table/data-table"
@@ -30,7 +28,6 @@ import {
   saveUsers,
   todayIsoDate,
 } from "@/lib/users/storage"
-import { cn } from "@/lib/utils"
 import { normalizeGroupCompanies, type Group } from "@/types/group"
 import type { AppUser } from "@/types/user"
 
@@ -207,31 +204,17 @@ export function UserManagementPage({
         }
       />
 
-      <div
-        className={cn(
-          "overflow-hidden rounded-xl border bg-card shadow-xs",
-          dataTableFullscreenClassName(isFullscreen)
-        )}
-      >
-        <div className="flex flex-col gap-3 border-b px-3 py-2.5 sm:flex-row sm:items-center sm:justify-end">
-          <DataTableToolbar
-            table={table}
-            searchPlaceholder="Search users..."
-            rowSize={rowSize}
-            onRowSizeChange={setRowSize}
-            isFullscreen={isFullscreen}
-            onToggleFullscreen={toggleFullscreen}
-          />
-        </div>
-
-        <DataTableView
-          table={table}
-          columnCount={columns.length}
-          rowSize={rowSize}
-          emptyMessage="No users found."
-          onRowClick={openView}
-        />
-      </div>
+      <DataTableCard
+        table={table}
+        columnCount={columns.length}
+        searchPlaceholder="Search users..."
+        rowSize={rowSize}
+        onRowSizeChange={setRowSize}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={toggleFullscreen}
+        emptyMessage="No users found."
+        onRowClick={openView}
+      />
 
       <UserFormDialog
         open={dialogOpen}

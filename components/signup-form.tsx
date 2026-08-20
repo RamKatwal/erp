@@ -53,7 +53,6 @@ const FormSchema = z
     path: ["confirmPassword"],
   })
 
-const inputClassName = "h-10 text-sm md:text-sm"
 
 export default function SignupForm() {
   const router = useRouter()
@@ -128,7 +127,6 @@ export default function SignupForm() {
                       id="fullName"
                       placeholder="Enter full name"
                       autoComplete="name"
-                      className={inputClassName}
                       {...field}
                     />
                   </FormControl>
@@ -148,7 +146,6 @@ export default function SignupForm() {
                       type="tel"
                       placeholder="+977-9877777777"
                       autoComplete="tel"
-                      className={inputClassName}
                       {...field}
                     />
                   </FormControl>
@@ -168,7 +165,6 @@ export default function SignupForm() {
                       type="email"
                       placeholder="name@example.com"
                       autoComplete="email"
-                      className={inputClassName}
                       {...field}
                     />
                   </FormControl>
@@ -187,7 +183,6 @@ export default function SignupForm() {
                       id="username"
                       placeholder="Enter username"
                       autoComplete="username"
-                      className={inputClassName}
                       {...field}
                     />
                   </FormControl>
@@ -209,7 +204,7 @@ export default function SignupForm() {
                         type={showPassword ? "text" : "password"}
                         placeholder="Create password"
                         autoComplete="new-password"
-                        className={cn(inputClassName, "peer pr-9")}
+                        className="peer pr-9"
                       />
                       <button
                         type="button"
@@ -250,7 +245,7 @@ export default function SignupForm() {
                         type={showConfirmPassword ? "text" : "password"}
                         placeholder="Confirm Password"
                         autoComplete="new-password"
-                        className={cn(inputClassName, "peer pr-9")}
+                        className="peer pr-9"
                       />
                       <button
                         type="button"

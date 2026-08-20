@@ -39,13 +39,7 @@ export function createPermissionGroupColumns({
         <DataTableColumnHeader column={column} title="Role Name" />
       ),
       cell: ({ row }) => (
-        <button
-          type="button"
-          className="font-medium text-primary hover:underline"
-          onClick={() => onEdit(row.original)}
-        >
-          {row.getValue("name")}
-        </button>
+        <span className="font-medium">{row.getValue("name")}</span>
       ),
     },
     {

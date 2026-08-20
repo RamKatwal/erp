@@ -1,27 +1,10 @@
 import type { Subscription } from "@/types/subscription"
 
-const memberColors = [
-  "bg-violet-500 text-white",
-  "bg-sky-500 text-white",
-  "bg-emerald-500 text-white",
-  "bg-amber-500 text-white",
-  "bg-rose-500 text-white",
-  "bg-indigo-500 text-white",
-  "bg-teal-500 text-white",
-  "bg-fuchsia-500 text-white",
-] as const
-
-function member(
-  id: string,
-  name: string,
-  initials: string,
-  colorIndex: number
-) {
+function member(id: string, name: string, initials: string) {
   return {
     id,
     name,
     initials,
-    color: memberColors[colorIndex % memberColors.length],
   }
 }
 
@@ -30,7 +13,7 @@ export const mockSubscriptions: Subscription[] = [
     id: "SUB-10294",
     companyId: "comp_10294",
     companyName: "Omniverse",
-    companyLogoUrl: "/omniverse-logo.png",
+    companyDomain: "nvidia.com",
     planId: "plan_ent_01",
     planName: "Enterprise Plan",
     planTier: "Enterprise Custom",
@@ -62,11 +45,11 @@ export const mockSubscriptions: Subscription[] = [
       "Audit Logs",
     ],
     members: [
-      member("u1", "Asha Thapa", "AT", 0),
-      member("u2", "Bikash Rai", "BR", 1),
-      member("u3", "Chitra Gurung", "CG", 2),
-      member("u4", "Deepa Shrestha", "DS", 3),
-      member("u5", "Eshan Magar", "EM", 4),
+      member("u1", "Asha Thapa", "AT"),
+      member("u2", "Bikash Rai", "BR"),
+      member("u3", "Chitra Gurung", "CG"),
+      member("u4", "Deepa Shrestha", "DS"),
+      member("u5", "Eshan Magar", "EM"),
     ],
     assignedBranches: [
       {
@@ -123,7 +106,7 @@ export const mockSubscriptions: Subscription[] = [
     id: "SUB-10881",
     companyId: "comp_10881",
     companyName: "Himalayan Traders",
-    companyLogoUrl: null,
+    companyDomain: "himalaya.com",
     planId: "plan_std_01",
     planName: "Standard Plan",
     planTier: "Standard",
@@ -140,7 +123,7 @@ export const mockSubscriptions: Subscription[] = [
     createdAt: "2026-07-20",
     periodEnd: "2026-08-19",
     nextBillingDate: "2026-08-19",
-    remainingDays: 8,
+    remainingDays: 5,
     autoRenew: false,
     paymentMethod: null,
     features: [
@@ -150,9 +133,9 @@ export const mockSubscriptions: Subscription[] = [
       "Email Support",
     ],
     members: [
-      member("u6", "Farah Khan", "FK", 5),
-      member("u7", "Gopal Adhikari", "GA", 6),
-      member("u8", "Hira Lama", "HL", 7),
+      member("u6", "Farah Khan", "FK"),
+      member("u7", "Gopal Adhikari", "GA"),
+      member("u8", "Hira Lama", "HL"),
     ],
     assignedBranches: [
       {
@@ -174,7 +157,7 @@ export const mockSubscriptions: Subscription[] = [
     id: "SUB-11002",
     companyId: "comp_11002",
     companyName: "Everest Retail Group",
-    companyLogoUrl: "/abc-company-logo.png",
+    companyDomain: "stripe.com",
     planId: "plan_del_01",
     planName: "De-lite Plan",
     planTier: "De-lite",
@@ -204,10 +187,10 @@ export const mockSubscriptions: Subscription[] = [
       "Standard Reports",
     ],
     members: [
-      member("u9", "Indira Basnet", "IB", 0),
-      member("u10", "Jivan KC", "JK", 1),
-      member("u11", "Kabita Poudel", "KP", 2),
-      member("u12", "Laxman Yadav", "LY", 3),
+      member("u9", "Indira Basnet", "IB"),
+      member("u10", "Jivan KC", "JK"),
+      member("u11", "Kabita Poudel", "KP"),
+      member("u12", "Laxman Yadav", "LY"),
     ],
     assignedBranches: [
       {
@@ -282,7 +265,7 @@ export const mockSubscriptions: Subscription[] = [
     id: "SUB-11140",
     companyId: "comp_11140",
     companyName: "Nova Logistics",
-    companyLogoUrl: null,
+    companyDomain: "novalogistics.io",
     planId: "plan_std_01",
     planName: "Standard Plan",
     planTier: "Standard",
@@ -342,4 +325,10 @@ export function getSubscriptionById(
   subscriptionId: string
 ): Subscription | undefined {
   return mockSubscriptions.find((item) => item.id === subscriptionId)
+}
+
+export function getSubscriptionByCompanyId(
+  companyId: string
+): Subscription | undefined {
+  return mockSubscriptions.find((item) => item.companyId === companyId)
 }

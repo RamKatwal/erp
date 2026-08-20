@@ -1,5 +1,3 @@
-import Image from "next/image"
-
 import { AppBrand } from "@/components/app-brand"
 import { cn } from "@/lib/utils"
 
@@ -32,21 +30,6 @@ export default function AuthMarketingPanel({
           Organize finances, reduce errors, and gain actionable insights to make
           smarter decisions for your business growth.
         </p>
-      </div>
-
-      {/* Bottom-right preview — oversized so overflow-hidden clips edges */}
-      <div className="pointer-events-none absolute top-[48%] -right-[12%] left-16 lg:left-30">
-        <Image
-          src="/images/signup-dashboard.png"
-          alt="Omniverse dashboard preview"
-          width={2048}
-          height={1056}
-          quality={100}
-          sizes="(min-width: 768px) 55vw, 100vw"
-          className="h-auto w-[125%] max-w-none object-cover object-left-top drop-shadow-2xl"
-          priority
-          unoptimized
-        />
       </div>
     </div>
   )

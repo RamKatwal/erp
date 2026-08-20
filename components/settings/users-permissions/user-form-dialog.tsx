@@ -8,13 +8,14 @@ import { z } from "zod"
 import { CompanyBranchMultiselect } from "@/components/settings/users-permissions/company-branch-multiselect"
 import { RoleSelect } from "@/components/settings/users-permissions/role-select"
 import { Button } from "@/components/ui/button"
+import { Dialog } from "@/components/ui/dialog"
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+  FormDialogBody,
+  FormDialogContent,
+  FormDialogFooter,
+  FormDialogHeader,
+  FormDialogTitle,
+} from "@/components/ui/form-dialog"
 import {
   Form,
   FormControl,
@@ -248,19 +249,19 @@ export function UserFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[min(720px,calc(100svh-2rem))] w-full max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
-        <DialogHeader className="shrink-0 border-b px-5 py-4 pr-12">
-          <DialogTitle className="text-base font-semibold">
+      <FormDialogContent size="xl">
+        <FormDialogHeader>
+          <FormDialogTitle>
             {isEdit ? "Edit User" : "Create User"}
-          </DialogTitle>
-        </DialogHeader>
+          </FormDialogTitle>
+        </FormDialogHeader>
 
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
             className="flex min-h-0 flex-1 flex-col"
           >
-            <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto px-5 py-4 sm:grid-cols-2 lg:grid-cols-3">
+            <FormDialogBody className="grid min-h-0 flex-1 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               <FormField
                 control={form.control}
                 name="name"
@@ -435,9 +436,9 @@ export function UserFormDialog({
                   </FormItem>
                 )}
               />
-            </div>
+            </FormDialogBody>
 
-            <DialogFooter className="shrink-0 border-t px-5 py-4">
+            <FormDialogFooter>
               <Button
                 type="button"
                 variant="outline"
@@ -448,10 +449,10 @@ export function UserFormDialog({
               <Button type="submit" disabled={roles.length === 0}>
                 {isEdit ? "Save changes" : "Save"}
               </Button>
-            </DialogFooter>
+            </FormDialogFooter>
           </form>
         </Form>
-      </DialogContent>
+      </FormDialogContent>
     </Dialog>
   )
 }

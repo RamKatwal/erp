@@ -263,19 +263,19 @@ export const PAYMENT_METHODS: {
   id: PaymentMethodId
   name: string
   description: string
-  logoSrc: string
+  domain: string
 }[] = [
   {
     id: "esewa",
     name: "eSewa",
     description: "eSewa",
-    logoSrc: "/images/payment/esewa.png",
+    domain: "esewa.com.np",
   },
   {
     id: "fonepay",
     name: "Fonepay",
     description: "Fonepay",
-    logoSrc: "/images/payment/fonepay.png",
+    domain: "fonepay.com",
   },
 ]
 

@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useRouter } from "next/navigation"
 import { PlusIcon } from "lucide-react"
 
 import {
@@ -10,17 +11,13 @@ import {
 import { subscriptionColumns } from "@/components/admin/subscriptions/subscription-columns"
 import {
   type DataTableRowSize,
-  dataTableFullscreenClassName,
-  DataTableToolbar,
-  DataTableView,
+  DataTableCard,
   useDataTable,
   useDataTableFullscreen,
 } from "@/components/data-table/data-table"
 import { PageHeader } from "@/components/layout/page-header"
 import { Button } from "@/components/ui/button"
-import { FilterTabs } from "@/components/ui/filter-tabs"
 import { mockSubscriptions } from "@/lib/mock/subscriptions"
-import { cn } from "@/lib/utils"
 import {
   formatPaymentMethodSummary,
   subscriptionStatusLabels,
@@ -36,6 +33,7 @@ const statusFilterTabs: StatusFilter[] = [
   "trialing",
   "pending",
   "past_due",
+  "canceled",
 ]
 
 const statusFilterLabels: Record<StatusFilter, string> = {
@@ -44,6 +42,7 @@ const statusFilterLabels: Record<StatusFilter, string> = {
 }
 
 export function SubscriptionsPage() {
+  const router = useRouter()
   const [subscriptions, setSubscriptions] =
     React.useState<Subscription[]>(mockSubscriptions)
   const [activeStatus, setActiveStatus] = React.useState<StatusFilter>("all")
@@ -59,7 +58,7 @@ export function SubscriptionsPage() {
     [activeStatus, subscriptions]
   )
 
-  const statusTabItems = React.useMemo(
+  const statusFilterOptions = React.useMemo(
     () =>
       statusFilterTabs.map((status) => ({
         value: status,
@@ -102,7 +101,7 @@ export function SubscriptionsPage() {
       id: `SUB-${Math.floor(10000 + Math.random() * 90000)}`,
       companyId: `comp_${Date.now()}`,
       companyName: values.companyName,
-      companyLogoUrl: null,
+      companyDomain: null,
       planId: values.planId,
       planName,
       planTier: planName.replace(" Plan", ""),
@@ -145,43 +144,31 @@ export function SubscriptionsPage() {
         }
       />
 
-      <div
-        className={cn(
-          "overflow-hidden rounded-xl border bg-card shadow-xs",
-          dataTableFullscreenClassName(isFullscreen)
-        )}
-      >
-        <div className="flex flex-col gap-3 border-b px-3 py-2.5 lg:flex-row lg:items-center lg:justify-between">
-          <FilterTabs
-            items={statusTabItems}
-            value={activeStatus}
-            onValueChange={(status) => {
-              setActiveStatus(status)
-              table.setPageIndex(0)
-            }}
-          />
-
-          <DataTableToolbar
-            table={table}
-            searchPlaceholder="Search subscriptions..."
-            rowSize={rowSize}
-            onRowSizeChange={setRowSize}
-            isFullscreen={isFullscreen}
-            onToggleFullscreen={toggleFullscreen}
-          />
-        </div>
-
-        <DataTableView
-          table={table}
-          columnCount={subscriptionColumns.length}
-          rowSize={rowSize}
-          emptyMessage={
-            activeStatus === "all"
-              ? "No subscriptions found."
-              : `No ${statusFilterLabels[activeStatus].toLowerCase()} subscriptions found.`
-          }
-        />
-      </div>
+      <DataTableCard
+        table={table}
+        columnCount={subscriptionColumns.length}
+        searchPlaceholder="Search subscriptions..."
+        rowSize={rowSize}
+        onRowSizeChange={setRowSize}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={toggleFullscreen}
+        emptyMessage={
+          activeStatus === "all"
+            ? "No subscriptions found."
+            : `No ${statusFilterLabels[activeStatus].toLowerCase()} subscriptions found.`
+        }
+        onRowClick={(subscription) =>
+          router.push(`/admin/subscriptions/${subscription.id}`)
+        }
+        filters={{
+          value: activeStatus,
+          options: statusFilterOptions,
+          onValueChange: (status) => {
+            setActiveStatus(status as StatusFilter)
+            table.setPageIndex(0)
+          },
+        }}
+      />
 
       <AddSubscriptionDialog
         open={dialogOpen}

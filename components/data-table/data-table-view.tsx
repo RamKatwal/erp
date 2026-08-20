@@ -73,11 +73,17 @@ export function DataTableView<TData>({
           </thead>
           <tbody>
             {table.getRowModel().rows.length ? (
-              table.getRowModel().rows.map((row) => (
+              table.getRowModel().rows.map((row) => {
+                const isInteractive = Boolean(onRowClick) || row.getCanSelect()
+
+                return (
                 <tr
                   key={row.id}
                   data-state={row.getIsSelected() ? "selected" : undefined}
-                  className={dataTableClassNames.bodyRow}
+                  className={cn(
+                    dataTableClassNames.bodyRow,
+                    isInteractive && "cursor-pointer"
+                  )}
                   onClick={(event) => {
                     const target = event.target as HTMLElement
                     if (target.closest(interactiveSelector)) return
@@ -85,7 +91,9 @@ export function DataTableView<TData>({
                       onRowClick(row.original)
                       return
                     }
-                    row.toggleSelected()
+                    if (row.getCanSelect()) {
+                      row.toggleSelected()
+                    }
                   }}
                 >
                   {row.getVisibleCells().map((cell) => (
@@ -107,7 +115,8 @@ export function DataTableView<TData>({
                     </td>
                   ))}
                 </tr>
-              ))
+                )
+              })
             ) : (
               <tr>
                 <td

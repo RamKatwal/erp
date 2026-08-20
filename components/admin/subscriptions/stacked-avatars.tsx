@@ -11,7 +11,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { cn } from "@/lib/utils"
 import type {
   SubscriptionAssignedBranch,
   SubscriptionMember,
@@ -19,14 +18,14 @@ import type {
 
 const MAX_VISIBLE_AVATARS = 3
 
-const branchAvatarColors = [
-  "bg-sky-500 text-white",
-  "bg-violet-500 text-white",
-  "bg-emerald-500 text-white",
-  "bg-amber-500 text-white",
-  "bg-rose-500 text-white",
-  "bg-indigo-500 text-white",
-] as const
+const avatarFallbackClass =
+  "bg-muted text-[10px] font-medium text-muted-foreground"
+
+type StackedAvatarItem = {
+  key: string
+  initials: string
+  title: string
+}
 
 function branchInitials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean)
@@ -40,7 +39,7 @@ export function StackedAvatars({
   total,
   emptyLabel = "—",
 }: {
-  items: { key: string; initials: string; color: string; title: string }[]
+  items: StackedAvatarItem[]
   total: number
   emptyLabel?: string
 }) {
@@ -65,14 +64,12 @@ export function StackedAvatars({
               render={
                 <Avatar
                   size="sm"
-                  className="cursor-default"
+                  className="cursor-default after:border-border"
                   aria-label={item.title}
                 />
               }
             >
-              <AvatarFallback
-                className={cn("text-[10px] font-medium", item.color)}
-              >
+              <AvatarFallback className={avatarFallbackClass}>
                 {item.initials}
               </AvatarFallback>
             </TooltipTrigger>
@@ -84,7 +81,7 @@ export function StackedAvatars({
             <TooltipTrigger
               render={
                 <AvatarGroupCount
-                  className="size-6 cursor-default text-[10px] font-medium"
+                  className="size-6 cursor-default border border-border bg-muted text-[10px] font-medium text-muted-foreground"
                   aria-label={remainingLabel}
                 />
               }
@@ -102,11 +99,10 @@ export function StackedAvatars({
 export function userAvatarItems(
   members: SubscriptionMember[],
   usersUsed: number
-) {
+): StackedAvatarItem[] {
   const fromMembers = members.map((member) => ({
     key: member.id,
     initials: member.initials,
-    color: member.color,
     title: member.name,
   }))
 
@@ -117,17 +113,17 @@ export function userAvatarItems(
     (_, index) => ({
       key: `user-${index}`,
       initials: `U${index + 1}`,
-      color: branchAvatarColors[index % branchAvatarColors.length],
       title: `User ${index + 1}`,
     })
   )
 }
 
-export function branchAvatarItems(branches: SubscriptionAssignedBranch[]) {
-  return branches.map((branch, index) => ({
+export function branchAvatarItems(
+  branches: SubscriptionAssignedBranch[]
+): StackedAvatarItem[] {
+  return branches.map((branch) => ({
     key: branch.branchId,
     initials: branchInitials(branch.branchName),
-    color: branchAvatarColors[index % branchAvatarColors.length],
     title: branch.branchName,
   }))
 }

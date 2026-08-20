@@ -6,14 +6,15 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 
 import { Button } from "@/components/ui/button"
+import { Dialog } from "@/components/ui/dialog"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+  FormDialogBody,
+  FormDialogContent,
+  FormDialogDescription,
+  FormDialogFooter,
+  FormDialogHeader,
+  FormDialogTitle,
+} from "@/components/ui/form-dialog"
 import {
   Form,
   FormControl,
@@ -23,9 +24,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-
-const selectClassName =
-  "border-input bg-background focus-visible:border-ring focus-visible:ring-ring/50 h-8 w-full rounded-lg border px-2.5 text-sm outline-none focus-visible:ring-[3px]"
+import { NativeSelect } from "@/components/ui/native-select"
 
 const addSubscriptionSchema = z.object({
   companyName: z
@@ -81,23 +80,21 @@ export function AddSubscriptionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[min(720px,calc(100svh-2rem))] w-full max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-md">
-        <DialogHeader className="shrink-0 border-b px-5 py-4 pr-12">
-          <DialogTitle className="text-base font-semibold">
-            Add / Upgrade Subscription
-          </DialogTitle>
-          <DialogDescription>
+      <FormDialogContent size="sm">
+        <FormDialogHeader>
+          <FormDialogTitle>Add / Upgrade Subscription</FormDialogTitle>
+          <FormDialogDescription>
             Create or upgrade a company subscription. Billing is not charged
             until payment is confirmed.
-          </DialogDescription>
-        </DialogHeader>
+          </FormDialogDescription>
+        </FormDialogHeader>
 
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
             className="flex min-h-0 flex-1 flex-col"
           >
-            <div className="flex flex-col gap-4 overflow-y-auto px-5 py-4">
+            <FormDialogBody>
               <FormField
                 control={form.control}
                 name="companyName"
@@ -119,13 +116,13 @@ export function AddSubscriptionDialog({
                   <FormItem>
                     <FormLabel>Plan</FormLabel>
                     <FormControl>
-                      <select className={selectClassName} {...field}>
+                      <NativeSelect {...field}>
                         {PLAN_OPTIONS.map((plan) => (
                           <option key={plan.id} value={plan.id}>
                             {plan.name}
                           </option>
                         ))}
-                      </select>
+                      </NativeSelect>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -139,18 +136,18 @@ export function AddSubscriptionDialog({
                   <FormItem>
                     <FormLabel>Billing interval</FormLabel>
                     <FormControl>
-                      <select className={selectClassName} {...field}>
+                      <NativeSelect {...field}>
                         <option value="month">Monthly</option>
                         <option value="year">Annual</option>
-                      </select>
+                      </NativeSelect>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
+            </FormDialogBody>
 
-            <DialogFooter className="shrink-0 border-t px-5 py-4">
+            <FormDialogFooter>
               <Button
                 type="button"
                 variant="outline"
@@ -159,10 +156,10 @@ export function AddSubscriptionDialog({
                 Cancel
               </Button>
               <Button type="submit">Save subscription</Button>
-            </DialogFooter>
+            </FormDialogFooter>
           </form>
         </Form>
-      </DialogContent>
+      </FormDialogContent>
     </Dialog>
   )
 }

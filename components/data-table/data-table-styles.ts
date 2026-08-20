@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils"
 
-/** Carbon data table row sizes — https://carbondesignsystem.com/components/data-table/style/ */
+/** Row density tokens. Medium matches the invoices table (text-sm, ~48px). */
 export type DataTableRowSize = "xs" | "sm" | "md" | "lg" | "xl"
 
 export const dataTableRowSizes: {
@@ -14,38 +14,39 @@ export const dataTableRowSizes: {
   { value: "xl", label: "Extra large" },
 ]
 
-const rowSizeHeightClass: Record<DataTableRowSize, string> = {
-  xs: "h-6",
-  sm: "h-8",
-  md: "h-10",
-  lg: "h-12",
-  xl: "h-14",
+const rowSizeMinHeightClass: Record<DataTableRowSize, string> = {
+  xs: "min-h-8",
+  sm: "min-h-10",
+  md: "min-h-12",
+  lg: "min-h-14",
+  xl: "min-h-16",
 }
 
-const rowSizeMinHeightClass: Record<DataTableRowSize, string> = {
-  xs: "min-h-6",
-  sm: "min-h-8",
-  md: "min-h-10",
-  lg: "min-h-12",
-  xl: "min-h-14",
+const rowSizePaddingClass: Record<DataTableRowSize, string> = {
+  xs: "px-3",
+  sm: "px-3 py-0.5",
+  md: "px-4 py-1",
+  lg: "px-4 py-1.5",
+  xl: "px-4 py-2",
 }
 
 export const dataTableClassNames = {
-  table: "w-full caption-bottom border-collapse text-xs",
-  headerRow: "border-b border-border bg-muted/50 text-muted-foreground",
+  table: "w-full caption-bottom border-collapse font-sans text-sm",
+  headerRow: "border-b border-border bg-muted/40 text-muted-foreground",
   bodyRow:
-    "cursor-pointer border-b border-border bg-card transition-colors hover:bg-muted data-[state=selected]:bg-muted data-[state=selected]:hover:bg-muted/80",
+    "border-b border-border bg-card transition-colors hover:bg-muted data-[state=selected]:bg-muted data-[state=selected]:hover:bg-muted/80",
   selectCell: "w-10 px-2 text-center [&_[data-slot=checkbox]]:mx-auto",
-  emptyCell: "h-24 px-4 text-center text-muted-foreground",
+  emptyCell: "h-24 px-4 text-center text-sm text-muted-foreground",
 } as const
 
 export function getDataTableHeaderCellClass(
   rowSize: DataTableRowSize = "md"
 ) {
   return cn(
-    rowSizeHeightClass[rowSize],
-    "border-r border-border px-3 text-left text-xs font-medium whitespace-nowrap last:border-r-0",
-    rowSize === "xl" ? "align-top pt-4" : "align-middle"
+    rowSizeMinHeightClass[rowSize],
+    rowSizePaddingClass[rowSize],
+    "border-r border-border text-left text-xs font-medium whitespace-nowrap last:border-r-0",
+    rowSize === "xl" ? "align-top" : "align-middle"
   )
 }
 
@@ -55,10 +56,11 @@ export function getDataTableBodyCellClass(
 ) {
   return cn(
     rowSizeMinHeightClass[rowSize],
-    "border-r border-border px-3 last:border-r-0",
+    rowSizePaddingClass[rowSize],
+    "border-r border-border last:border-r-0",
     wrap
       ? "align-middle whitespace-normal"
       : "align-middle whitespace-nowrap",
-    rowSize === "xl" && !wrap ? "pt-4" : null
+    rowSize === "xl" && !wrap ? "align-top" : null
   )
 }

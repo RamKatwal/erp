@@ -38,6 +38,7 @@ export function useDataTable<TData, TValue>({
     React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
   const [globalFilter, setGlobalFilter] = React.useState("")
+  const enableRowSelection = columns.some((column) => column.id === "select")
 
   const table = useReactTable({
     data,
@@ -54,7 +55,7 @@ export function useDataTable<TData, TValue>({
         pageSize,
       },
     },
-    enableRowSelection: true,
+    enableRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,

@@ -1,18 +1,17 @@
 "use client"
 
-import Image from "next/image"
-
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
+import { getFaviconUrl } from "@/lib/brand/favicon"
 import {
   formatPaymentMethodSummary,
   paymentProviderLabels,
   type SubscriptionPaymentMethod,
 } from "@/types/subscription"
 
-const providerLogos = {
-  esewa: "/images/payment/esewa.png",
-  fonepay: "/images/payment/fonepay.png",
+const paymentProviderDomains = {
+  esewa: "esewa.com.np",
+  fonepay: "fonepay.com",
 } as const
 
 type PaymentMethodSectionProps = {
@@ -44,9 +43,9 @@ export function PaymentMethodSection({
         {paymentMethod ? (
           <div className="mt-4 flex items-start gap-3 rounded-lg border bg-muted/30 p-4">
             <div className="flex size-10 items-center justify-center rounded-md border bg-background p-1.5">
-              <Image
-                src={providerLogos[paymentMethod.provider]}
-                alt={paymentProviderLabels[paymentMethod.provider]}
+              <img
+                src={getFaviconUrl(paymentProviderDomains[paymentMethod.provider])}
+                alt=""
                 width={28}
                 height={28}
                 className="size-7 object-contain"

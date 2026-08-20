@@ -27,17 +27,7 @@ export const groupColumns: ColumnDef<Group>[] = [
       <DataTableColumnHeader column={column} title="Group Name" />
     ),
     cell: ({ row }) => (
-      <Button
-        variant="link"
-        className="h-auto px-0 font-medium"
-        render={
-          <Link
-            href={`/configurations/users/group-management/${row.original.id}`}
-          />
-        }
-      >
-        {row.getValue("name")}
-      </Button>
+      <span className="font-medium">{row.getValue("name")}</span>
     ),
   },
   {

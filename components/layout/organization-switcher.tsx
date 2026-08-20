@@ -1,10 +1,10 @@
 "use client"
 
 import * as React from "react"
-import Image from "next/image"
 import Link from "next/link"
 import { ChevronRight } from "lucide-react"
 
+import { CompanyLogo } from "@/components/company-logo"
 import { organizations, type Organization } from "@/config/organizations"
 import {
   SidebarSubmenuItem,
@@ -40,12 +40,11 @@ export function OrganizationLogo({
   className?: string
 }) {
   return (
-    <Image
-      src={org.logo}
-      alt=""
-      width={16}
-      height={16}
-      className={cn("size-4 shrink-0 rounded-[4px] object-contain", className)}
+    <CompanyLogo
+      name={org.name}
+      domain={org.domain}
+      size={16}
+      className={cn("size-4", className)}
     />
   )
 }

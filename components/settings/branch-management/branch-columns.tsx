@@ -42,13 +42,7 @@ export function createBranchColumns({
         <DataTableColumnHeader column={column} title="Branch Name" />
       ),
       cell: ({ row }) => (
-        <Button
-          variant="link"
-          className="h-auto px-0 font-medium"
-          onClick={() => onEdit(row.original)}
-        >
-          {row.getValue("name")}
-        </Button>
+        <span className="font-medium">{row.getValue("name")}</span>
       ),
     },
     {

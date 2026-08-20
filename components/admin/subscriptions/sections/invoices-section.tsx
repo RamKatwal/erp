@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import Image from "next/image"
 import { DownloadIcon, EyeIcon, FileTextIcon } from "lucide-react"
 
 import {
@@ -20,6 +19,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet"
 import { formatCurrency, formatLongDate } from "@/lib/format"
+import { getFaviconUrl } from "@/lib/brand/favicon"
 import {
   invoiceReceiptPath,
 } from "@/lib/mock/invoice-receipt"
@@ -30,9 +30,9 @@ import {
   type SubscriptionPaymentMethod,
 } from "@/types/subscription"
 
-const providerLogos = {
-  esewa: "/images/payment/esewa.png",
-  fonepay: "/images/payment/fonepay.png",
+const paymentProviderDomains = {
+  esewa: "esewa.com.np",
+  fonepay: "fonepay.com",
 } as const
 
 function invoiceDownloadHref(invoice: SubscriptionInvoice) {
@@ -62,8 +62,8 @@ function PaymentMethodCell({
   return (
     <span className="inline-flex items-center gap-2">
       <span className="flex size-6 items-center justify-center rounded-md border bg-background p-0.5">
-        <Image
-          src={providerLogos[method.provider]}
+        <img
+          src={getFaviconUrl(paymentProviderDomains[method.provider])}
           alt=""
           width={16}
           height={16}

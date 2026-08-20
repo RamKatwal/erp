@@ -11,6 +11,7 @@ export type CompanyBranchOption = {
 export type CompanyOption = {
   id: string
   name: string
+  domain?: string | null
   branches: CompanyBranchOption[]
 }
 
@@ -38,6 +39,7 @@ export function getCompanyOptions(): CompanyOption[] {
   return mockSubscriptions.map((subscription) => ({
     id: subscription.companyId,
     name: subscription.companyName,
+    domain: subscription.companyDomain,
     branches: sortBranches(
       subscription.assignedBranches.map((branch) => ({
         id: branch.branchId,

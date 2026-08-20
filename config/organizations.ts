@@ -6,7 +6,7 @@ export const organizations = [
     initials: "A",
     location: "Suryabinayak, Bhaktapur",
     color: "bg-muted text-foreground",
-    logo: "/abc-company-logo.png",
+    domain: "stripe.com",
   },
   {
     id: "notion",
@@ -15,7 +15,7 @@ export const organizations = [
     initials: "N",
     location: "Pulchowk, Lalitpur",
     color: "bg-muted text-foreground",
-    logo: "/providhy-icon.png",
+    domain: "notion.so",
   },
 ] as const
 

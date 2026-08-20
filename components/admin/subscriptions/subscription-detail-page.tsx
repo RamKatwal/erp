@@ -4,6 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import {
   ArrowLeft,
+  Building2Icon,
   ChevronDown,
   RefreshCwIcon,
   Settings2Icon,
@@ -188,7 +189,21 @@ export function SubscriptionDetailPage({
           </Button>
         }
         actions={
-          <DropdownMenu>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              nativeButton={false}
+              render={
+                <Link
+                  href={`/admin/companies/${subscription.companyId}/configuration`}
+                />
+              }
+            >
+              <Building2Icon className="size-4" />
+              Company profile
+            </Button>
+            <DropdownMenu>
             <DropdownMenuTrigger
               render={<Button size="sm" variant="outline" />}
             >
@@ -215,6 +230,7 @@ export function SubscriptionDetailPage({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          </div>
         }
       />
 

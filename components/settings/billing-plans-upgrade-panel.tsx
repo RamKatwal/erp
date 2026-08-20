@@ -103,6 +103,7 @@ export function BillingPlansUpgradePanel() {
           const sub = entitlementToSubscription(res.session.entitlement, {
             id: res.session.companyId,
             name: res.session.company.companyName,
+            website: res.session.company.companyWebsite,
           })
           saveWorkspaceSubscriptionClient(sub)
           setSubscription(sub)

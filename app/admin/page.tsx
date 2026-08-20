@@ -1,10 +1,5 @@
-import { ModulePage } from "@/components/dashboard/module-page"
+import { AdminHomePage } from "@/components/admin/home/admin-home-page"
 
-export default function AdminHomePage() {
-  return (
-    <ModulePage
-      title="Home"
-      description="Admin portal home. Content coming soon."
-    />
-  )
+export default function AdminHomeRoute() {
+  return <AdminHomePage />
 }

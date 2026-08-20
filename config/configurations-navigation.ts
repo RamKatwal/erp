@@ -11,6 +11,11 @@ export const configurationsNavigation: ConfigurationsNavItem[] = [
     href: "/configurations/general",
     children: [
       {
+        title: "Company Configuration",
+        href: "/configurations/general/company-configuration",
+        description: "View and update your company profile information.",
+      },
+      {
         title: "Product Configuration",
         href: "/configurations/general/product-configuration",
         description: "Configure product defaults and catalog options.",

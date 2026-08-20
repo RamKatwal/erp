@@ -46,6 +46,7 @@ export function saveOnboardingSessionClient(
         entitlementToSubscription(session.entitlement, {
           id: session.companyId,
           name: session.company.companyName,
+          website: session.company.companyWebsite,
         })
       )
     }

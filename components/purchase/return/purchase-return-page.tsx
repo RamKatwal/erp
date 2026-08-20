@@ -5,9 +5,7 @@ import { DownloadIcon, PlusIcon } from "lucide-react"
 
 import {
   type DataTableRowSize,
-  dataTableFullscreenClassName,
-  DataTableToolbar,
-  DataTableView,
+  DataTableCard,
   useDataTable,
   useDataTableFullscreen,
 } from "@/components/data-table/data-table"
@@ -16,7 +14,6 @@ import { purchaseReturnColumns } from "@/components/purchase/return/purchase-ret
 import { Button } from "@/components/ui/button"
 import { FilterTabs } from "@/components/ui/filter-tabs"
 import { mockPurchaseReturns } from "@/lib/mock/purchase-returns"
-import { cn } from "@/lib/utils"
 import {
   purchaseReturnStatusLabels,
   type PurchaseReturnStatus,
@@ -87,13 +84,16 @@ export function PurchaseReturnPage() {
         }
       />
 
-      <div
-        className={cn(
-          "overflow-hidden rounded-xl border bg-card shadow-xs",
-          dataTableFullscreenClassName(isFullscreen)
-        )}
-      >
-        <div className="flex flex-col gap-3 border-b px-3 py-2.5 lg:flex-row lg:items-center lg:justify-between">
+      <DataTableCard
+        table={table}
+        columnCount={purchaseReturnColumns.length}
+        searchPlaceholder="Search returns..."
+        rowSize={rowSize}
+        onRowSizeChange={setRowSize}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={toggleFullscreen}
+        emptyMessage={`No ${purchaseReturnStatusLabels[activeStatus].toLowerCase()} returns found.`}
+        leading={
           <FilterTabs
             items={statusTabItems}
             value={activeStatus}
@@ -102,24 +102,8 @@ export function PurchaseReturnPage() {
               table.setPageIndex(0)
             }}
           />
-
-          <DataTableToolbar
-            table={table}
-            searchPlaceholder="Search returns..."
-            rowSize={rowSize}
-            onRowSizeChange={setRowSize}
-            isFullscreen={isFullscreen}
-            onToggleFullscreen={toggleFullscreen}
-          />
-        </div>
-
-        <DataTableView
-          table={table}
-          columnCount={purchaseReturnColumns.length}
-          rowSize={rowSize}
-          emptyMessage={`No ${purchaseReturnStatusLabels[activeStatus].toLowerCase()} returns found.`}
-        />
-      </div>
+        }
+      />
     </div>
   )
 }

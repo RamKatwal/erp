@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Spinner } from "@/components/ui/spinner"
+import { getFaviconUrl } from "@/lib/brand/favicon"
 import { cn } from "@/lib/utils"
 import {
   calculatePricing,
@@ -253,7 +254,7 @@ export function UpdatePlanLimitsDialog({
                     )}
                   >
                     <img
-                      src={method.logoSrc}
+                      src={getFaviconUrl(method.domain)}
                       alt=""
                       aria-hidden
                       className="size-6 shrink-0 object-contain"
