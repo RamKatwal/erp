@@ -5,33 +5,49 @@ import { XIcon } from "lucide-react"
 
 import {
   getBranchesByIds,
+  getCompanyOptions,
   groupBranchesByCompany,
   type ResolvedBranchOption,
 } from "@/lib/companies/options"
 import { cn } from "@/lib/utils"
 
 type StatusChipTone = {
-  dot: string
+  color: string
 }
 
 const statusChipBaseClass =
   "inline-flex max-w-full items-center gap-1.5 rounded-full border border-border bg-background px-2 py-0.5 text-xs font-normal leading-none text-foreground"
 
-const companyTones: StatusChipTone[] = [
-  { dot: "bg-sky-500" },
-  { dot: "bg-violet-500" },
-  { dot: "bg-emerald-500" },
-  { dot: "bg-amber-500" },
-  { dot: "bg-rose-500" },
-  { dot: "bg-teal-500" },
-] as const
+const companyToneColors = [
+  "hsl(199 89% 48%)",
+  "hsl(258 90% 58%)",
+  "hsl(160 84% 39%)",
+  "hsl(38 92% 50%)",
+  "hsl(350 89% 60%)",
+  "hsl(173 80% 40%)",
+  "hsl(25 95% 53%)",
+  "hsl(239 84% 67%)",
+  "hsl(292 84% 54%)",
+  "hsl(84 81% 44%)",
+  "hsl(330 81% 60%)",
+  "hsl(189 94% 43%)",
+]
+
+function companyColorIndex(companyId: string) {
+  const companies = getCompanyOptions()
+  const index = companies.findIndex((company) => company.id === companyId)
+  if (index >= 0) return index
+  return [...companyId].reduce((hash, char) => hash + char.charCodeAt(0), 0)
+}
 
 export function getCompanyTone(companyId: string): StatusChipTone {
-  let hash = 0
-  for (const char of companyId) {
-    hash = (hash + char.charCodeAt(0)) % companyTones.length
+  const index = companyColorIndex(companyId)
+  const paletteColor = companyToneColors[index]
+  if (paletteColor) {
+    return { color: paletteColor }
   }
-  return companyTones[hash]
+  const hue = Math.round((index * 137.508) % 360)
+  return { color: `hsl(${hue} 72% 46%)` }
 }
 
 export function branchChipLabel(branch: ResolvedBranchOption) {
@@ -50,7 +66,8 @@ export function StatusChip({
   return (
     <span className={cn(statusChipBaseClass, className)}>
       <span
-        className={cn("size-1.5 shrink-0 rounded-full", tone.dot)}
+        className="size-1.5 shrink-0 rounded-full"
+        style={{ backgroundColor: tone.color }}
         aria-hidden
       />
       <span className="truncate">{label}</span>
@@ -72,7 +89,8 @@ export function RemovableStatusChip({
   return (
     <span className={cn(statusChipBaseClass, "gap-1 py-0.5 pr-1 pl-2")}>
       <span
-        className={cn("size-1.5 shrink-0 rounded-full", tone.dot)}
+        className="size-1.5 shrink-0 rounded-full"
+        style={{ backgroundColor: tone.color }}
         aria-hidden
       />
       <span className="truncate">{label}</span>

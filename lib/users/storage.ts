@@ -1,7 +1,7 @@
 import { mockUsers } from "@/lib/mock/users"
 import type { AppUser } from "@/types/user"
 
-const USERS_STORAGE_KEY = "ibmerp-users"
+const USERS_STORAGE_KEY = "ibmerp-users-v2"
 
 export function createUserId(email: string) {
   const slug = email
@@ -28,6 +28,7 @@ function normalizeUser(user: AppUser): AppUser {
     address: user.address ?? "",
     designation: user.designation ?? "",
     assignments: user.assignments.map((assignment) => ({ ...assignment })),
+    entryBy: user.entryBy ?? "",
   }
 }
 
@@ -46,4 +47,10 @@ export function readUsers(): AppUser[] {
 
 export function saveUsers(users: AppUser[]) {
   window.localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users))
+}
+
+export function getUsersAssignedToRole(groupId: string): AppUser[] {
+  return readUsers().filter((user) =>
+    user.assignments.some((assignment) => assignment.groupId === groupId)
+  )
 }

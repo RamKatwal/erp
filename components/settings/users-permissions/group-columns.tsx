@@ -4,7 +4,8 @@ import type { ColumnDef } from "@tanstack/react-table"
 import {
   MoreVerticalIcon,
   PencilIcon,
-  Trash2Icon,
+  PowerIcon,
+  PowerOffIcon,
 } from "lucide-react"
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
@@ -21,16 +22,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { type Group } from "@/types/group"
+import {
+  getGroupStatus,
+  isProtectedRole,
+  type Group,
+} from "@/types/group"
 
 type GroupColumnHandlers = {
   onEdit: (group: Group) => void
-  onDelete: (group: Group) => void
+  onDeactivate: (group: Group) => void
+  onActivate: (group: Group) => void
 }
 
 export function createPermissionGroupColumns({
   onEdit,
-  onDelete,
+  onDeactivate,
+  onActivate,
 }: GroupColumnHandlers): ColumnDef<Group>[] {
   return [
     {
@@ -65,54 +72,67 @@ export function createPermissionGroupColumns({
       meta: { wrapCell: true },
     },
     {
-      accessorKey: "description",
+      accessorKey: "entryBy",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Description" />
+        <DataTableColumnHeader column={column} title="Entry by" />
       ),
-      cell: ({ row }) => {
-        const description = row.getValue("description") as string
-        return (
-          <span className="line-clamp-2 text-muted-foreground">
-            {description || "—"}
-          </span>
-        )
-      },
-      meta: { wrapCell: true },
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          {(row.getValue("entryBy") as string) || "—"}
+        </span>
+      ),
     },
     {
       id: "actions",
       header: () => <span className="sr-only">Actions</span>,
-      cell: ({ row }) => (
-        <div className="flex items-center justify-end">
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={`Actions for ${row.original.name}`}
-                />
-              }
-            >
-              <MoreVerticalIcon />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onEdit(row.original)}>
-                <PencilIcon />
-                Edit role
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                variant="destructive"
-                onClick={() => onDelete(row.original)}
+      cell: ({ row }) => {
+        const group = row.original
+        const protectedRole = isProtectedRole(group)
+        const isActive = getGroupStatus(group) === "active"
+
+        return (
+          <div className="flex items-center justify-end">
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={`Actions for ${group.name}`}
+                  />
+                }
               >
-                <Trash2Icon />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      ),
+                <MoreVerticalIcon />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  disabled={protectedRole}
+                  onClick={() => onEdit(group)}
+                >
+                  <PencilIcon />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {isActive ? (
+                  <DropdownMenuItem
+                    variant="destructive"
+                    disabled={protectedRole}
+                    onClick={() => onDeactivate(group)}
+                  >
+                    <PowerOffIcon />
+                    Deactivate
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem onClick={() => onActivate(group)}>
+                    <PowerIcon />
+                    Activate
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )
+      },
       enableSorting: false,
       enableHiding: false,
     },

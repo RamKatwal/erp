@@ -1,8 +1,11 @@
 "use client"
 
 import * as React from "react"
+import { Tick02Icon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
 import { Check, ChevronsUpDown, Pencil, Save } from "lucide-react"
 
+import { CompanyLogo } from "@/components/company-logo"
 import { PageHeader } from "@/components/layout/page-header"
 import { PermissionMatrix } from "@/components/settings/group-management/permission-matrix"
 import { Button } from "@/components/ui/button"
@@ -17,12 +20,17 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Label } from "@/components/ui/label"
 import {
   getBranchesByIds,
+  getCompanyOptions,
+  type CompanyOption,
   type ResolvedBranchOption,
 } from "@/lib/companies/options"
 import { createEmptyGroupPermissions } from "@/lib/groups/permissions"
@@ -33,7 +41,7 @@ import {
   upsertGroupBranchPermission,
 } from "@/lib/users/permission-storage"
 import { cn } from "@/lib/utils"
-import { normalizeGroupCompanies, type Group, type GroupPermissions } from "@/types/group"
+import { getGroupStatus, normalizeGroupCompanies, type Group, type GroupPermissions } from "@/types/group"
 
 type AccessSelectOption = {
   value: string
@@ -114,9 +122,144 @@ function roleAllowedBranchIds(role: Group | undefined): string[] {
   return normalized.branchIds ?? []
 }
 
+function branchLabel(branch: ResolvedBranchOption) {
+  return branch.isHeadOffice ? "Head office" : branch.name
+}
+
 function formatBranchOption(branch: ResolvedBranchOption) {
-  const officeLabel = branch.isHeadOffice ? "Head office" : branch.name
-  return `${officeLabel} · ${branch.companyName}`
+  return `${branchLabel(branch)} · ${branch.companyName}`
+}
+
+function groupBranchesUnderCompanies(branches: ResolvedBranchOption[]) {
+  const byCompany = new Map<string, ResolvedBranchOption[]>()
+  for (const branch of branches) {
+    const list = byCompany.get(branch.companyId) ?? []
+    list.push(branch)
+    byCompany.set(branch.companyId, list)
+  }
+
+  return getCompanyOptions()
+    .map((company) => {
+      const companyBranches = byCompany.get(company.id)
+      if (!companyBranches?.length) return null
+      return { company, branches: companyBranches }
+    })
+    .filter(
+      (group): group is { company: CompanyOption; branches: ResolvedBranchOption[] } =>
+        group !== null
+    )
+}
+
+function BranchAccessSelect({
+  id,
+  value,
+  onValueChange,
+  disabled,
+  placeholder,
+  branches,
+  className,
+}: {
+  id: string
+  value: string
+  onValueChange: (value: string) => void
+  disabled?: boolean
+  placeholder: string
+  branches: ResolvedBranchOption[]
+  className?: string
+}) {
+  const selected = branches.find((branch) => branch.id === value)
+  const groups = React.useMemo(
+    () => groupBranchesUnderCompanies(branches),
+    [branches]
+  )
+  const isDisabled = disabled || branches.length === 0
+
+  return (
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger
+        disabled={isDisabled}
+        render={
+          <Button
+            id={id}
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={isDisabled}
+            className={cn(
+              "h-8 w-72 justify-between gap-2 px-2.5 font-normal",
+              className
+            )}
+          />
+        }
+      >
+        <span
+          className={cn(
+            "min-w-0 truncate",
+            !selected && "text-muted-foreground"
+          )}
+        >
+          {selected ? formatBranchOption(selected) : placeholder}
+        </span>
+        <ChevronsUpDown className="size-3.5 shrink-0 opacity-50" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="start"
+        className="thin-scrollbar max-h-80 min-w-64 max-w-80 overflow-y-auto"
+      >
+        {groups.length === 0 ? (
+          <DropdownMenuItem disabled>{placeholder}</DropdownMenuItem>
+        ) : (
+          groups.map((group, index) => (
+            <React.Fragment key={group.company.id}>
+              {index > 0 ? <DropdownMenuSeparator /> : null}
+              <DropdownMenuGroup>
+                <DropdownMenuLabel className="flex items-center gap-2 text-foreground">
+                  <CompanyLogo
+                    name={group.company.name}
+                    domain={group.company.domain}
+                    size={14}
+                    className="size-3.5 rounded-[3px]"
+                  />
+                  <span className="min-w-0 flex-1 truncate font-medium">
+                    {group.company.name}
+                  </span>
+                  <span className="shrink-0 font-normal text-muted-foreground">
+                    {group.branches.length} branch
+                    {group.branches.length === 1 ? "" : "es"}
+                  </span>
+                </DropdownMenuLabel>
+                {group.branches.map((branch) => {
+                  const isActive = branch.id === value
+
+                  return (
+                    <DropdownMenuItem
+                      key={branch.id}
+                      onClick={() => onValueChange(branch.id)}
+                      className={cn(
+                        "gap-2 pl-7",
+                        isActive && "bg-primary/10 focus:bg-primary/10"
+                      )}
+                    >
+                      <span className="min-w-0 flex-1 truncate">
+                        {branchLabel(branch)}
+                      </span>
+                      {isActive ? (
+                        <HugeiconsIcon
+                          icon={Tick02Icon}
+                          strokeWidth={2}
+                          className="size-3.5 shrink-0 text-primary"
+                        />
+                      ) : null}
+                    </DropdownMenuItem>
+                  )
+                })}
+              </DropdownMenuGroup>
+            </React.Fragment>
+          ))
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
 }
 
 function clonePermissions(permissions: GroupPermissions): GroupPermissions {
@@ -150,7 +293,9 @@ export function PermissionManagementPage() {
   const canConfigure = Boolean(groupId && branchId && selectedBranch)
 
   React.useEffect(() => {
-    const nextGroups = readPermissionGroups()
+    const nextGroups = readPermissionGroups().filter(
+      (group) => getGroupStatus(group) === "active"
+    )
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setGroups(nextGroups)
 
@@ -310,21 +455,17 @@ export function PermissionManagementPage() {
             >
               Branch access
             </Label>
-            <AccessSelect
+            <BranchAccessSelect
               id="permission-branch"
               value={branchId}
               onValueChange={handleBranchChange}
               disabled={allowedBranches.length === 0 || isEditing}
-              className="w-72"
               placeholder={
                 selectedGroup
                   ? "No branches assigned to this group"
                   : "Select a group first"
               }
-              options={allowedBranches.map((branch) => ({
-                value: branch.id,
-                label: formatBranchOption(branch),
-              }))}
+              branches={allowedBranches}
             />
           </div>
         </div>

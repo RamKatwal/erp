@@ -54,6 +54,7 @@ type DataTableToolbarProps<TData> = {
   isFullscreen?: boolean
   onToggleFullscreen?: () => void
   filters?: DataTableFilters
+  showFilter?: boolean
 }
 
 export function DataTableToolbar<TData>({
@@ -65,6 +66,7 @@ export function DataTableToolbar<TData>({
   isFullscreen = false,
   onToggleFullscreen,
   filters,
+  showFilter = true,
 }: DataTableToolbarProps<TData>) {
   const globalFilter = (table.getState().globalFilter as string) ?? ""
   const isFiltered = Boolean(
@@ -143,54 +145,56 @@ export function DataTableToolbar<TData>({
           </TooltipContent>
         </Tooltip>
 
-        {filters ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button
-                  variant="outline"
-                  size="sm"
-                  aria-label="Filter"
-                  aria-pressed={isFiltered}
-                  className={cn(isFiltered && "border-foreground/20 bg-muted")}
-                />
-              }
-            >
+        {showFilter ? (
+          filters ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    aria-label="Filter"
+                    aria-pressed={isFiltered}
+                    className={cn(isFiltered && "border-foreground/20 bg-muted")}
+                  />
+                }
+              >
+                <FilterIcon />
+                Filter
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-44">
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>Filter</DropdownMenuLabel>
+                  {filters.options.map((option) => (
+                    <DropdownMenuItem
+                      key={option.value}
+                      onClick={() => filters.onValueChange(option.value)}
+                    >
+                      <span>{option.label}</span>
+                      <span className="ml-auto flex items-center gap-2">
+                        {option.count != null ? (
+                          <span className="text-xs text-muted-foreground tabular-nums">
+                            {option.count}
+                          </span>
+                        ) : null}
+                        {filters.value === option.value ? (
+                          <CheckIcon className="size-4" />
+                        ) : (
+                          <span className="size-4" aria-hidden />
+                        )}
+                      </span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button variant="outline" size="sm">
               <FilterIcon />
               Filter
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-44">
-              <DropdownMenuGroup>
-                <DropdownMenuLabel>Filter</DropdownMenuLabel>
-                {filters.options.map((option) => (
-                  <DropdownMenuItem
-                    key={option.value}
-                    onClick={() => filters.onValueChange(option.value)}
-                  >
-                    <span>{option.label}</span>
-                    <span className="ml-auto flex items-center gap-2">
-                      {option.count != null ? (
-                        <span className="text-xs text-muted-foreground tabular-nums">
-                          {option.count}
-                        </span>
-                      ) : null}
-                      {filters.value === option.value ? (
-                        <CheckIcon className="size-4" />
-                      ) : (
-                        <span className="size-4" aria-hidden />
-                      )}
-                    </span>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : (
-          <Button variant="outline" size="sm">
-            <FilterIcon />
-            Filter
-          </Button>
-        )}
+            </Button>
+          )
+        ) : null}
       </ButtonGroup>
     </div>
   )

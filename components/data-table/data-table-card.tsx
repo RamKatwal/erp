@@ -26,6 +26,8 @@ type DataTableCardProps<TData> = {
   /** Optional leading chrome such as status tabs. Omit for the default right-aligned toolbar. */
   leading?: ReactNode
   filters?: DataTableFilters
+  /** When false, hides the toolbar Filter control. Defaults to true. */
+  showFilter?: boolean
 }
 
 export function DataTableCard<TData>({
@@ -40,6 +42,7 @@ export function DataTableCard<TData>({
   onRowClick,
   leading,
   filters,
+  showFilter = true,
 }: DataTableCardProps<TData>) {
   return (
     <div
@@ -66,6 +69,7 @@ export function DataTableCard<TData>({
           isFullscreen={isFullscreen}
           onToggleFullscreen={onToggleFullscreen}
           filters={filters}
+          showFilter={showFilter}
         />
       </div>
 

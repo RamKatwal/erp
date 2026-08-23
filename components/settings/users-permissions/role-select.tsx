@@ -1,17 +1,17 @@
 "use client"
 
 import * as React from "react"
-import { ChevronsUpDownIcon } from "lucide-react"
+import { PlusIcon, SearchIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
   Command,
   CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandItem,
   CommandList,
 } from "@/components/ui/command"
+import { Input } from "@/components/ui/input"
 import {
   Popover,
   PopoverContent,
@@ -30,6 +30,7 @@ type RoleSelectProps = {
   active?: boolean
   className?: string
   "aria-invalid"?: boolean
+  onCreateNew?: () => void
 }
 
 export function RoleSelect({
@@ -42,79 +43,115 @@ export function RoleSelect({
   active = true,
   className,
   "aria-invalid": ariaInvalid,
+  onCreateNew,
 }: RoleSelectProps) {
   const [open, setOpen] = React.useState(false)
+  const [query, setQuery] = React.useState("")
 
   React.useEffect(() => {
     if (!active) {
       setOpen(false)
+      setQuery("")
     }
   }, [active])
 
   const selectedRole = roles.find((role) => role.id === value)
+  const filteredRoles = React.useMemo(() => {
+    const needle = query.trim().toLowerCase()
+    if (!needle) return roles
+    return roles.filter((role) => role.name.toLowerCase().includes(needle))
+  }, [query, roles])
 
-  function handleOpenChange(next: boolean) {
+  function handleOpenChange(next: boolean, eventDetails?: { reason?: string }) {
+    if (!next && eventDetails?.reason === "trigger-press") {
+      return
+    }
+
     setOpen(next)
     if (!next) {
+      setQuery("")
       onBlur?.()
     }
   }
 
   function selectRole(roleId: string) {
     onChange(roleId)
+    setQuery("")
     setOpen(false)
     onBlur?.()
   }
 
-  return (
-    <Popover open={open} onOpenChange={handleOpenChange}>
-      <PopoverTrigger
-        render={
-          <Button
-            type="button"
-            variant="outline"
-            disabled={disabled || roles.length === 0}
-            aria-invalid={ariaInvalid}
-            aria-haspopup="listbox"
-            className={cn(
-              "h-9 w-full justify-between gap-2 px-3 font-normal",
-              !selectedRole && "text-muted-foreground",
-              className
-            )}
-          />
-        }
-      >
-        <span className="truncate">
-          {selectedRole?.name ??
-            (roles.length === 0 ? "No roles available" : placeholder)}
-        </span>
-        <ChevronsUpDownIcon className="size-4 shrink-0 opacity-50" />
-      </PopoverTrigger>
+  function handleCreateNew() {
+    setOpen(false)
+    setQuery("")
+    onCreateNew?.()
+  }
 
-      <PopoverContent
-        align="start"
-        sideOffset={6}
-        className="w-[var(--anchor-width)] p-0"
-      >
-        <Command>
-          <CommandInput placeholder="Search roles…" />
-          <CommandList className="max-h-64">
-            <CommandEmpty>No role found.</CommandEmpty>
-            <CommandGroup>
-              {roles.map((role) => (
-                <CommandItem
-                  key={role.id}
-                  value={role.name}
-                  data-checked={value === role.id ? "true" : undefined}
-                  onSelect={() => selectRole(role.id)}
-                >
-                  <span className="truncate">{role.name}</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+  return (
+    <div className={cn("relative w-full", className)}>
+      <Popover open={open} onOpenChange={handleOpenChange}>
+        <PopoverTrigger
+          nativeButton={false}
+          disabled={disabled}
+          render={
+            <Input
+              role="combobox"
+              aria-expanded={open}
+              aria-autocomplete="list"
+              aria-invalid={ariaInvalid}
+              disabled={disabled}
+              autoComplete="off"
+              placeholder={open ? "Search roles…" : placeholder}
+              className="pr-9"
+              value={open ? query : (selectedRole?.name ?? "")}
+              onChange={(event) => {
+                setQuery(event.target.value)
+                if (!open) setOpen(true)
+              }}
+            />
+          }
+        />
+        <PopoverContent
+          align="start"
+          sideOffset={6}
+          initialFocus={false}
+          className="w-[var(--anchor-width)] p-0"
+        >
+          <Command shouldFilter={false}>
+            <CommandList className="max-h-64">
+              <CommandEmpty>No role found.</CommandEmpty>
+              <CommandGroup>
+                {filteredRoles.map((role) => (
+                  <CommandItem
+                    key={role.id}
+                    value={role.name}
+                    data-checked={value === role.id ? "true" : undefined}
+                    onSelect={() => selectRole(role.id)}
+                  >
+                    <span className="truncate">{role.name}</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+
+          {onCreateNew ? (
+            <div className="border-t p-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 w-full justify-start font-normal"
+                onClick={handleCreateNew}
+              >
+                <PlusIcon />
+                Create New
+              </Button>
+            </div>
+          ) : null}
+        </PopoverContent>
+      </Popover>
+      <SearchIcon className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground opacity-50" />
+    </div>
   )
 }

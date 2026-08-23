@@ -3,6 +3,7 @@
 import type { ColumnDef } from "@tanstack/react-table"
 import {
   EyeIcon,
+  MailIcon,
   MoreVerticalIcon,
   PencilIcon,
   UserRoundCheckIcon,
@@ -15,7 +16,6 @@ import {
   CompanyAccessChips,
   groupedBranchAccessSearchText,
 } from "@/components/settings/users-permissions/grouped-branch-chips"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -33,6 +33,7 @@ type UserColumnHandlers = {
   onEdit: (user: AppUser) => void
   onActivate: (user: AppUser) => void
   onDeactivate: (user: AppUser) => void
+  onResendEmail: (user: AppUser) => void
 }
 
 export function getUserRoleLabel(user: AppUser, roles: Group[]) {
@@ -54,6 +55,7 @@ export function createUserColumns({
   onEdit,
   onActivate,
   onDeactivate,
+  onResendEmail,
 }: UserColumnHandlers): ColumnDef<AppUser>[] {
   return [
     {
@@ -63,6 +65,17 @@ export function createUserColumns({
       ),
       cell: ({ row }) => (
         <span className="font-medium">{row.getValue("name")}</span>
+      ),
+    },
+    {
+      accessorKey: "username",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Username" />
+      ),
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          {(row.getValue("username") as string) || "—"}
+        </span>
       ),
     },
     {
@@ -123,18 +136,15 @@ export function createUserColumns({
       meta: { wrapCell: true },
     },
     {
-      accessorKey: "status",
+      accessorKey: "entryBy",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Status" />
+        <DataTableColumnHeader column={column} title="Entry by" />
       ),
-      cell: ({ row }) => {
-        const status = row.original.status
-        return (
-          <Badge variant={status === "active" ? "default" : "secondary"}>
-            {status === "active" ? "Active" : "Inactive"}
-          </Badge>
-        )
-      },
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          {(row.getValue("entryBy") as string) || "—"}
+        </span>
+      ),
     },
     {
       id: "actions",
@@ -163,6 +173,10 @@ export function createUserColumns({
                 <DropdownMenuItem onClick={() => onEdit(user)}>
                   <PencilIcon />
                   Edit user
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onResendEmail(user)}>
+                  <MailIcon />
+                  Resend Email
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 {user.status === "active" ? (

@@ -55,6 +55,18 @@ function ensureHeadOffice(
   ])
 }
 
+/** Every company plus every branch (including generated Head Office rows). */
+export function getAllCompanyAccess() {
+  const companies = getCompanyOptions()
+  return {
+    companyIds: companies.map((company) => company.id),
+    companyNames: companies.map((company) => company.name),
+    branchIds: companies.flatMap((company) =>
+      company.branches.map((branch) => branch.id)
+    ),
+  }
+}
+
 /** Companies and their branches from subscription seed data (admin mock). */
 export function getCompanyOptions(): CompanyOption[] {
   return mockSubscriptions.map((subscription) => ({

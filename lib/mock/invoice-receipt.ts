@@ -1,5 +1,8 @@
 import { mockSubscriptions } from "@/lib/mock/subscriptions"
-import { paymentProviderLabels } from "@/types/subscription"
+import {
+  invoiceBilledForLabel,
+  paymentProviderLabels,
+} from "@/types/subscription"
 import type { Subscription, SubscriptionInvoice } from "@/types/subscription"
 
 export type InvoiceReceiptData = {
@@ -29,7 +32,7 @@ export type InvoiceReceiptData = {
     method: string
     date: string
     amountPaid: number
-    receiptNumber: string
+    invoiceNumber: string
   }>
 }
 
@@ -76,7 +79,7 @@ export function buildInvoiceReceiptData(
     datePaid: invoice.issueDate,
     amountPaid: invoice.amountPaid,
     currency: invoice.currency,
-    planName: invoice.planName,
+    planName: invoiceBilledForLabel(invoice),
     periodStart: invoice.periodStart,
     periodEnd: invoice.periodEnd,
     unitPrice: invoice.amountPaid,
@@ -98,7 +101,7 @@ export function buildInvoiceReceiptData(
               method: paymentMethod,
               date: invoice.issueDate,
               amountPaid: invoice.amountPaid,
-              receiptNumber,
+              invoiceNumber: invoice.invoiceNumber,
             },
           ]
         : [],
@@ -134,6 +137,7 @@ export function getInvoiceReceiptById(
     status: "Paid",
     pdfDownloadUrl: invoiceReceiptPath(invoiceId),
     planName: subscription.planName,
+    chargeType: "plan",
     paymentMethod: subscription.paymentMethod,
     usersUsed: subscription.usersUsed,
     usersLimit: subscription.usersLimit,

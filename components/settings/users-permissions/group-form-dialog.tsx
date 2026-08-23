@@ -27,8 +27,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { normalizeGroupCompanies, type Group } from "@/types/group"
+import { ADMIN_ROLE_ID, normalizeGroupCompanies, type Group } from "@/types/group"
 
 const groupFormSchema = z.object({
   name: z
@@ -36,12 +35,6 @@ const groupFormSchema = z.object({
     .trim()
     .min(1, { message: "Role name is required" })
     .max(100, { message: "Role name is too long" }),
-  description: z
-    .string()
-    .trim()
-    .max(250, { message: "Description is too long" })
-    .optional()
-    .or(z.literal("")),
   companyIds: z
     .array(z.string())
     .min(1, { message: "Select at least one company branch" }),
@@ -65,7 +58,6 @@ type PermissionGroupFormDialogProps = {
 
 const emptyValues: PermissionGroupFormValues = {
   name: "",
-  description: "",
   companyIds: [],
   branchIds: [],
 }
@@ -94,7 +86,6 @@ export function PermissionGroupFormDialog({
       const normalized = normalizeGroupCompanies(group)
       form.reset({
         name: normalized.name,
-        description: normalized.description,
         companyIds: normalized.companyIds ?? [],
         branchIds: normalized.branchIds ?? [],
       })
@@ -106,6 +97,17 @@ export function PermissionGroupFormDialog({
 
   function handleSubmit(values: PermissionGroupFormValues) {
     const normalizedName = values.name.trim()
+    const reservedAdminName =
+      normalizedName.toLowerCase() === "admin" &&
+      (!isEdit || group?.id !== ADMIN_ROLE_ID)
+
+    if (reservedAdminName) {
+      form.setError("name", {
+        message: "Admin is a reserved role and cannot be created",
+      })
+      return
+    }
+
     const nameTaken = existingNames.some(
       (name) =>
         name.toLowerCase() === normalizedName.toLowerCase() &&
@@ -123,7 +125,6 @@ export function PermissionGroupFormDialog({
 
     onSubmit({
       name: normalizedName,
-      description: values.description?.trim() ?? "",
       companyIds: values.companyIds,
       companyNames: getCompanyNamesForIds(values.companyIds),
       branchIds: values.branchIds,
@@ -153,7 +154,7 @@ export function PermissionGroupFormDialog({
                   <FormItem>
                     <FormLabel>Role Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. Branch Cashier" {...field} />
+                      <Input placeholder="e.g. Warehouse Supervisor" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -193,23 +194,6 @@ export function PermissionGroupFormDialog({
                         {form.formState.errors.companyIds.message}
                       </p>
                     ) : null}
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Who typically has this role?"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />

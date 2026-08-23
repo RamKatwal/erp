@@ -2,20 +2,26 @@
 
 import * as React from "react"
 
-import { Button } from "@/components/ui/button"
+import {
+  pricingFor,
+  shiftPeriodEnd,
+} from "@/components/admin/subscriptions/billing-utils"
+import { OrderPaymentPanel } from "@/components/admin/subscriptions/order-payment-panel"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Spinner } from "@/components/ui/spinner"
-import { formatCurrency, formatLongDate } from "@/lib/format"
+import { formatLongDate } from "@/lib/format"
+import {
+  DEFAULT_PAYMENT_METHOD_ID,
+  formatNpr,
+  type PaymentMethodId,
+} from "@/lib/onboarding/plans"
 import {
   billingIntervalLabels,
-  billingIntervalUnits,
   type Subscription,
 } from "@/types/subscription"
 
@@ -23,21 +29,7 @@ type RenewPlanDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   subscription: Subscription
-  onConfirm: () => void
-}
-
-function computeNewPeriodEnd(current: string, interval: "month" | "year") {
-  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(current)
-  const date = match
-    ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
-    : new Date(current)
-
-  if (interval === "year") {
-    date.setFullYear(date.getFullYear() + 1)
-  } else {
-    date.setMonth(date.getMonth() + 1)
-  }
-  return date
+  onConfirm: (paymentMethod: PaymentMethodId, amountPaid: number) => void
 }
 
 export function RenewPlanDialog({
@@ -47,91 +39,164 @@ export function RenewPlanDialog({
   onConfirm,
 }: RenewPlanDialogProps) {
   const [isLoading, setIsLoading] = React.useState(false)
-
-  const newEnd = computeNewPeriodEnd(
-    subscription.periodEnd,
-    subscription.interval
+  const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethodId>(
+    subscription.paymentMethod?.provider ?? DEFAULT_PAYMENT_METHOD_ID
   )
+
+  React.useEffect(() => {
+    if (!open) return
+    setIsLoading(false)
+    setPaymentMethod(
+      subscription.paymentMethod?.provider ?? DEFAULT_PAYMENT_METHOD_ID
+    )
+  }, [open, subscription])
+
+  const newEnd = shiftPeriodEnd(subscription.periodEnd, subscription.interval)
   const newEndFormatted = newEnd.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
   })
 
+  const calculated = pricingFor(
+    subscription,
+    subscription.usersLimit,
+    subscription.branchesLimit
+  )
+  const amountDue =
+    subscription.amount > 0 ? subscription.amount : calculated.total
+  const periodLabel =
+    subscription.interval === "year" ? "Annually" : "Monthly"
+
+  const orderLines = [
+    { label: "Plan", value: subscription.planName },
+    { label: "Billing cycle", value: periodLabel },
+    { label: "Users", value: `${subscription.usersLimit} seats` },
+    {
+      label: "Branches",
+      value: String(Math.max(subscription.branchesLimit, 0)),
+    },
+    {
+      label: "Taxable amount",
+      value: formatNpr(
+        subscription.amount > 0
+          ? roundMoney(amountDue / 1.13)
+          : calculated.taxableAmount
+      ),
+    },
+    {
+      label: "VAT",
+      value: formatNpr(
+        subscription.amount > 0
+          ? roundMoney(amountDue - amountDue / 1.13)
+          : calculated.tax
+      ),
+    },
+  ]
+
   function handleConfirm() {
     setIsLoading(true)
     setTimeout(() => {
       setIsLoading(false)
-      onConfirm()
+      onConfirm(paymentMethod, amountDue)
       onOpenChange(false)
     }, 1200)
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[min(860px,calc(100svh-2rem))] w-full max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl">
+        <DialogHeader className="border-b px-5 py-4 pr-12">
           <DialogTitle>Renew subscription</DialogTitle>
           <DialogDescription>
-            Pay now to extend your{" "}
-            <span className="font-medium text-foreground">
-              {subscription.planName}
-            </span>{" "}
-            for the next billing period.
+            Review your current plan and pay to extend it for the next billing
+            period.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="rounded-lg border bg-muted/30 p-4">
-          <dl className="space-y-3 text-sm">
-            <div className="flex items-center justify-between gap-3">
-              <dt className="text-muted-foreground">Plan</dt>
-              <dd className="font-medium">{subscription.planName}</dd>
+        <div className="grid min-h-0 flex-1 overflow-hidden sm:grid-cols-[minmax(0,1fr)_minmax(17rem,19rem)]">
+          <div className="flex min-h-0 flex-col gap-4 overflow-y-auto p-5">
+            <div className="rounded-lg bg-card px-4 py-4 ring-1 ring-foreground/10">
+              <p className="text-xs font-medium text-muted-foreground">
+                Current plan
+              </p>
+              <p className="mt-1 text-base font-semibold">
+                {subscription.planName}
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {subscription.planDescription}
+              </p>
             </div>
-            <div className="flex items-center justify-between gap-3">
-              <dt className="text-muted-foreground">Billing cycle</dt>
-              <dd className="font-medium">
-                {billingIntervalLabels[subscription.interval]}
-              </dd>
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <dt className="text-muted-foreground">Current period ends</dt>
-              <dd className="font-medium">
-                {formatLongDate(subscription.periodEnd)}
-              </dd>
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <dt className="text-muted-foreground">New period ends</dt>
-              <dd className="font-medium text-primary">{newEndFormatted}</dd>
-            </div>
-            <div className="border-t pt-3">
-              <div className="flex items-center justify-between gap-3">
-                <dt className="font-medium">Amount due now</dt>
-                <dd className="text-base font-semibold tabular-nums">
-                  {formatCurrency(subscription.amount, subscription.currency)} /{" "}
-                  {billingIntervalUnits[subscription.interval]}
+
+            <dl className="flex flex-col gap-3 rounded-lg bg-card px-4 py-4 text-sm ring-1 ring-foreground/10">
+              <div className="flex justify-between gap-4">
+                <dt className="text-muted-foreground">Billing cycle</dt>
+                <dd className="font-medium">
+                  {billingIntervalLabels[subscription.interval]}
                 </dd>
               </div>
-            </div>
-          </dl>
-        </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-muted-foreground">Users</dt>
+                <dd className="font-medium tabular-nums">
+                  {subscription.usersUsed} / {subscription.usersLimit} seats
+                </dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-muted-foreground">Branches</dt>
+                <dd className="font-medium tabular-nums">
+                  {subscription.branchesUsed} / {subscription.branchesLimit}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-muted-foreground">Current period ends</dt>
+                <dd className="font-medium">
+                  {formatLongDate(subscription.periodEnd)}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-muted-foreground">New period ends</dt>
+                <dd className="font-medium text-primary">{newEndFormatted}</dd>
+              </div>
+              {subscription.features.length > 0 ? (
+                <div className="border-t pt-3">
+                  <dt className="mb-2 text-muted-foreground">Includes</dt>
+                  <dd>
+                    <ul className="flex flex-col gap-1 text-foreground">
+                      {subscription.features.slice(0, 6).map((feature) => (
+                        <li key={feature}>{feature}</li>
+                      ))}
+                    </ul>
+                  </dd>
+                </div>
+              ) : null}
+            </dl>
+          </div>
 
-        <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-          >
-            Cancel
-          </Button>
-          <Button type="button" disabled={isLoading} onClick={handleConfirm}>
-            {isLoading ? (
-              <Spinner size={18} variant="default" />
-            ) : (
-              `Pay ${formatCurrency(subscription.amount, subscription.currency)}`
-            )}
-          </Button>
-        </DialogFooter>
+          <div className="min-h-0 overflow-y-auto border-t bg-muted/20 p-5 sm:border-t-0 sm:border-l">
+            <OrderPaymentPanel
+              lines={orderLines}
+              total={amountDue}
+              totalLabel="Amount due now"
+              paymentMethod={paymentMethod}
+              onPaymentMethodChange={setPaymentMethod}
+              showPayment={amountDue > 0}
+              confirmLabel={
+                amountDue > 0
+                  ? `Pay ${formatNpr(amountDue)}`
+                  : "Confirm renewal"
+              }
+              confirming={isLoading}
+              onCancel={() => onOpenChange(false)}
+              onConfirm={handleConfirm}
+              footnote="You will confirm payment on the checkout step. This demo applies the renewal immediately."
+            />
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   )
+}
+
+function roundMoney(value: number) {
+  return Math.round(value * 100) / 100
 }

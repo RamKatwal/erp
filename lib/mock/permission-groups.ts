@@ -1,29 +1,39 @@
-import type { Group } from "@/types/group"
+import { getAllCompanyAccess } from "@/lib/companies/options"
+import { ADMIN_ROLE_ID, type Group } from "@/types/group"
 
-/** Seed user roles for Settings. Permissions live on role × branch, not here. */
+const allAccess = getAllCompanyAccess()
+
+const defaultAccess = {
+  companyIds: allAccess.companyIds,
+  companyNames: allAccess.companyNames,
+  branchIds: allAccess.branchIds,
+}
+
+/** Seed user roles for the Admin portal. Permissions live on role × branch, not here. */
 export const mockPermissionGroups: Group[] = [
   {
-    id: "grp-branch-cashier",
-    name: "Branch Cashier",
-    description: "Counter staff and cashiers.",
-    companyIds: ["comp_10294"],
-    companyNames: ["Omniverse"],
-    branchIds: ["br_hq_01"],
+    id: ADMIN_ROLE_ID,
+    name: "Admin",
+    description: "",
+    locked: true,
+    status: "active",
+    entryBy: "Main Admin",
+    ...defaultAccess,
   },
   {
-    id: "grp-store-associate",
-    name: "Store Associate",
-    description: "Floor staff at a single outlet.",
-    companyIds: ["comp_10881"],
-    companyNames: ["Himalayan Traders"],
-    branchIds: ["br_ht_02"],
+    id: "grp-accountant",
+    name: "Accountant",
+    description: "",
+    status: "active",
+    entryBy: "Main Admin",
+    ...defaultAccess,
   },
   {
-    id: "grp-branch-manager",
-    name: "Branch Manager",
-    description: "Store managers and branch heads.",
-    companyIds: ["comp_10294", "comp_10881"],
-    companyNames: ["Omniverse", "Himalayan Traders"],
-    branchIds: ["br_hq_01", "br_ht_01", "br_ht_02"],
+    id: "grp-sales",
+    name: "Sales",
+    description: "",
+    status: "active",
+    entryBy: "Main Admin",
+    ...defaultAccess,
   },
 ]

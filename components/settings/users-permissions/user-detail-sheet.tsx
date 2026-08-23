@@ -106,6 +106,9 @@ export function UserDetailSheet({
                 <DetailItem label="Role">
                   {getUserRoleLabel(user, roles)}
                 </DetailItem>
+                <DetailItem label="Entry by">
+                  {displayValue(user.entryBy)}
+                </DetailItem>
                 <DetailItem label="Company">
                   <CompanyAccessChips
                     branchIds={user.assignments.map(

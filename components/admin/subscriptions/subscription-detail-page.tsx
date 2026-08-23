@@ -4,7 +4,6 @@ import * as React from "react"
 import Link from "next/link"
 import {
   ArrowLeft,
-  Building2Icon,
   ChevronDown,
   RefreshCwIcon,
   Settings2Icon,
@@ -15,7 +14,10 @@ import { CancelSubscriptionDialog } from "@/components/admin/subscriptions/cance
 import { RenewPlanDialog } from "@/components/admin/subscriptions/renew-plan-dialog"
 import { CurrentPlanSection } from "@/components/admin/subscriptions/sections/current-plan-section"
 import { InvoicesSection } from "@/components/admin/subscriptions/sections/invoices-section"
-import { UpdatePlanLimitsDialog } from "@/components/admin/subscriptions/update-plan-limits-dialog"
+import {
+  UpdatePlanLimitsDialog,
+  type UpdatePlanLimitsResult,
+} from "@/components/admin/subscriptions/update-plan-limits-dialog"
 import { PageHeader } from "@/components/layout/page-header"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -60,8 +62,10 @@ export function SubscriptionDetailPage({
   >(() => getSubscriptionById(subscriptionId))
   const [renewOpen, setRenewOpen] = React.useState(false)
   const [cancelOpen, setCancelOpen] = React.useState(false)
-  const [branchLimitsOpen, setBranchLimitsOpen] = React.useState(false)
-  const [userLimitsOpen, setUserLimitsOpen] = React.useState(false)
+  const [limitsOpen, setLimitsOpen] = React.useState(false)
+  const [limitsFocus, setLimitsFocus] = React.useState<"branches" | "users">(
+    "branches"
+  )
 
   if (!subscription) {
     return (
@@ -81,7 +85,10 @@ export function SubscriptionDetailPage({
     )
   }
 
-  function handleRenewConfirm() {
+  function handleRenewConfirm(
+    paymentMethod: PaymentMethodId,
+    amountPaid: number
+  ) {
     setSubscription((prev) => {
       if (!prev) return prev
       const end = new Date(prev.periodEnd)
@@ -95,12 +102,46 @@ export function SubscriptionDetailPage({
         0,
         Math.ceil((end.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
       )
+      const today = new Date().toISOString().slice(0, 10)
+      const invoiceId = `inv_${prev.id}_${Date.now()}`
+      const invoiceNumber = `INV-${prev.companyName
+        .slice(0, 3)
+        .toUpperCase()}-${Date.now().toString().slice(-6)}`
+      const payment = {
+        provider: paymentMethod,
+        billingEmail: prev.paymentMethod?.billingEmail ?? "",
+      }
+
       return {
         ...prev,
         periodEnd: newEnd,
         nextBillingDate: newEnd,
         remainingDays: remaining,
         status: "active",
+        amount: amountPaid,
+        paymentMethod: payment,
+        invoices: [
+          {
+            invoiceId,
+            invoiceNumber,
+            issueDate: today,
+            periodStart: today,
+            periodEnd: newEnd,
+            amountPaid,
+            currency: prev.currency,
+            status: "Paid",
+            pdfDownloadUrl: invoiceReceiptPath(invoiceId),
+            planName: prev.planName,
+            chargeType: "plan",
+            interval: prev.interval,
+            paymentMethod: payment,
+            usersUsed: prev.usersUsed,
+            usersLimit: prev.usersLimit,
+            branchesUsed: prev.branchesUsed,
+            branchesLimit: prev.branchesLimit,
+          },
+          ...prev.invoices,
+        ],
       }
     })
   }
@@ -111,30 +152,25 @@ export function SubscriptionDetailPage({
     )
   }
 
-  function handleLimitsConfirm(
-    branchesLimit: number,
-    usersLimit: number,
-    paymentMethod: PaymentMethodId,
-    amountPaid: number
-  ) {
+  function handleLimitsConfirm(result: UpdatePlanLimitsResult) {
     setSubscription((prev) => {
       if (!prev) return prev
 
       const today = new Date().toISOString().slice(0, 10)
       const invoiceId = `inv_${prev.id}_${Date.now()}`
-      const pdfDownloadUrl = invoiceReceiptPath(invoiceId)
       const invoiceNumber = `INV-${prev.companyName
         .slice(0, 3)
         .toUpperCase()}-${Date.now().toString().slice(-6)}`
+      const payment = {
+        provider: result.paymentMethod,
+        billingEmail: prev.paymentMethod?.billingEmail ?? "",
+      }
 
       return {
         ...prev,
-        branchesLimit,
-        usersLimit,
-        paymentMethod: {
-          provider: paymentMethod,
-          billingEmail: prev.paymentMethod?.billingEmail ?? "",
-        },
+        branchesLimit: result.branchesLimit,
+        usersLimit: result.usersLimit,
+        paymentMethod: payment,
         invoices: [
           {
             invoiceId,
@@ -142,19 +178,20 @@ export function SubscriptionDetailPage({
             issueDate: today,
             periodStart: today,
             periodEnd: prev.periodEnd,
-            amountPaid,
+            amountPaid: result.amountPaid,
             currency: prev.currency,
             status: "Paid",
-            pdfDownloadUrl,
+            pdfDownloadUrl: invoiceReceiptPath(invoiceId),
             planName: prev.planName,
-            paymentMethod: {
-              provider: paymentMethod,
-              billingEmail: prev.paymentMethod?.billingEmail ?? "",
-            },
+            chargeType: result.chargeType,
+            addedUsers: result.addedUsers,
+            addedBranches: result.addedBranches,
+            interval: prev.interval,
+            paymentMethod: payment,
             usersUsed: prev.usersUsed,
-            usersLimit,
+            usersLimit: result.usersLimit,
             branchesUsed: prev.branchesUsed,
-            branchesLimit,
+            branchesLimit: result.branchesLimit,
           },
           ...prev.invoices,
         ],
@@ -187,21 +224,7 @@ export function SubscriptionDetailPage({
           </Button>
         }
         actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              nativeButton={false}
-              render={
-                <Link
-                  href={`/admin/companies/${subscription.companyId}/configuration`}
-                />
-              }
-            >
-              <Building2Icon className="size-4" />
-              Company profile
-            </Button>
-            <DropdownMenu>
+          <DropdownMenu>
             <DropdownMenuTrigger
               render={<Button size="sm" variant="outline" />}
             >
@@ -228,15 +251,19 @@ export function SubscriptionDetailPage({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          </div>
         }
       />
 
       <CurrentPlanSection
         subscription={subscription}
-        onRenew={() => setRenewOpen(true)}
-        onUpdateBranchLimits={() => setBranchLimitsOpen(true)}
-        onUpdateUserLimits={() => setUserLimitsOpen(true)}
+        onUpdateBranchLimits={() => {
+          setLimitsFocus("branches")
+          setLimitsOpen(true)
+        }}
+        onUpdateUserLimits={() => {
+          setLimitsFocus("users")
+          setLimitsOpen(true)
+        }}
       />
 
       <InvoicesSection subscription={subscription} />
@@ -256,17 +283,9 @@ export function SubscriptionDetailPage({
       />
 
       <UpdatePlanLimitsDialog
-        mode="branches"
-        open={branchLimitsOpen}
-        onOpenChange={setBranchLimitsOpen}
-        subscription={subscription}
-        onConfirm={handleLimitsConfirm}
-      />
-
-      <UpdatePlanLimitsDialog
-        mode="users"
-        open={userLimitsOpen}
-        onOpenChange={setUserLimitsOpen}
+        focus={limitsFocus}
+        open={limitsOpen}
+        onOpenChange={setLimitsOpen}
         subscription={subscription}
         onConfirm={handleLimitsConfirm}
       />

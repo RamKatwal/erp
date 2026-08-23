@@ -7,6 +7,15 @@ type InvoiceDemoPageProps = {
   params: Promise<{ invoiceId: string }>
 }
 
+export async function generateMetadata({ params }: InvoiceDemoPageProps) {
+  const { invoiceId } = await params
+  const receipt = getInvoiceReceiptById(invoiceId)
+
+  return {
+    title: receipt ? `Invoice ${receipt.invoiceNumber}` : "Invoice",
+  }
+}
+
 export default async function InvoiceDemoDetailPage({
   params,
 }: InvoiceDemoPageProps) {

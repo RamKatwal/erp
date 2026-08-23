@@ -6,6 +6,10 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 
 import { CompanyBranchMultiselect } from "@/components/settings/users-permissions/company-branch-multiselect"
+import {
+  PermissionGroupFormDialog,
+  type PermissionGroupFormValues,
+} from "@/components/settings/users-permissions/group-form-dialog"
 import { RoleSelect } from "@/components/settings/users-permissions/role-select"
 import { Button } from "@/components/ui/button"
 import { Dialog } from "@/components/ui/dialog"
@@ -19,6 +23,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -79,7 +84,11 @@ type UserFormDialogProps = {
   roles: Group[]
   existingEmails: string[]
   existingUsernames: string[]
+  existingRoleNames?: string[]
   onSubmit: (values: UserFormValues) => void
+  onCreateRole?: (
+    values: PermissionGroupFormValues & { companyNames: string[] }
+  ) => Group
 }
 
 function RequiredMark() {
@@ -120,10 +129,13 @@ export function UserFormDialog({
   roles,
   existingEmails,
   existingUsernames,
+  existingRoleNames = [],
   onSubmit,
+  onCreateRole,
 }: UserFormDialogProps) {
   const isEdit = mode === "edit"
   const defaultRoleId = roles[0]?.id ?? ""
+  const [roleDialogOpen, setRoleDialogOpen] = React.useState(false)
 
   const form = useForm<UserFormInput>({
     resolver: zodResolver(userFormSchema),
@@ -145,6 +157,12 @@ export function UserFormDialog({
     [selectedRole]
   )
   const roleHasAccess = allowedBranchIds.length > 0
+
+  React.useEffect(() => {
+    if (!open) {
+      setRoleDialogOpen(false)
+    }
+  }, [open])
 
   React.useEffect(() => {
     if (!open) return
@@ -193,6 +211,14 @@ export function UserFormDialog({
     form.setValue("groupId", roleId, { shouldDirty: true, shouldValidate: true })
     form.setValue("branchIds", [], { shouldDirty: true, shouldValidate: true })
     form.setValue("companyIds", [], { shouldDirty: true, shouldValidate: true })
+  }
+
+  function handleCreateRole(
+    values: PermissionGroupFormValues & { companyNames: string[] }
+  ) {
+    if (!onCreateRole) return
+    const created = onCreateRole(values)
+    handleRoleChange(created.id)
   }
 
   function handleSubmit(values: UserFormInput) {
@@ -248,7 +274,11 @@ export function UserFormDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+      disablePointerDismissal={roleDialogOpen}
+    >
       <FormDialogContent size="xl">
         <FormDialogHeader>
           <FormDialogTitle>
@@ -373,14 +403,19 @@ export function UserFormDialog({
                     </FormLabel>
                     <FormControl>
                       <RoleSelect
-                        active={open}
+                        active={open && !roleDialogOpen}
                         value={field.value}
                         onChange={handleRoleChange}
                         onBlur={field.onBlur}
                         roles={roles}
-                        disabled={roles.length === 0}
+                        disabled={roles.length === 0 && !onCreateRole}
                         placeholder="Select role…"
                         aria-invalid={Boolean(form.formState.errors.groupId)}
+                        onCreateNew={
+                          onCreateRole
+                            ? () => setRoleDialogOpen(true)
+                            : undefined
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -426,6 +461,10 @@ export function UserFormDialog({
                         }
                       />
                     </FormControl>
+                    <FormDescription>
+                      Companies and branches shown here are based on the
+                      selected role.
+                    </FormDescription>
                     <FormMessage />
                     {form.formState.errors.companyIds &&
                     !form.formState.errors.branchIds ? (
@@ -452,6 +491,16 @@ export function UserFormDialog({
             </FormDialogFooter>
           </form>
         </Form>
+
+        {onCreateRole ? (
+          <PermissionGroupFormDialog
+            open={roleDialogOpen}
+            onOpenChange={setRoleDialogOpen}
+            mode="create"
+            existingNames={existingRoleNames}
+            onSubmit={handleCreateRole}
+          />
+        ) : null}
       </FormDialogContent>
     </Dialog>
   )

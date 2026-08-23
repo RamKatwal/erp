@@ -19,4 +19,6 @@ export type AppUser = {
   /** A user may belong to one or more entities; each has its own role. */
   assignments: UserEntityAssignment[]
   createdAt: string
+  /** Display name of the user who created this record. */
+  entryBy?: string
 }

@@ -74,7 +74,7 @@ export function InvoiceReceiptView({ receipt, className }: InvoiceReceiptViewPro
     >
       <div className="mx-auto max-w-[760px] px-8 py-12 print:max-w-none print:px-0 print:py-0">
         <div className="mb-12 flex items-start justify-between gap-6">
-          <h1 className="text-[2rem] font-semibold tracking-tight">Receipt</h1>
+          <h1 className="text-[2rem] font-semibold tracking-tight">Invoice</h1>
           <Image
             src={appBrand.logo}
             alt={appBrand.name}
@@ -87,7 +87,6 @@ export function InvoiceReceiptView({ receipt, className }: InvoiceReceiptViewPro
 
         <div className="space-y-1.5">
           <MetaRow label="Invoice number" value={receipt.invoiceNumber} />
-          <MetaRow label="Receipt number" value={receipt.receiptNumber} />
           <MetaRow
             label="Date paid"
             value={formatReceiptLongDate(receipt.datePaid)}
@@ -198,7 +197,7 @@ export function InvoiceReceiptView({ receipt, className }: InvoiceReceiptViewPro
               <span>Payment method</span>
               <span>Date</span>
               <span className="text-right">Amount paid</span>
-              <span className="text-right">Receipt number</span>
+              <span className="text-right">Invoice number</span>
             </div>
 
             {receipt.paymentHistory.length === 0 ? (
@@ -208,7 +207,7 @@ export function InvoiceReceiptView({ receipt, className }: InvoiceReceiptViewPro
             ) : (
               receipt.paymentHistory.map((entry) => (
                 <div
-                  key={`${entry.receiptNumber}-${entry.date}`}
+                  key={`${entry.invoiceNumber}-${entry.date}`}
                   className={cn(
                     receiptGrid,
                     "border-b border-neutral-200 py-5 text-[15px] last:border-0"
@@ -222,7 +221,7 @@ export function InvoiceReceiptView({ receipt, className }: InvoiceReceiptViewPro
                     {formatCurrency(entry.amountPaid, receipt.currency)}
                   </p>
                   <p className="text-right tabular-nums text-neutral-900">
-                    {entry.receiptNumber}
+                    {entry.invoiceNumber}
                   </p>
                 </div>
               ))

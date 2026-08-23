@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { CalendarDaysIcon, ClockIcon, RefreshCwIcon } from "lucide-react"
+import { CalendarDaysIcon, ClockIcon } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -103,14 +103,12 @@ function UsageBar({
 
 type CurrentPlanSectionProps = {
   subscription: Subscription
-  onRenew?: () => void
   onUpdateBranchLimits?: () => void
   onUpdateUserLimits?: () => void
 }
 
 export function CurrentPlanSection({
   subscription,
-  onRenew,
   onUpdateBranchLimits,
   onUpdateUserLimits,
 }: CurrentPlanSectionProps) {
@@ -148,19 +146,6 @@ export function CurrentPlanSection({
                 / {billingIntervalUnits[subscription.interval]}
               </span>
             </p>
-            <div className="flex items-center gap-2">
-              {onRenew && !isCanceled ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={onRenew}
-                >
-                  <RefreshCwIcon className="size-3.5" />
-                  Renew plan
-                </Button>
-              ) : null}
-            </div>
           </div>
         </div>
 

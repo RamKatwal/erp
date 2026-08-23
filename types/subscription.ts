@@ -16,6 +16,33 @@ export const INVOICE_STATUSES = ["Paid", "Open", "Past due", "Void"] as const
 
 export type InvoiceStatus = (typeof INVOICE_STATUSES)[number]
 
+export const INVOICE_CHARGE_TYPES = [
+  "plan",
+  "branches",
+  "users",
+  "branches_and_users",
+] as const
+
+export type InvoiceChargeType = (typeof INVOICE_CHARGE_TYPES)[number]
+
+export const invoiceChargeTypeLabels: Record<InvoiceChargeType, string> = {
+  plan: "Plan",
+  branches: "Branches",
+  users: "User seats",
+  branches_and_users: "Branches + users",
+}
+
+export function invoiceBilledForLabel(invoice: {
+  chargeType?: InvoiceChargeType
+  planName: string
+}): string {
+  const chargeType = invoice.chargeType ?? "plan"
+  if (chargeType === "plan") return invoice.planName
+  if (chargeType === "branches") return `Branch add-on · ${invoice.planName}`
+  if (chargeType === "users") return `User seats · ${invoice.planName}`
+  return `Branches + users · ${invoice.planName}`
+}
+
 export const SUBSCRIPTION_PAYMENT_PROVIDERS = ["esewa", "fonepay"] as const
 
 export type SubscriptionPaymentProvider =
@@ -50,6 +77,14 @@ export type SubscriptionInvoice = {
   status: InvoiceStatus
   pdfDownloadUrl: string
   planName: string
+  /** What this payment covers. Defaults to full plan when omitted. */
+  chargeType?: InvoiceChargeType
+  /** Extra user seats purchased on this invoice (add-on payments). */
+  addedUsers?: number
+  /** Extra branches purchased on this invoice (add-on payments). */
+  addedBranches?: number
+  /** Billing interval this invoice covers. Falls back to the subscription interval. */
+  interval?: BillingInterval
   paymentMethod: SubscriptionPaymentMethod | null
   usersUsed: number
   usersLimit: number

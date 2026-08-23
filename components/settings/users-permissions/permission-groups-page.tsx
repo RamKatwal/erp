@@ -10,6 +10,7 @@ import {
   useDataTableFullscreen,
 } from "@/components/data-table/data-table"
 import { PageHeader } from "@/components/layout/page-header"
+import { DeactivateRoleDialog } from "@/components/settings/users-permissions/deactivate-role-dialog"
 import { createPermissionGroupColumns } from "@/components/settings/users-permissions/group-columns"
 import { groupedBranchAccessSearchText } from "@/components/settings/users-permissions/grouped-branch-chips"
 import {
@@ -17,36 +18,60 @@ import {
   type PermissionGroupFormValues,
 } from "@/components/settings/users-permissions/group-form-dialog"
 import { Button } from "@/components/ui/button"
+import { Tabs } from "@/components/ui/tabs"
+import { getCurrentUser } from "@/lib/auth/current-user"
 import { mockPermissionGroups } from "@/lib/mock/permission-groups"
 import {
   createPermissionGroupId,
+  ensureDefaultPermissionGroups,
   readPermissionGroups,
   savePermissionGroups,
 } from "@/lib/users/groups-storage"
+import { getUsersAssignedToRole } from "@/lib/users/storage"
 import {
-  readGroupBranchPermissions,
-  saveGroupBranchPermissions,
-} from "@/lib/users/permission-storage"
-import { normalizeGroupCompanies, type Group } from "@/types/group"
+  getGroupStatus,
+  isProtectedRole,
+  normalizeGroupCompanies,
+  type Group,
+  type GroupStatus,
+} from "@/types/group"
+import type { AppUser } from "@/types/user"
 
 export function PermissionGroupsPage() {
   const [groups, setGroups] = React.useState<Group[]>(mockPermissionGroups)
+  const [statusTab, setStatusTab] = React.useState<GroupStatus>("active")
   const [rowSize, setRowSize] = React.useState<DataTableRowSize>("md")
   const { isFullscreen, toggleFullscreen } = useDataTableFullscreen()
   const [dialogOpen, setDialogOpen] = React.useState(false)
   const [dialogMode, setDialogMode] = React.useState<"create" | "edit">("create")
   const [editingGroup, setEditingGroup] = React.useState<Group | null>(null)
+  const [deactivateOpen, setDeactivateOpen] = React.useState(false)
+  const [pendingDeactivate, setPendingDeactivate] =
+    React.useState<Group | null>(null)
+  const [assignedUsers, setAssignedUsers] = React.useState<AppUser[]>([])
 
   React.useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setGroups(readPermissionGroups().map(normalizeGroupCompanies))
+    setGroups(readPermissionGroups())
   }, [])
 
   const persist = React.useCallback((next: Group[]) => {
-    const normalized = next.map(normalizeGroupCompanies)
+    const normalized = ensureDefaultPermissionGroups(next)
     setGroups(normalized)
     savePermissionGroups(normalized)
   }, [])
+
+  const activeCount = groups.filter(
+    (group) => getGroupStatus(group) === "active"
+  ).length
+  const inactiveCount = groups.filter(
+    (group) => getGroupStatus(group) === "inactive"
+  ).length
+
+  const visibleGroups = React.useMemo(
+    () => groups.filter((group) => getGroupStatus(group) === statusTab),
+    [groups, statusTab]
+  )
 
   function openCreate() {
     setDialogMode("create")
@@ -55,6 +80,7 @@ export function PermissionGroupsPage() {
   }
 
   function openEdit(group: Group) {
+    if (isProtectedRole(group)) return
     setDialogMode("edit")
     setEditingGroup(group)
     setDialogOpen(true)
@@ -67,16 +93,19 @@ export function PermissionGroupsPage() {
       const nextGroup = normalizeGroupCompanies({
         id: createPermissionGroupId(values.name),
         name: values.name,
-        description: values.description ?? "",
+        description: "",
         companyIds: values.companyIds,
         companyNames: values.companyNames,
         branchIds: values.branchIds,
+        status: "active",
+        entryBy: getCurrentUser().name,
+        locked: false,
       })
       persist([nextGroup, ...groups])
       return
     }
 
-    if (!editingGroup) return
+    if (!editingGroup || isProtectedRole(editingGroup)) return
 
     persist(
       groups.map((group) =>
@@ -84,7 +113,6 @@ export function PermissionGroupsPage() {
           ? normalizeGroupCompanies({
               ...group,
               name: values.name,
-              description: values.description ?? "",
               companyIds: values.companyIds,
               companyNames: values.companyNames,
               branchIds: values.branchIds,
@@ -94,11 +122,34 @@ export function PermissionGroupsPage() {
     )
   }
 
-  function handleDelete(group: Group) {
-    persist(groups.filter((item) => item.id !== group.id))
-    saveGroupBranchPermissions(
-      readGroupBranchPermissions().filter(
-        (entry) => entry.groupId !== group.id
+  function requestDeactivate(group: Group) {
+    if (isProtectedRole(group) || getGroupStatus(group) !== "active") return
+    setPendingDeactivate(group)
+    setAssignedUsers(getUsersAssignedToRole(group.id))
+    setDeactivateOpen(true)
+  }
+
+  function confirmDeactivate() {
+    if (!pendingDeactivate || isProtectedRole(pendingDeactivate)) return
+    if (getUsersAssignedToRole(pendingDeactivate.id).length > 0) return
+
+    persist(
+      groups.map((group) =>
+        group.id === pendingDeactivate.id
+          ? { ...group, status: "inactive" }
+          : group
+      )
+    )
+    setDeactivateOpen(false)
+    setPendingDeactivate(null)
+    setAssignedUsers([])
+  }
+
+  function activateGroup(group: Group) {
+    if (isProtectedRole(group)) return
+    persist(
+      groups.map((item) =>
+        item.id === group.id ? { ...item, status: "active" } : item
       )
     )
   }
@@ -107,14 +158,15 @@ export function PermissionGroupsPage() {
     () =>
       createPermissionGroupColumns({
         onEdit: openEdit,
-        onDelete: handleDelete,
+        onDeactivate: requestDeactivate,
+        onActivate: activateGroup,
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [groups]
   )
 
   const table = useDataTable({
-    data: groups,
+    data: visibleGroups,
     columns,
     pageSize: 10,
     globalFilterFn: (row, _columnId, filterValue) => {
@@ -129,11 +181,16 @@ export function PermissionGroupsPage() {
 
       return (
         item.name.toLowerCase().includes(query) ||
-        item.description.toLowerCase().includes(query) ||
+        (item.entryBy ?? "").toLowerCase().includes(query) ||
         accessMatches
       )
     },
   })
+
+  const statusTabItems = [
+    { value: "active", label: "Active", count: activeCount },
+    { value: "inactive", label: "Inactive", count: inactiveCount },
+  ]
 
   return (
     <div className="flex flex-col gap-4">
@@ -156,8 +213,24 @@ export function PermissionGroupsPage() {
         onRowSizeChange={setRowSize}
         isFullscreen={isFullscreen}
         onToggleFullscreen={toggleFullscreen}
-        emptyMessage="No user roles yet. Add a role to start assigning permissions."
+        showFilter={false}
+        emptyMessage={
+          statusTab === "active"
+            ? "No active user roles."
+            : "No inactive user roles."
+        }
         onRowClick={openEdit}
+        leading={
+          <Tabs
+            items={statusTabItems}
+            value={statusTab}
+            onValueChange={(value) => {
+              if (value !== "active" && value !== "inactive") return
+              setStatusTab(value)
+              table.setPageIndex(0)
+            }}
+          />
+        }
       />
 
       <PermissionGroupFormDialog
@@ -167,6 +240,20 @@ export function PermissionGroupsPage() {
         group={editingGroup}
         existingNames={groups.map((group) => group.name)}
         onSubmit={handleFormSubmit}
+      />
+
+      <DeactivateRoleDialog
+        open={deactivateOpen}
+        onOpenChange={(open) => {
+          setDeactivateOpen(open)
+          if (!open) {
+            setPendingDeactivate(null)
+            setAssignedUsers([])
+          }
+        }}
+        role={pendingDeactivate}
+        assignedUsers={assignedUsers}
+        onConfirm={confirmDeactivate}
       />
     </div>
   )

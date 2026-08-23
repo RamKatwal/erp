@@ -1,3 +1,7 @@
+export const ADMIN_ROLE_ID = "grp-admin"
+
+export type GroupStatus = "active" | "inactive"
+
 export type Group = {
   id: string
   name: string
@@ -13,6 +17,19 @@ export type Group = {
   companyName?: string
   /** Admin user roles: selected branches / head offices across companies. */
   branchIds?: string[]
+  status?: GroupStatus
+  /** Display name of the user who created the role. */
+  entryBy?: string
+  /** System roles (Admin) cannot be edited or deactivated. */
+  locked?: boolean
+}
+
+export function isProtectedRole(group: Pick<Group, "id" | "locked">) {
+  return group.locked === true || group.id === ADMIN_ROLE_ID
+}
+
+export function getGroupStatus(group: Pick<Group, "status">): GroupStatus {
+  return group.status ?? "active"
 }
 
 export const GROUP_PERMISSION_ACTIONS = [
@@ -53,5 +70,8 @@ export function normalizeGroupCompanies(group: Group): Group {
     companyNames,
     companyId: companyIds[0],
     companyName: companyNames[0],
+    status: group.status ?? "active",
+    entryBy: group.entryBy ?? "",
+    locked: group.locked ?? group.id === ADMIN_ROLE_ID,
   }
 }

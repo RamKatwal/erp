@@ -10,8 +10,9 @@ export const mockUsers: AppUser[] = [
     address: "Durbar Marg, Kathmandu",
     designation: "Cashier",
     status: "active",
-    assignments: [{ branchId: "br_hq_01", groupId: "grp-branch-cashier" }],
+    assignments: [{ branchId: "br_hq_01", groupId: "grp-sales" }],
     createdAt: "2026-03-01",
+    entryBy: "Main Admin",
   },
   {
     id: "usr-ramesh",
@@ -23,10 +24,11 @@ export const mockUsers: AppUser[] = [
     designation: "Branch Manager",
     status: "active",
     assignments: [
-      { branchId: "br_hq_01", groupId: "grp-branch-manager" },
-      { branchId: "br_ht_01", groupId: "grp-branch-manager" },
+      { branchId: "br_hq_01", groupId: "grp-sales" },
+      { branchId: "br_ht_01", groupId: "grp-sales" },
     ],
     createdAt: "2026-03-12",
+    entryBy: "Main Admin",
   },
   {
     id: "usr-sita",
@@ -37,7 +39,8 @@ export const mockUsers: AppUser[] = [
     address: "New Road, Kathmandu",
     designation: "Branch Manager",
     status: "inactive",
-    assignments: [{ branchId: "br_ht_02", groupId: "grp-branch-manager" }],
+    assignments: [{ branchId: "br_ht_02", groupId: "grp-sales" }],
     createdAt: "2026-04-02",
+    entryBy: "Main Admin",
   },
 ]

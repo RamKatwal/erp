@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ChevronsUpDownIcon, XIcon } from "lucide-react"
+import { ChevronsUpDownIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -135,28 +135,30 @@ export function CompanyBranchMultiselect({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
+        disabled={disabled || (allowedSet !== null && companies.length === 0)}
         render={
-          <Button
+          <button
             id={id}
             type="button"
-            variant="outline"
             disabled={disabled || (allowedSet !== null && companies.length === 0)}
             aria-invalid={ariaInvalid}
             aria-haspopup="dialog"
             className={cn(
-              "h-auto min-h-9 w-full justify-between gap-2 px-3 py-1.5 font-normal",
-              selectedGroups.length === 0 && "text-muted-foreground",
+              "flex min-h-9 w-full justify-between gap-2 rounded-md border border-input bg-transparent px-3 py-1.5 text-left text-sm shadow-xs outline-none transition-[color,box-shadow] select-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
+              selectedGroups.length === 0
+                ? "items-center text-muted-foreground"
+                : "items-start",
               className
             )}
           />
         }
       >
-        <span className="flex min-w-0 flex-1 flex-col gap-1.5 py-0.5">
+        <span className="flex min-w-0 flex-1 flex-col items-start gap-1.5 py-0.5 text-left">
           {selectedGroups.length === 0 ? (
             <span>{placeholder}</span>
           ) : (
             selectedGroups.map((group) => (
-              <span key={group.companyId} className="flex flex-col gap-1">
+              <span key={group.companyId} className="flex flex-col items-start gap-1">
                 <StatusChip
                   label={group.companyName}
                   tone={getCompanyTone(group.companyId)}
@@ -176,7 +178,7 @@ export function CompanyBranchMultiselect({
             ))
           )}
         </span>
-        <ChevronsUpDownIcon className="size-4 shrink-0 opacity-50" />
+        <ChevronsUpDownIcon className="mt-0.5 size-4 shrink-0 opacity-50" />
       </PopoverTrigger>
 
       <PopoverContent

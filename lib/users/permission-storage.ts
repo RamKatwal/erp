@@ -3,7 +3,7 @@ import { mockGroupBranchPermissions } from "@/lib/mock/group-branch-permissions"
 import type { GroupBranchPermissionAssignment } from "@/types/permission-assignment"
 import type { GroupPermissions } from "@/types/group"
 
-const GROUP_BRANCH_PERMISSIONS_STORAGE_KEY = "ibmerp-group-branch-permissions"
+const GROUP_BRANCH_PERMISSIONS_STORAGE_KEY = "ibmerp-group-branch-permissions-v2"
 
 export function permissionAssignmentKey(groupId: string, branchId: string) {
   return `${groupId}::${branchId}`

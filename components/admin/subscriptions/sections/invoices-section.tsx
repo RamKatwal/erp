@@ -3,11 +3,6 @@
 import * as React from "react"
 import { DownloadIcon, EyeIcon, FileTextIcon } from "lucide-react"
 
-import {
-  branchAvatarItems,
-  StackedAvatars,
-  userAvatarItems,
-} from "@/components/admin/subscriptions/stacked-avatars"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -20,11 +15,14 @@ import {
 } from "@/components/ui/sheet"
 import { formatCurrency, formatLongDate } from "@/lib/format"
 import { paymentMethodLogoSrc } from "@/lib/onboarding/plans"
+import { invoiceReceiptPath } from "@/lib/mock/invoice-receipt"
 import {
-  invoiceReceiptPath,
-} from "@/lib/mock/invoice-receipt"
-import {
+  billingIntervalLabels,
+  invoiceBilledForLabel,
+  invoiceChargeTypeLabels,
   paymentProviderLabels,
+  type BillingInterval,
+  type InvoiceChargeType,
   type Subscription,
   type SubscriptionInvoice,
   type SubscriptionPaymentMethod,
@@ -70,6 +68,58 @@ function PaymentMethodCell({
   )
 }
 
+function invoiceChargeType(
+  invoice: SubscriptionInvoice
+): InvoiceChargeType {
+  return invoice.chargeType ?? "plan"
+}
+
+function invoiceInterval(
+  invoice: SubscriptionInvoice,
+  subscription: Subscription
+): BillingInterval {
+  return invoice.interval ?? subscription.interval
+}
+
+function paidUsersCount(invoice: SubscriptionInvoice) {
+  const chargeType = invoiceChargeType(invoice)
+  if (chargeType === "branches") return null
+  if (chargeType === "users" || chargeType === "branches_and_users") {
+    return invoice.addedUsers ?? 0
+  }
+  return invoice.usersLimit
+}
+
+function paidBranchesCount(invoice: SubscriptionInvoice) {
+  const chargeType = invoiceChargeType(invoice)
+  if (chargeType === "users") return null
+  if (chargeType === "branches" || chargeType === "branches_and_users") {
+    return invoice.addedBranches ?? 0
+  }
+  return invoice.branchesLimit
+}
+
+function QuantityCell({ value }: { value: number | null }) {
+  if (value === null) {
+    return <span className="text-muted-foreground">—</span>
+  }
+  return <span className="tabular-nums">{value}</span>
+}
+
+function BilledForCell({ invoice }: { invoice: SubscriptionInvoice }) {
+  const chargeType = invoiceChargeType(invoice)
+  if (chargeType === "plan") {
+    return <span>{invoice.planName}</span>
+  }
+
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="font-medium">{invoiceChargeTypeLabels[chargeType]}</span>
+      <span className="text-xs text-muted-foreground">{invoice.planName}</span>
+    </div>
+  )
+}
+
 function DetailRow({
   label,
   children,
@@ -87,15 +137,20 @@ function DetailRow({
 
 function InvoiceDetailSheet({
   invoice,
+  subscription,
   open,
   onOpenChange,
 }: {
   invoice: SubscriptionInvoice
+  subscription: Subscription
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
   const pdfHref = invoiceDownloadHref(invoice)
   const isPaid = invoice.status === "Paid"
+  const chargeType = invoiceChargeType(invoice)
+  const usersPaid = paidUsersCount(invoice)
+  const branchesPaid = paidBranchesCount(invoice)
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -134,8 +189,11 @@ function InvoiceDetailSheet({
             <DetailRow label="Issue date">
               {formatLongDate(invoice.issueDate)}
             </DetailRow>
-            <DetailRow label="Plan">
-              {invoice.planName}
+            <DetailRow label="Billed for">
+              {invoiceBilledForLabel(invoice)}
+            </DetailRow>
+            <DetailRow label="Interval">
+              {billingIntervalLabels[invoiceInterval(invoice, subscription)]}
             </DetailRow>
             {invoice.paymentMethod && (
               <DetailRow label="Payment method">
@@ -161,15 +219,23 @@ function InvoiceDetailSheet({
           <Separator className="my-4" />
 
           <h3 className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Usage
+            {chargeType === "plan" ? "Paid allocation" : "This payment"}
           </h3>
           <div className="text-sm">
-            <DetailRow label="Users">
-              {invoice.usersUsed} / {invoice.usersLimit}
-            </DetailRow>
-            <DetailRow label="Branches">
-              {invoice.branchesUsed} / {invoice.branchesLimit}
-            </DetailRow>
+            {usersPaid !== null ? (
+              <DetailRow
+                label={chargeType === "plan" ? "Users" : "User seats"}
+              >
+                {usersPaid}
+              </DetailRow>
+            ) : null}
+            {branchesPaid !== null ? (
+              <DetailRow
+                label={chargeType === "plan" ? "Branches" : "Branches"}
+              >
+                {branchesPaid}
+              </DetailRow>
+            ) : null}
           </div>
 
           <Separator className="my-4" />
@@ -200,7 +266,7 @@ function InvoiceDetailSheet({
             }
           >
             <DownloadIcon className="mr-2 size-4" />
-            Download receipt
+            Download invoice
           </Button>
         </div>
       </SheetContent>
@@ -238,8 +304,9 @@ export function InvoicesSection({ subscription }: InvoicesSectionProps) {
                 <tr>
                   <th className="px-4 py-2.5 font-medium">Invoice ID</th>
                   <th className="px-4 py-2.5 font-medium">Date</th>
+                  <th className="px-4 py-2.5 font-medium">Interval</th>
                   <th className="px-4 py-2.5 font-medium">Period Covered</th>
-                  <th className="px-4 py-2.5 font-medium">Plan type</th>
+                  <th className="px-4 py-2.5 font-medium">Billed for</th>
                   <th className="px-4 py-2.5 font-medium">Payment Method</th>
                   <th className="px-4 py-2.5 font-medium">Users</th>
                   <th className="px-4 py-2.5 font-medium">Branches</th>
@@ -260,32 +327,23 @@ export function InvoicesSection({ subscription }: InvoicesSectionProps) {
                       {formatLongDate(invoice.issueDate)}
                     </td>
                     <td className="px-4 py-2.5 text-muted-foreground">
+                      {billingIntervalLabels[invoiceInterval(invoice, subscription)]}
+                    </td>
+                    <td className="px-4 py-2.5 text-muted-foreground">
                       {formatLongDate(invoice.periodStart)} –{" "}
                       {formatLongDate(invoice.periodEnd)}
                     </td>
-                    <td className="px-4 py-2.5">{invoice.planName}</td>
+                    <td className="px-4 py-2.5">
+                      <BilledForCell invoice={invoice} />
+                    </td>
                     <td className="px-4 py-2.5">
                       <PaymentMethodCell method={invoice.paymentMethod} />
                     </td>
                     <td className="px-4 py-2.5">
-                      <StackedAvatars
-                        items={userAvatarItems(
-                          subscription.members,
-                          invoice.usersUsed
-                        )}
-                        total={invoice.usersUsed}
-                      />
+                      <QuantityCell value={paidUsersCount(invoice)} />
                     </td>
                     <td className="px-4 py-2.5">
-                      <StackedAvatars
-                        items={branchAvatarItems(
-                          subscription.assignedBranches.slice(
-                            0,
-                            invoice.branchesUsed
-                          )
-                        )}
-                        total={invoice.branchesUsed}
-                      />
+                      <QuantityCell value={paidBranchesCount(invoice)} />
                     </td>
                     <td className="px-4 py-2.5 tabular-nums">
                       {formatCurrency(invoice.amountPaid, invoice.currency)}
@@ -308,7 +366,7 @@ export function InvoicesSection({ subscription }: InvoicesSectionProps) {
                         <Button
                           variant="ghost"
                           size="icon-sm"
-                          aria-label={`Download ${invoice.invoiceNumber}`}
+                          aria-label={`Download invoice ${invoice.invoiceNumber}`}
                           nativeButton={false}
                           render={
                             <a
@@ -333,6 +391,7 @@ export function InvoicesSection({ subscription }: InvoicesSectionProps) {
       {selectedInvoice && (
         <InvoiceDetailSheet
           invoice={selectedInvoice}
+          subscription={subscription}
           open={!!selectedInvoice}
           onOpenChange={(open) => {
             if (!open) setSelectedInvoice(null)

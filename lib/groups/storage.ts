@@ -22,6 +22,17 @@ export function readCustomGroups(): Group[] {
   }
 }
 
+export function saveCustomGroup(group: Group) {
+  const customGroups = readCustomGroups()
+  window.localStorage.setItem(
+    CUSTOM_GROUPS_STORAGE_KEY,
+    JSON.stringify([
+      ...customGroups.filter((item) => item.id !== group.id),
+      group,
+    ])
+  )
+}
+
 export function readGroupConfiguration(
   group: Group
 ): StoredGroupConfiguration {

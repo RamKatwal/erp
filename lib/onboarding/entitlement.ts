@@ -116,6 +116,7 @@ export function entitlementToSubscription(
             status: "Paid",
             pdfDownloadUrl: "/inv_demo/inv_2026_001",
             planName: entitlement.planName,
+            chargeType: "plan",
             paymentMethod: entitlement.paymentMethod
               ? {
                   provider: entitlement.paymentMethod,
