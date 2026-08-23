@@ -1,0 +1,47 @@
+---
+description: Use the shared Tabs component for all tab UIs (filters, modules, panels)
+globs: **/*.{tsx,ts}
+alwaysApply: false
+---
+
+# Tabs
+
+Use only `@/components/ui/tabs`. Do not add new tab bars, `FilterTabs`, segmented controls, or one-off button-group tabs.
+
+## Visual pattern
+
+Active = primary button. Inactive = outline button. Same look as Purchase Return status tabs.
+
+## Filter / status bar (no panels)
+
+```tsx
+import { Tabs, type TabItem } from "@/components/ui/tabs"
+
+const items: TabItem[] = [
+  { value: "approved", label: "Approved", count: 12 },
+  { value: "draft", label: "Draft", count: 3 },
+]
+
+<Tabs items={items} value={value} onValueChange={setValue} />
+```
+
+## Module / content tabs (with panels)
+
+```tsx
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+
+<Tabs value={value} onValueChange={setValue}>
+  <TabsList>
+    <TabsTrigger value="inventory">Inventory</TabsTrigger>
+    <TabsTrigger value="purchase">Purchase</TabsTrigger>
+  </TabsList>
+  <TabsContent value="inventory">…</TabsContent>
+  <TabsContent value="purchase">…</TabsContent>
+</Tabs>
+```
+
+## Do not
+
+- Import or recreate `filter-tabs`
+- Use `components/ui/tabs` line/pill variants from shadcn as a second style
+- Build ad-hoc `ButtonGroup` + `Button` tablists for navigation/filtering

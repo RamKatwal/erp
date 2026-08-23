@@ -140,7 +140,6 @@ export function PermissionGroupsPage() {
       <PageHeader
         title="User Roles"
         count={`${groups.length} roles`}
-        description="Create roles across companies and branches. Configure module access in Permission Management."
         actions={
           <Button size="sm" onClick={openCreate}>
             <PlusIcon />

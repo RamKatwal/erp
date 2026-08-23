@@ -263,21 +263,26 @@ export const PAYMENT_METHODS: {
   id: PaymentMethodId
   name: string
   description: string
-  domain: string
+  logoSrc: string
 }[] = [
   {
     id: "esewa",
     name: "eSewa",
     description: "eSewa",
-    domain: "esewa.com.np",
+    logoSrc: "/images/payment/esewa.png",
   },
   {
     id: "fonepay",
     name: "Fonepay",
     description: "Fonepay",
-    domain: "fonepay.com",
+    logoSrc: "/images/payment/fonepay.png",
   },
 ]
+
+export const paymentMethodLogoSrc: Record<PaymentMethodId, string> = {
+  esewa: "/images/payment/esewa.png",
+  fonepay: "/images/payment/fonepay.png",
+}
 
 export type AdditionalModule = {
   id: AdditionalModuleId

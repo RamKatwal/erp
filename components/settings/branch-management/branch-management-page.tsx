@@ -145,7 +145,6 @@ export function BranchManagementPage() {
       <PageHeader
         title="Branch Management"
         count={`${branches.length} / ${branchLimit}`}
-        description="Create and manage company branches within your subscription limit."
         actions={
           <div className="flex items-center gap-2">
             {limitReached ? (

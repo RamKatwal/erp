@@ -105,7 +105,6 @@ export function CompanyConfigurationPage({
     <div className="flex flex-col gap-5">
       <PageHeader
         title="Company Configuration"
-        description="View and update your company profile information."
         breadcrumb={
           backHref
             ? (

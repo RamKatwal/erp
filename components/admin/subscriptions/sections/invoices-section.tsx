@@ -19,7 +19,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet"
 import { formatCurrency, formatLongDate } from "@/lib/format"
-import { getFaviconUrl } from "@/lib/brand/favicon"
+import { paymentMethodLogoSrc } from "@/lib/onboarding/plans"
 import {
   invoiceReceiptPath,
 } from "@/lib/mock/invoice-receipt"
@@ -29,11 +29,6 @@ import {
   type SubscriptionInvoice,
   type SubscriptionPaymentMethod,
 } from "@/types/subscription"
-
-const paymentProviderDomains = {
-  esewa: "esewa.com.np",
-  fonepay: "fonepay.com",
-} as const
 
 function invoiceDownloadHref(invoice: SubscriptionInvoice) {
   if (invoice.pdfDownloadUrl && invoice.pdfDownloadUrl !== "#") {
@@ -63,7 +58,7 @@ function PaymentMethodCell({
     <span className="inline-flex items-center gap-2">
       <span className="flex size-6 items-center justify-center rounded-md border bg-background p-0.5">
         <img
-          src={getFaviconUrl(paymentProviderDomains[method.provider])}
+          src={paymentMethodLogoSrc[method.provider]}
           alt=""
           width={16}
           height={16}

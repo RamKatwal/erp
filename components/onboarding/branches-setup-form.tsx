@@ -267,7 +267,6 @@ export default function BranchesSetupForm() {
         <PageHeader
           title="Quick branch setup"
           count={`${branchLimit} / ${branchLimit}`}
-          description="Fill each branch from your plan. After this, your workspace will be ready."
         />
 
         <div className="flex max-h-[min(36rem,65svh)] min-h-0 flex-col overflow-hidden rounded-xl border bg-card shadow-xs">

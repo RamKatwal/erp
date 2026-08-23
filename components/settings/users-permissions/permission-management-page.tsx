@@ -1,11 +1,19 @@
 "use client"
 
 import * as React from "react"
-import { Check, ChevronsUpDown, Save } from "lucide-react"
+import { Check, ChevronsUpDown, Pencil, Save } from "lucide-react"
 
 import { PageHeader } from "@/components/layout/page-header"
 import { PermissionMatrix } from "@/components/settings/group-management/permission-matrix"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,6 +47,7 @@ function AccessSelect({
   disabled,
   placeholder,
   options,
+  className,
 }: {
   id: string
   value: string
@@ -46,12 +55,13 @@ function AccessSelect({
   disabled?: boolean
   placeholder: string
   options: AccessSelectOption[]
+  className?: string
 }) {
   const selected = options.find((option) => option.value === value)
   const isDisabled = disabled || options.length === 0
 
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger
         disabled={isDisabled}
         render={
@@ -59,8 +69,12 @@ function AccessSelect({
             id={id}
             type="button"
             variant="outline"
+            size="sm"
             disabled={isDisabled}
-            className="h-9 w-full justify-between px-3 font-normal"
+            className={cn(
+              "h-8 w-44 justify-between gap-2 px-2.5 font-normal",
+              className
+            )}
           />
         }
       >
@@ -72,9 +86,12 @@ function AccessSelect({
         >
           {selected?.label ?? placeholder}
         </span>
-        <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
+        <ChevronsUpDown className="size-3.5 shrink-0 opacity-50" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="max-h-64">
+      <DropdownMenuContent
+        align="start"
+        className="thin-scrollbar max-h-64 min-w-(--anchor-width)"
+      >
         {options.map((option) => (
           <DropdownMenuItem
             key={option.value}
@@ -82,7 +99,7 @@ function AccessSelect({
           >
             <span className="min-w-0 flex-1 truncate">{option.label}</span>
             {option.value === value ? (
-              <Check className="ml-auto size-4 shrink-0" />
+              <Check className="ml-auto size-3.5 shrink-0" />
             ) : null}
           </DropdownMenuItem>
         ))}
@@ -98,10 +115,14 @@ function roleAllowedBranchIds(role: Group | undefined): string[] {
 }
 
 function formatBranchOption(branch: ResolvedBranchOption) {
-  const officeLabel = branch.isHeadOffice
-    ? `${branch.name} (Head Office)`
-    : branch.name
+  const officeLabel = branch.isHeadOffice ? "Head office" : branch.name
   return `${officeLabel} · ${branch.companyName}`
+}
+
+function clonePermissions(permissions: GroupPermissions): GroupPermissions {
+  return Object.fromEntries(
+    Object.entries(permissions).map(([key, actions]) => [key, [...actions]])
+  )
 }
 
 export function PermissionManagementPage() {
@@ -111,8 +132,12 @@ export function PermissionManagementPage() {
   const [permissions, setPermissions] = React.useState<GroupPermissions>(
     createEmptyGroupPermissions()
   )
+  const [permissionsSnapshot, setPermissionsSnapshot] =
+    React.useState<GroupPermissions | null>(null)
+  const [isEditing, setIsEditing] = React.useState(false)
   const [saved, setSaved] = React.useState(false)
   const [hydrated, setHydrated] = React.useState(false)
+  const [confirmOpen, setConfirmOpen] = React.useState(false)
 
   const selectedGroup = groups.find((group) => group.id === groupId)
   const allowedBranches = React.useMemo(
@@ -174,104 +199,188 @@ export function PermissionManagementPage() {
   }, [groupId, branchId, groups, hydrated])
 
   function handleGroupChange(nextGroupId: string) {
+    if (isEditing) return
     setGroupId(nextGroupId)
     setSaved(false)
+    setConfirmOpen(false)
   }
 
   function handleBranchChange(nextBranchId: string) {
+    if (isEditing) return
     setBranchId(nextBranchId)
     setSaved(false)
+    setConfirmOpen(false)
   }
 
   function handlePermissionsChange(next: GroupPermissions) {
+    if (!isEditing) return
     setSaved(false)
     setPermissions(next)
   }
 
-  function handleSave() {
-    if (!groupId || !branchId) return
+  function handleEdit() {
+    if (!canConfigure) return
+    setPermissionsSnapshot(clonePermissions(permissions))
+    setIsEditing(true)
+    setSaved(false)
+  }
+
+  function handleCancel() {
+    if (permissionsSnapshot) {
+      setPermissions(clonePermissions(permissionsSnapshot))
+    }
+    setPermissionsSnapshot(null)
+    setIsEditing(false)
+    setSaved(false)
+    setConfirmOpen(false)
+  }
+
+  function handleSaveClick() {
+    if (!canConfigure || !isEditing) return
+    setConfirmOpen(true)
+  }
+
+  function handleConfirmSave() {
+    if (!groupId || !branchId || !isEditing) return
     upsertGroupBranchPermission(groupId, branchId, permissions)
+    setPermissionsSnapshot(null)
+    setIsEditing(false)
     setSaved(true)
+    setConfirmOpen(false)
   }
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
       <PageHeader
         title="Permission Management"
-        description="Select a group and one of its assigned branches, then configure the permission matrix. Users in that group at that branch receive these permissions on next page load."
         actions={
-          <Button size="sm" onClick={handleSave} disabled={!canConfigure}>
-            <Save />
-            {saved ? "Saved" : "Save"}
-          </Button>
+          isEditing ? (
+            <>
+              <Button size="sm" variant="outline" onClick={handleCancel}>
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSaveClick}
+                disabled={!canConfigure}
+              >
+                <Save />
+                {saved ? "Saved" : "Save"}
+              </Button>
+            </>
+          ) : (
+            <Button
+              size="sm"
+              onClick={handleEdit}
+              disabled={!canConfigure}
+            >
+              <Pencil />
+              Edit permissions
+            </Button>
+          )
         }
       />
 
-      <section className="grid gap-4 rounded-xl border bg-card p-4 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label htmlFor="permission-group">Group</Label>
-          <AccessSelect
-            id="permission-group"
-            value={groupId}
-            onValueChange={handleGroupChange}
-            disabled={groups.length === 0}
-            placeholder="No groups available"
-            options={groups.map((group) => ({
-              value: group.id,
-              label: group.name,
-            }))}
-          />
+      <div className="overflow-hidden rounded-xl border bg-card shadow-xs">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b px-4 py-3">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <Label
+              htmlFor="permission-group"
+              className="shrink-0 text-muted-foreground"
+            >
+              Group
+            </Label>
+            <AccessSelect
+              id="permission-group"
+              value={groupId}
+              onValueChange={handleGroupChange}
+              disabled={groups.length === 0 || isEditing}
+              placeholder="No groups available"
+              options={groups.map((group) => ({
+                value: group.id,
+                label: group.name,
+              }))}
+            />
+          </div>
+
+          <div className="flex min-w-0 items-center gap-2.5">
+            <Label
+              htmlFor="permission-branch"
+              className="shrink-0 text-muted-foreground"
+            >
+              Branch access
+            </Label>
+            <AccessSelect
+              id="permission-branch"
+              value={branchId}
+              onValueChange={handleBranchChange}
+              disabled={allowedBranches.length === 0 || isEditing}
+              className="w-72"
+              placeholder={
+                selectedGroup
+                  ? "No branches assigned to this group"
+                  : "Select a group first"
+              }
+              options={allowedBranches.map((branch) => ({
+                value: branch.id,
+                label: formatBranchOption(branch),
+              }))}
+            />
+          </div>
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="permission-branch">Branch access</Label>
-          <AccessSelect
-            id="permission-branch"
-            value={branchId}
-            onValueChange={handleBranchChange}
-            disabled={allowedBranches.length === 0}
-            placeholder={
-              selectedGroup
-                ? "No branches assigned to this group"
-                : "Select a group first"
-            }
-            options={allowedBranches.map((branch) => ({
-              value: branch.id,
-              label: formatBranchOption(branch),
-            }))}
+        {canConfigure ? (
+          <PermissionMatrix
+            permissions={permissions}
+            onChange={handlePermissionsChange}
+            readOnly={!isEditing}
           />
-        </div>
-
-        {selectedGroup && selectedBranch ? (
-          <p className="text-xs text-muted-foreground sm:col-span-2">
-            Editing permissions for{" "}
-            <span className="font-medium text-foreground">
-              {selectedGroup.name}
-            </span>{" "}
-            at{" "}
-            <span className="font-medium text-foreground">
-              {formatBranchOption(selectedBranch)}
-            </span>
-            .
-          </p>
-        ) : selectedGroup ? (
-          <p className="text-xs text-muted-foreground sm:col-span-2">
-            This group has no branch access yet. Edit the role under User Roles
-            and assign companies/branches first.
-          </p>
         ) : (
-          <p className="text-xs text-muted-foreground sm:col-span-2">
-            Create a group with branch access to configure permissions.
+          <p className="px-3 py-10 text-center text-sm text-muted-foreground">
+            {selectedGroup
+              ? "This group has no branch access yet. Assign companies/branches under User Roles first."
+              : "Create a group with branch access to configure permissions."}
           </p>
         )}
-      </section>
+      </div>
 
-      {canConfigure ? (
-        <PermissionMatrix
-          permissions={permissions}
-          onChange={handlePermissionsChange}
-        />
-      ) : null}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Save permissions?</DialogTitle>
+            <DialogDescription>
+              Apply the current matrix to{" "}
+              <span className="font-medium text-foreground">
+                {selectedGroup?.name ?? "this group"}
+              </span>
+              {selectedBranch ? (
+                <>
+                  {" "}
+                  on{" "}
+                  <span className="font-medium text-foreground">
+                    {formatBranchOption(selectedBranch)}
+                  </span>
+                </>
+              ) : null}
+              .
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setConfirmOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleConfirmSave}>
+              <Save />
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

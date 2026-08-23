@@ -34,13 +34,35 @@ function sortBranches(branches: CompanyBranchOption[]) {
   })
 }
 
+/** Every company always has a Head Office entry, listed first. */
+function ensureHeadOffice(
+  companyId: string,
+  branches: CompanyBranchOption[]
+): CompanyBranchOption[] {
+  if (branches.some((branch) => branch.isHeadOffice)) {
+    return sortBranches(branches)
+  }
+
+  return sortBranches([
+    {
+      id: `${companyId}-head-office`,
+      name: "Head Office",
+      code: "HQ",
+      status: "Active",
+      isHeadOffice: true,
+    },
+    ...branches,
+  ])
+}
+
 /** Companies and their branches from subscription seed data (admin mock). */
 export function getCompanyOptions(): CompanyOption[] {
   return mockSubscriptions.map((subscription) => ({
     id: subscription.companyId,
     name: subscription.companyName,
     domain: subscription.companyDomain,
-    branches: sortBranches(
+    branches: ensureHeadOffice(
+      subscription.companyId,
       subscription.assignedBranches.map((branch) => ({
         id: branch.branchId,
         name: branch.branchName,

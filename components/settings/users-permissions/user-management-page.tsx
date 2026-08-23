@@ -188,7 +188,6 @@ export function UserManagementPage({
       <PageHeader
         title="User Management"
         count={`${users.length} users`}
-        description="Pick a role, then grant access to that role’s companies and branches."
         actions={
           <div className="flex items-center gap-2">
             {!canAddUser ? (

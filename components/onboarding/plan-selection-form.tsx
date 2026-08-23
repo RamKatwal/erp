@@ -48,7 +48,6 @@ import {
   savePlanSelection,
   type OnboardingPlanSelection,
 } from "@/lib/onboarding/storage"
-import { getFaviconUrl } from "@/lib/brand/favicon"
 import { cn } from "@/lib/utils"
 
 function NumberStepper({
@@ -614,7 +613,7 @@ export default function PlanSelectionForm() {
                       )}
                     >
                       <img
-                        src={getFaviconUrl(method.domain)}
+                        src={method.logoSrc}
                         alt=""
                         aria-hidden
                         className="size-6 shrink-0 object-contain"

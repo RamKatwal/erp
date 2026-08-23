@@ -2,17 +2,12 @@
 
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
-import { getFaviconUrl } from "@/lib/brand/favicon"
+import { paymentMethodLogoSrc } from "@/lib/onboarding/plans"
 import {
   formatPaymentMethodSummary,
   paymentProviderLabels,
   type SubscriptionPaymentMethod,
 } from "@/types/subscription"
-
-const paymentProviderDomains = {
-  esewa: "esewa.com.np",
-  fonepay: "fonepay.com",
-} as const
 
 type PaymentMethodSectionProps = {
   paymentMethod: SubscriptionPaymentMethod | null
@@ -44,7 +39,7 @@ export function PaymentMethodSection({
           <div className="mt-4 flex items-start gap-3 rounded-lg border bg-muted/30 p-4">
             <div className="flex size-10 items-center justify-center rounded-md border bg-background p-1.5">
               <img
-                src={getFaviconUrl(paymentProviderDomains[paymentMethod.provider])}
+                src={paymentMethodLogoSrc[paymentMethod.provider]}
                 alt=""
                 width={28}
                 height={28}

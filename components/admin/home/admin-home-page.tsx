@@ -14,10 +14,7 @@ export function AdminHomePage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader
-        title="Home"
-        description="Cross-tenant operations overview for the Omniverse platform team."
-      />
+      <PageHeader title="Home" />
 
       <KpiStrip kpis={kpis} />
 

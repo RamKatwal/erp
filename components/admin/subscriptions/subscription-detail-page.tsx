@@ -26,7 +26,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { formatLongDate } from "@/lib/format"
 import { getSubscriptionById } from "@/lib/mock/subscriptions"
 import { invoiceReceiptPath } from "@/lib/mock/invoice-receipt"
 import {
@@ -175,7 +174,6 @@ export function SubscriptionDetailPage({
             {subscriptionStatusLabels[subscription.status]}
           </Badge>
         }
-        description={`Subscription ID: ${subscription.id} | Created: ${formatLongDate(subscription.createdAt)}`}
         breadcrumb={
           <Button
             variant="link"

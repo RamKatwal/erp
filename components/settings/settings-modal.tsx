@@ -108,9 +108,6 @@ export function SettingsModal() {
               <h2 className="text-lg font-semibold tracking-tight">
                 {activeItem?.title}
               </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {activeItem?.description}
-              </p>
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">

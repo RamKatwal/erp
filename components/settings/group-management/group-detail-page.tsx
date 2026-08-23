@@ -141,7 +141,6 @@ export function GroupDetailPage({ groupId }: { groupId: string }) {
             <Badge variant="secondary">Main admin</Badge>
           ) : null
         }
-        description="Configure access and the dashboard shared by this group."
         breadcrumb={
           <Button
             variant="link"
@@ -222,10 +221,12 @@ export function GroupDetailPage({ groupId }: { groupId: string }) {
       </div>
 
       {activeSection === "permissions" ? (
-        <PermissionMatrix
-          permissions={configuration.permissions}
-          onChange={(permissions) => updateConfiguration({ permissions })}
-        />
+        <div className="overflow-hidden rounded-xl border bg-card shadow-xs">
+          <PermissionMatrix
+            permissions={configuration.permissions}
+            onChange={(permissions) => updateConfiguration({ permissions })}
+          />
+        </div>
       ) : (
         <section className="space-y-4">
           <div className="flex gap-3 rounded-lg border border-primary/20 bg-primary/5 p-4">

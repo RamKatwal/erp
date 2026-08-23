@@ -5,7 +5,6 @@ export default function CostTermsPage() {
     <ConfigurationsPlaceholderPage
       href="/configurations/general/cost-terms"
       fallbackTitle="Cost Terms"
-      fallbackDescription="Manage cost calculation terms and labels."
     />
   )
 }

@@ -12,7 +12,7 @@ import {
 import { PageHeader } from "@/components/layout/page-header"
 import { purchaseReturnColumns } from "@/components/purchase/return/purchase-return-columns"
 import { Button } from "@/components/ui/button"
-import { FilterTabs } from "@/components/ui/filter-tabs"
+import { Tabs } from "@/components/ui/tabs"
 import { mockPurchaseReturns } from "@/lib/mock/purchase-returns"
 import {
   purchaseReturnStatusLabels,
@@ -94,11 +94,12 @@ export function PurchaseReturnPage() {
         onToggleFullscreen={toggleFullscreen}
         emptyMessage={`No ${purchaseReturnStatusLabels[activeStatus].toLowerCase()} returns found.`}
         leading={
-          <FilterTabs
+          <Tabs
             items={statusTabItems}
             value={activeStatus}
             onValueChange={(status) => {
-              setActiveStatus(status)
+              if (typeof status !== "string") return
+              setActiveStatus(status as PurchaseReturnStatus)
               table.setPageIndex(0)
             }}
           />

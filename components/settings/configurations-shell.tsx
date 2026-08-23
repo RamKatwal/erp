@@ -13,9 +13,6 @@ export function ConfigurationsShell({ children }: ConfigurationsShellProps) {
       <aside className="hidden w-64 shrink-0 overflow-y-auto border-r bg-muted/20 md:block">
         <div className="sticky top-0 border-b bg-card/80 px-4 py-3 backdrop-blur-sm">
           <h2 className="text-sm font-semibold tracking-tight">Configurations</h2>
-          <p className="text-xs text-muted-foreground">
-            Configure organization preferences
-          </p>
         </div>
         <ConfigurationsNav />
       </aside>

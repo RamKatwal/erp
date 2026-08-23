@@ -8,7 +8,6 @@ type PageHeaderProps = {
   count?: string | number
   /** Free-form node rendered next to the title, e.g. a status badge. */
   badge?: React.ReactNode
-  description?: React.ReactNode
   actions?: React.ReactNode
   /** Rendered above the title, e.g. a back link. */
   breadcrumb?: React.ReactNode
@@ -19,7 +18,6 @@ export function PageHeader({
   title,
   count,
   badge,
-  description,
   actions,
   breadcrumb,
   className,
@@ -45,9 +43,6 @@ export function PageHeader({
           ) : null}
           {badge}
         </div>
-        {description ? (
-          <p className="text-xs text-muted-foreground">{description}</p>
-        ) : null}
       </div>
 
       {actions ? (

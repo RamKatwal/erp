@@ -135,7 +135,6 @@ export function SubscriptionsPage() {
       <PageHeader
         title="Subscriptions"
         count={`${subscriptions.length} subscriptions`}
-        description="Overview of software licensing and branch entitlement usage across registered companies."
         actions={
           <Button size="sm" onClick={() => setDialogOpen(true)}>
             <PlusIcon />

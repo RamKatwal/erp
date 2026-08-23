@@ -5,7 +5,6 @@ export default function PaymentTermsPage() {
     <ConfigurationsPlaceholderPage
       href="/configurations/general/payment-terms"
       fallbackTitle="Payment Terms"
-      fallbackDescription="Define payment due dates and term labels."
     />
   )
 }

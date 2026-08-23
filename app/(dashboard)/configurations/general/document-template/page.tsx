@@ -5,7 +5,6 @@ export default function DocumentTemplatePage() {
     <ConfigurationsPlaceholderPage
       href="/configurations/general/document-template"
       fallbackTitle="Document Template"
-      fallbackDescription="Customize print and PDF document templates."
     />
   )
 }

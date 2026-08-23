@@ -59,7 +59,6 @@ export function GroupManagementPage() {
       <PageHeader
         title="User Roles"
         count={`${groups.length} roles`}
-        description="Create roles and assign shared access across modules."
         actions={
           <Button
             size="sm"

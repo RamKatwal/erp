@@ -5,7 +5,6 @@ export default function ProductConfigurationPage() {
     <ConfigurationsPlaceholderPage
       href="/configurations/general/product-configuration"
       fallbackTitle="Product Configuration"
-      fallbackDescription="Configure product defaults and catalog options."
     />
   )
 }

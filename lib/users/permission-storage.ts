@@ -69,3 +69,37 @@ export function upsertGroupBranchPermission(
   saveGroupBranchPermissions(next)
   return nextEntry
 }
+
+/** Persist the same matrix for one group across multiple branches. */
+export function upsertGroupBranchPermissions(
+  groupId: string,
+  branchIds: string[],
+  permissions: GroupPermissions
+) {
+  const uniqueBranchIds = [...new Set(branchIds.filter(Boolean))]
+  if (uniqueBranchIds.length === 0) return []
+
+  let current = readGroupBranchPermissions()
+  const updatedAt = new Date().toISOString()
+  const written: GroupBranchPermissionAssignment[] = []
+
+  for (const branchId of uniqueBranchIds) {
+    const nextEntry: GroupBranchPermissionAssignment = {
+      groupId,
+      branchId,
+      permissions,
+      updatedAt,
+    }
+    const index = current.findIndex(
+      (entry) => entry.groupId === groupId && entry.branchId === branchId
+    )
+    current =
+      index >= 0
+        ? current.map((entry, i) => (i === index ? nextEntry : entry))
+        : [...current, nextEntry]
+    written.push(nextEntry)
+  }
+
+  saveGroupBranchPermissions(current)
+  return written
+}

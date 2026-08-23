@@ -15,9 +15,6 @@ export function UsersPermissionsShell({ children }: UsersPermissionsShellProps) 
           <h2 className="text-sm font-semibold tracking-tight">
             Users & Permissions
           </h2>
-          <p className="text-xs text-muted-foreground">
-            Groups, users, and entity access
-          </p>
         </div>
         <UsersPermissionsNav />
       </aside>

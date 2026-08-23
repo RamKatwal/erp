@@ -5,18 +5,13 @@ import { PageHeader } from "@/components/layout/page-header"
 
 type ModuleOverviewProps = {
   title: string
-  description: string
   items: NavItem[]
 }
 
-export function ModuleOverview({
-  title,
-  description,
-  items,
-}: ModuleOverviewProps) {
+export function ModuleOverview({ title, items }: ModuleOverviewProps) {
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader title={title} description={description} />
+      <PageHeader title={title} />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {items.map((item, index) => {
