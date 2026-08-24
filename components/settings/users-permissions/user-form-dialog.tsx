@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { ChevronDownIcon, XIcon } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
@@ -10,9 +11,19 @@ import {
   PermissionGroupFormDialog,
   type PermissionGroupFormValues,
 } from "@/components/settings/users-permissions/group-form-dialog"
-import { RoleSelect } from "@/components/settings/users-permissions/role-select"
+import { branchChipLabel } from "@/components/settings/users-permissions/grouped-branch-chips"
+import {
+  dataTableClassNames,
+  getDataTableHeaderCellClass,
+} from "@/components/data-table/data-table-styles"
 import { Button } from "@/components/ui/button"
 import { Dialog } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   FormDialogBody,
   FormDialogContent,
@@ -23,13 +34,17 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import {
+  findCompanyForBranch,
+  groupBranchesByCompany,
+} from "@/lib/companies/options"
+import { cn } from "@/lib/utils"
 import { normalizeGroupCompanies, type Group } from "@/types/group"
 import type { AppUser } from "@/types/user"
 
@@ -61,13 +76,13 @@ const userFormSchema = z.object({
     .min(1, { message: "Username is required" })
     .min(3, { message: "Username must be at least 3 characters" })
     .max(50, { message: "Username is too long" }),
-  groupId: z.string().min(1, { message: "Select a role" }),
   companyIds: z
     .array(z.string())
     .min(1, { message: "Select at least one company branch" }),
   branchIds: z
     .array(z.string())
     .min(1, { message: "Select at least one branch or head office" }),
+  roleByBranch: z.record(z.string(), z.string()),
 })
 
 type UserFormInput = z.infer<typeof userFormSchema>
@@ -95,18 +110,91 @@ function RequiredMark() {
   return <span className="text-destructive"> *</span>
 }
 
-function roleAllowedBranchIds(role: Group | undefined): string[] {
-  if (!role) return []
-  return normalizeGroupCompanies(role).branchIds ?? []
+function CompactRoleDropdown({
+  value,
+  roles,
+  onChange,
+  ariaLabel,
+  invalid,
+}: {
+  value: string
+  roles: Group[]
+  onChange: (value: string) => void
+  ariaLabel: string
+  invalid?: boolean
+}) {
+  const selected = roles.find((role) => role.id === value)
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        disabled={roles.length === 0}
+        render={
+          <button
+            type="button"
+            aria-label={ariaLabel}
+            aria-invalid={invalid}
+            className={cn(
+              "flex h-7 w-full cursor-pointer items-center justify-between gap-1 rounded-md border border-input bg-transparent px-2 text-left text-xs shadow-xs outline-none transition-[color,box-shadow] select-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:bg-input/30",
+              selected ? "text-foreground" : "text-muted-foreground"
+            )}
+          />
+        }
+      >
+        <span className="min-w-0 truncate">
+          {selected?.name ?? "Select role…"}
+        </span>
+        <ChevronDownIcon className="size-3.5 shrink-0 opacity-50" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-40">
+        {roles.map((role) => (
+          <DropdownMenuItem
+            key={role.id}
+            className="cursor-pointer text-xs"
+            onClick={() => onChange(role.id)}
+          >
+            {role.name}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
+function companyIdsFromBranches(branchIds: string[]) {
+  const ids = new Set<string>()
+  for (const branchId of branchIds) {
+    const company = findCompanyForBranch(branchId)
+    if (company) ids.add(company.id)
+  }
+  return Array.from(ids)
+}
+
+function roleCoversBranch(role: Group, branchId: string) {
+  const company = findCompanyForBranch(branchId)
+  if (!company) return false
+  const normalized = normalizeGroupCompanies(role)
+  return (
+    (normalized.branchIds ?? []).includes(branchId) &&
+    (normalized.companyIds ?? []).includes(company.id)
+  )
+}
+
+function rolesForBranch(roles: Group[], branchId: string) {
+  return roles.filter((role) => roleCoversBranch(role, branchId))
 }
 
 function valuesFromUser(user: AppUser) {
-  const groupId = user.assignments[0]?.groupId ?? ""
-  const branchIds = user.assignments
-    .filter((assignment) => !groupId || assignment.groupId === groupId)
-    .map((assignment) => assignment.branchId)
-
-  return { groupId, branchIds }
+  const branchIds = user.assignments.map((assignment) => assignment.branchId)
+  const roleByBranch: Record<string, string> = {}
+  for (const assignment of user.assignments) {
+    roleByBranch[assignment.branchId] = assignment.groupId
+  }
+  return {
+    branchIds,
+    companyIds: companyIdsFromBranches(branchIds),
+    roleByBranch,
+  }
 }
 
 const emptyValues: UserFormInput = {
@@ -116,9 +204,9 @@ const emptyValues: UserFormInput = {
   contact: "",
   designation: "",
   username: "",
-  groupId: "",
   companyIds: [],
   branchIds: [],
+  roleByBranch: {},
 }
 
 export function UserFormDialog({
@@ -134,29 +222,21 @@ export function UserFormDialog({
   onCreateRole,
 }: UserFormDialogProps) {
   const isEdit = mode === "edit"
-  const defaultRoleId = roles[0]?.id ?? ""
   const [roleDialogOpen, setRoleDialogOpen] = React.useState(false)
 
   const form = useForm<UserFormInput>({
     resolver: zodResolver(userFormSchema),
     mode: "onSubmit",
     reValidateMode: "onChange",
-    defaultValues: {
-      ...emptyValues,
-      groupId: defaultRoleId,
-    },
+    defaultValues: emptyValues,
   })
 
-  const selectedRoleId = form.watch("groupId")
-  const selectedRole = React.useMemo(
-    () => roles.find((role) => role.id === selectedRoleId),
-    [roles, selectedRoleId]
+  const selectedBranchIds = form.watch("branchIds")
+  const roleByBranch = form.watch("roleByBranch")
+  const selectedGroups = React.useMemo(
+    () => groupBranchesByCompany(selectedBranchIds),
+    [selectedBranchIds]
   )
-  const allowedBranchIds = React.useMemo(
-    () => roleAllowedBranchIds(selectedRole),
-    [selectedRole]
-  )
-  const roleHasAccess = allowedBranchIds.length > 0
 
   React.useEffect(() => {
     if (!open) {
@@ -176,50 +256,89 @@ export function UserFormDialog({
         contact: user.contact ?? "",
         designation: user.designation ?? "",
         username: user.username ?? "",
-        groupId: fromUser.groupId || defaultRoleId,
-        companyIds: [],
+        companyIds: fromUser.companyIds,
         branchIds: fromUser.branchIds,
+        roleByBranch: fromUser.roleByBranch,
       })
       return
     }
 
-    form.reset({
-      ...emptyValues,
-      groupId: defaultRoleId,
-    })
-  }, [open, isEdit, user, form, defaultRoleId])
+    form.reset(emptyValues)
+  }, [open, isEdit, user, form])
 
   React.useEffect(() => {
     if (!open) return
 
-    const current = form.getValues("branchIds")
-    if (allowedBranchIds.length === 0) {
-      if (current.length > 0) {
-        form.setValue("branchIds", [], { shouldValidate: true })
-        form.setValue("companyIds", [], { shouldValidate: true })
+    const branchIds = form.getValues("branchIds")
+    const current = form.getValues("roleByBranch")
+    const next: Record<string, string> = {}
+    let changed = false
+
+    for (const branchId of branchIds) {
+      const validIds = new Set(
+        rolesForBranch(roles, branchId).map((role) => role.id)
+      )
+      const assigned = current[branchId] ?? ""
+      next[branchId] = validIds.has(assigned) ? assigned : ""
+      if (next[branchId] !== assigned || !(branchId in current)) {
+        changed = true
       }
-      return
     }
 
-    const next = current.filter((id) => allowedBranchIds.includes(id))
-    if (next.length !== current.length) {
-      form.setValue("branchIds", next, { shouldValidate: true })
+    for (const branchId of Object.keys(current)) {
+      if (!branchIds.includes(branchId)) {
+        changed = true
+      }
     }
-  }, [allowedBranchIds, form, open])
 
-  function handleRoleChange(roleId: string) {
-    form.setValue("groupId", roleId, { shouldDirty: true, shouldValidate: true })
-    form.setValue("branchIds", [], { shouldDirty: true, shouldValidate: true })
-    form.setValue("companyIds", [], { shouldDirty: true, shouldValidate: true })
+    if (changed) {
+      form.setValue("roleByBranch", next, { shouldValidate: false })
+    }
+  }, [form, open, roles, selectedBranchIds])
+
+  function applyBranchIds(nextBranchIds: string[]) {
+    form.setValue("companyIds", companyIdsFromBranches(nextBranchIds), {
+      shouldDirty: true,
+      shouldValidate: true,
+    })
+    form.setValue("branchIds", nextBranchIds, {
+      shouldDirty: true,
+      shouldValidate: true,
+    })
+  }
+
+  function setBranchRole(branchId: string, groupId: string) {
+    form.setValue(
+      "roleByBranch",
+      { ...form.getValues("roleByBranch"), [branchId]: groupId },
+      { shouldDirty: true, shouldValidate: true }
+    )
+    form.clearErrors(`roleByBranch.${branchId}` as `roleByBranch.${string}`)
   }
 
   function handleCreateRole(
     values: PermissionGroupFormValues & { companyNames: string[] }
   ) {
-    if (!onCreateRole) return
-    const created = onCreateRole(values)
-    handleRoleChange(created.id)
+    onCreateRole?.(values)
   }
+
+  function uncoveredBranchIds() {
+    return selectedBranchIds.filter(
+      (branchId) => rolesForBranch(roles, branchId).length === 0
+    )
+  }
+
+  function missingRoleBranchIds() {
+    return selectedBranchIds.filter((branchId) => {
+      const valid = rolesForBranch(roles, branchId)
+      if (valid.length === 0) return false
+      return !(roleByBranch[branchId] ?? "").trim()
+    })
+  }
+
+  const hasUncoveredBranches = uncoveredBranchIds().length > 0
+  const hasMissingRoles = missingRoleBranchIds().length > 0
+  const submitBlocked = hasUncoveredBranches || hasMissingRoles
 
   function handleSubmit(values: UserFormInput) {
     const normalizedEmail = values.email.trim().toLowerCase()
@@ -252,11 +371,32 @@ export function UserFormDialog({
       return
     }
 
-    if (
-      values.branchIds.some((branchId) => !allowedBranchIds.includes(branchId))
-    ) {
+    const uncovered = values.branchIds.filter(
+      (branchId) => rolesForBranch(roles, branchId).length === 0
+    )
+    if (uncovered.length > 0) {
       form.setError("branchIds", {
-        message: "Selected branches must belong to this role",
+        message:
+          "Every selected branch needs a role configured in User Roles before you can save",
+      })
+      return
+    }
+
+    let missingRole = false
+    for (const branchId of values.branchIds) {
+      const groupId = (values.roleByBranch[branchId] ?? "").trim()
+      const valid = rolesForBranch(roles, branchId)
+      if (!groupId || !valid.some((role) => role.id === groupId)) {
+        missingRole = true
+        form.setError(`roleByBranch.${branchId}` as `roleByBranch.${string}`, {
+          message: "Select a role",
+        })
+      }
+    }
+
+    if (missingRole) {
+      form.setError("roleByBranch", {
+        message: "Assign a role to every selected branch",
       })
       return
     }
@@ -267,7 +407,7 @@ export function UserFormDialog({
       username: values.username.trim(),
       assignments: values.branchIds.map((branchId) => ({
         branchId,
-        groupId: values.groupId,
+        groupId: values.roleByBranch[branchId],
       })),
     })
     onOpenChange(false)
@@ -279,7 +419,7 @@ export function UserFormDialog({
       onOpenChange={onOpenChange}
       disablePointerDismissal={roleDialogOpen}
     >
-      <FormDialogContent size="xl">
+      <FormDialogContent size="2xl">
         <FormDialogHeader>
           <FormDialogTitle>
             {isEdit ? "Edit User" : "Create User"}
@@ -394,37 +534,6 @@ export function UserFormDialog({
 
               <FormField
                 control={form.control}
-                name="groupId"
-                render={({ field }) => (
-                  <FormItem className="sm:col-span-2 lg:col-span-3">
-                    <FormLabel>
-                      Role
-                      <RequiredMark />
-                    </FormLabel>
-                    <FormControl>
-                      <RoleSelect
-                        active={open && !roleDialogOpen}
-                        value={field.value}
-                        onChange={handleRoleChange}
-                        onBlur={field.onBlur}
-                        roles={roles}
-                        disabled={roles.length === 0 && !onCreateRole}
-                        placeholder="Select role…"
-                        aria-invalid={Boolean(form.formState.errors.groupId)}
-                        onCreateNew={
-                          onCreateRole
-                            ? () => setRoleDialogOpen(true)
-                            : undefined
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
                 name="branchIds"
                 render={({ field }) => (
                   <FormItem className="sm:col-span-2 lg:col-span-3">
@@ -435,15 +544,7 @@ export function UserFormDialog({
                     <FormControl>
                       <CompanyBranchMultiselect
                         active={open}
-                        allowedBranchIds={allowedBranchIds}
-                        disabled={!selectedRoleId || !roleHasAccess}
-                        placeholder={
-                          !selectedRoleId
-                            ? "Select a role first…"
-                            : !roleHasAccess
-                              ? "This role has no companies or branches"
-                              : "Select companies & branches…"
-                        }
+                        placeholder="Select companies & branches…"
                         value={{
                           companyIds: form.watch("companyIds"),
                           branchIds: field.value,
@@ -461,10 +562,6 @@ export function UserFormDialog({
                         }
                       />
                     </FormControl>
-                    <FormDescription>
-                      Companies and branches shown here are based on the
-                      selected role.
-                    </FormDescription>
                     <FormMessage />
                     {form.formState.errors.companyIds &&
                     !form.formState.errors.branchIds ? (
@@ -475,6 +572,153 @@ export function UserFormDialog({
                   </FormItem>
                 )}
               />
+
+              <div className="flex flex-col gap-2 sm:col-span-2 lg:col-span-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Assign role
+                    {selectedBranchIds.length > 0 ? <RequiredMark /> : null}
+                  </div>
+                  {onCreateRole ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => setRoleDialogOpen(true)}
+                    >
+                      Create role
+                    </Button>
+                  ) : null}
+                </div>
+
+                {selectedGroups.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Select companies and branches above to assign a role to
+                    each one.
+                  </p>
+                ) : (
+                  <div
+                    className="overflow-hidden rounded-md border border-border"
+                    data-slot="data-table"
+                  >
+                    <table
+                      className={cn(dataTableClassNames.table, "text-xs")}
+                      data-row-size="sm"
+                    >
+                      <thead>
+                        <tr className={dataTableClassNames.headerRow}>
+                          <th className={getDataTableHeaderCellClass("sm")}>
+                            Branch
+                          </th>
+                          <th
+                            className={cn(
+                              getDataTableHeaderCellClass("sm"),
+                              "w-44"
+                            )}
+                          >
+                            Role
+                          </th>
+                          <th
+                            className={cn(
+                              getDataTableHeaderCellClass("sm"),
+                              "w-10 last:border-r-0"
+                            )}
+                          >
+                            <span className="sr-only">Remove</span>
+                          </th>
+                        </tr>
+                      </thead>
+                      {selectedGroups.map((group) => (
+                        <tbody key={group.companyId}>
+                          <tr className="border-b border-border bg-muted/30">
+                            <td
+                              colSpan={3}
+                              className="px-3 py-1.5 text-xs font-medium"
+                            >
+                              {group.companyName}
+                            </td>
+                          </tr>
+                          {group.branches.map((branch) => {
+                            const validRoles = rolesForBranch(roles, branch.id)
+                            const selectedRoleId =
+                              roleByBranch[branch.id] ?? ""
+                            const uncovered = validRoles.length === 0
+                            const roleError =
+                              form.formState.errors.roleByBranch?.[branch.id]
+                                ?.message
+
+                            return (
+                              <tr
+                                key={branch.id}
+                                className="border-b border-border bg-card transition-colors hover:bg-muted/40"
+                              >
+                                <td className="h-auto min-h-8 border-r border-border px-3 py-1.5 align-middle">
+                                  <p className="font-medium">
+                                    {branchChipLabel(branch)}
+                                  </p>
+                                  {uncovered ? (
+                                    <p className="text-[10px] leading-tight text-destructive">
+                                      No role configured for this branch — set
+                                      one up in User Roles
+                                    </p>
+                                  ) : roleError ? (
+                                    <p className="text-[10px] leading-tight text-destructive">
+                                      {roleError}
+                                    </p>
+                                  ) : null}
+                                </td>
+                                <td className="h-auto min-h-8 w-44 border-r border-border px-2 py-1.5 align-middle">
+                                  {uncovered ? (
+                                    <span className="text-muted-foreground">
+                                      —
+                                    </span>
+                                  ) : (
+                                    <CompactRoleDropdown
+                                      value={selectedRoleId}
+                                      roles={validRoles}
+                                      invalid={Boolean(roleError)}
+                                      ariaLabel={`Role for ${group.companyName} ${branchChipLabel(branch)}`}
+                                      onChange={(groupId) =>
+                                        setBranchRole(branch.id, groupId)
+                                      }
+                                    />
+                                  )}
+                                </td>
+                                <td className="h-auto min-h-8 w-10 px-1 py-1.5 align-middle">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    className="size-7"
+                                    aria-label={`Remove ${group.companyName} ${branchChipLabel(branch)}`}
+                                    onClick={() =>
+                                      applyBranchIds(
+                                        selectedBranchIds.filter(
+                                          (id) => id !== branch.id
+                                        )
+                                      )
+                                    }
+                                  >
+                                    <XIcon />
+                                  </Button>
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      ))}
+                    </table>
+                  </div>
+                )}
+
+                {typeof form.formState.errors.roleByBranch?.message ===
+                "string" ? (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.roleByBranch.message}
+                  </p>
+                ) : null}
+              </div>
             </FormDialogBody>
 
             <FormDialogFooter>
@@ -485,7 +729,10 @@ export function UserFormDialog({
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={roles.length === 0}>
+              <Button
+                type="submit"
+                disabled={selectedBranchIds.length > 0 && submitBlocked}
+              >
                 {isEdit ? "Save changes" : "Save"}
               </Button>
             </FormDialogFooter>

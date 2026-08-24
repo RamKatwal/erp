@@ -5,8 +5,6 @@ import {
   Building2Icon,
   GitBranchIcon,
   LayersIcon,
-  TrendingDownIcon,
-  TrendingUpIcon,
   UsersIcon,
   WalletIcon,
 } from "lucide-react"
@@ -26,22 +24,12 @@ const kpiIcons: Record<string, LucideIcon> = {
 function trendBadgeClass(trend: TrendDirection) {
   switch (trend) {
     case "up":
-      return "border-transparent bg-foreground text-background"
+      return "border-transparent bg-success/10 text-success"
     case "down":
       return "border-transparent bg-destructive/10 text-destructive"
     default:
       return "border-transparent bg-muted text-muted-foreground"
   }
-}
-
-function TrendIcon({ trend }: { trend: TrendDirection }) {
-  if (trend === "up") {
-    return <TrendingUpIcon className="size-2.5" aria-hidden />
-  }
-  if (trend === "down") {
-    return <TrendingDownIcon className="size-2.5" aria-hidden />
-  }
-  return null
 }
 
 type KpiStripProps = {
@@ -57,33 +45,28 @@ export function KpiStrip({ kpis }: KpiStripProps) {
         return (
           <div
             key={kpi.id}
-            className="flex flex-col gap-3 rounded-xl border bg-card px-4 py-4 shadow-xs"
+            className="flex flex-col justify-between gap-1 rounded-xl bg-card px-2.5 py-2 ring-1 ring-foreground/10"
           >
-            <div className="flex size-8 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground">
+            <div className="flex size-7 items-center justify-center rounded-md text-muted-foreground">
               <Icon className="size-4" strokeWidth={1.75} aria-hidden />
             </div>
 
-            <div className="min-w-0 space-y-1">
+            <div className="min-w-0 space-y-0.5">
               <p className="truncate text-xs text-muted-foreground">{kpi.label}</p>
 
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="text-2xl font-semibold tracking-tight tabular-nums">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <p className="text-xl font-semibold tracking-tight tabular-nums">
                   {kpi.value}
                 </p>
                 <Badge
                   className={cn(
-                    "h-5 gap-0.5 rounded-full px-1.5 text-[10px] font-medium tabular-nums",
+                    "h-5 rounded-full px-1.5 text-[10px] font-medium tabular-nums",
                     trendBadgeClass(kpi.trend)
                   )}
                 >
-                  <TrendIcon trend={kpi.trend} />
                   {kpi.changeLabel}
                 </Badge>
               </div>
-
-              <p className="text-[11px] leading-snug text-muted-foreground">
-                {kpi.description}
-              </p>
             </div>
           </div>
         )

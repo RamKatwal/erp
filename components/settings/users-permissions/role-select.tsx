@@ -102,7 +102,7 @@ export function RoleSelect({
               disabled={disabled}
               autoComplete="off"
               placeholder={open ? "Search roles…" : placeholder}
-              className="pr-9"
+              className="cursor-pointer pr-9"
               value={open ? query : (selectedRole?.name ?? "")}
               onChange={(event) => {
                 setQuery(event.target.value)

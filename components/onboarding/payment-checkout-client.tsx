@@ -74,12 +74,10 @@ export default function PaymentCheckoutClient() {
 
       saveOnboardingSessionClient(confirmed.session)
 
-      const email = confirmed.session.email
-      const q = email ? `?email=${encodeURIComponent(email)}` : ""
-
       if (outcome === "success") {
-        router.replace(`/onboarding/company${q}`)
+        router.replace("/admin")
       } else {
+        const email = confirmed.session.email
         const failQ = email
           ? `?email=${encodeURIComponent(email)}&payment=failed`
           : "?payment=failed"

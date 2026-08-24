@@ -223,9 +223,7 @@ export default function PlanSelectionForm() {
     setPaymentError(null)
     setPaymentSubStatus(pricing.isFree ? "confirming" : "checkout")
 
-    const companyPath = email
-      ? `/onboarding/company?email=${encodeURIComponent(email)}`
-      : "/onboarding/company"
+    const adminPath = "/admin"
 
     try {
       // Ensure session exists (verification should have created it)
@@ -250,7 +248,7 @@ export default function PlanSelectionForm() {
 
       if (!planRes.checkoutRequired) {
         setPaymentSubStatus("active")
-        router.push(companyPath)
+        router.push(adminPath)
         return
       }
 
@@ -266,7 +264,7 @@ export default function PlanSelectionForm() {
 
       if (payRes.alreadyActive) {
         setPaymentSubStatus("active")
-        router.push(companyPath)
+        router.push(adminPath)
         return
       }
 
@@ -650,7 +648,7 @@ export default function PlanSelectionForm() {
                 ? "No payment required. Upgrade later from Billing & Plans."
                 : paymentSubStatus === "failed"
                   ? "Previous payment did not complete. Retry when ready."
-                  : "You will confirm payment on the secure checkout step before company setup."}
+                  : "You will confirm payment on the secure checkout step, then enter your workspace."}
             </p>
           </div>
         </div>

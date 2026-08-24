@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation"
+import { PermissionManagementPage } from "@/components/settings/users-permissions/permission-management-page"
 
-export default function AdminSettingsPermissionsRedirect() {
-  redirect("/admin/organizations/permissions")
+export default function AdminSettingsPermissionsPage() {
+  return <PermissionManagementPage />
 }

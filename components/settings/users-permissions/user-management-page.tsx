@@ -11,7 +11,7 @@ import {
 } from "@/components/data-table/data-table"
 import { PageHeader } from "@/components/layout/page-header"
 import type { PermissionGroupFormValues } from "@/components/settings/users-permissions/group-form-dialog"
-import { createUserColumns, getUserRoleLabel } from "@/components/settings/users-permissions/user-columns"
+import { createUserColumns, getUserAccessLabel } from "@/components/settings/users-permissions/user-columns"
 import { UserDetailSheet } from "@/components/settings/users-permissions/user-detail-sheet"
 import {
   UserFormDialog,
@@ -233,7 +233,7 @@ export function UserManagementPage({
         item.email.toLowerCase().includes(query) ||
         item.username?.toLowerCase().includes(query) ||
         (item.entryBy ?? "").toLowerCase().includes(query) ||
-        getUserRoleLabel(item, roles).toLowerCase().includes(query)
+        getUserAccessLabel(item, roles).toLowerCase().includes(query)
       )
     },
   })

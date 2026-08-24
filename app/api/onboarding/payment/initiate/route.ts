@@ -21,7 +21,10 @@ export async function POST(request: Request) {
     )
   }
 
-  if (existing.status === "plan_active" && existing.entitlement) {
+  if (
+    (existing.status === "plan_active" || existing.status === "complete") &&
+    existing.entitlement
+  ) {
     // Idempotent: already paid / activated
     return NextResponse.json({
       session: existing,

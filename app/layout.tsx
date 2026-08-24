@@ -54,7 +54,10 @@ export default function RootLayout({
         roboto.variable
       )}
     >
-      <body className="flex min-h-full flex-col font-sans">
+      <body
+        className="flex min-h-full flex-col font-sans"
+        suppressHydrationWarning
+      >
         <Script
           id="appearance-init"
           strategy="beforeInteractive"

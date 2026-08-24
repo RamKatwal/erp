@@ -4,7 +4,7 @@ import {
   DuoHomeIcon,
   DuoPaymentsIcon,
   DuoPermissionsIcon,
-  DuoSettingsIcon,
+  DuoUserRolesIcon,
   DuoUsersIcon,
 } from "@/components/icons/duo"
 
@@ -23,12 +23,6 @@ export const organizationNavigation: NavItem[] = [
     icon: DuoBranchIcon,
     description: "Create and manage company branches.",
   },
-  {
-    title: "Permission Management",
-    href: "/admin/organizations/permissions",
-    icon: DuoPermissionsIcon,
-    description: "Configure module permissions per role and branch.",
-  },
 ]
 
 export const adminNavigation: NavItem[] = [
@@ -37,19 +31,24 @@ export const adminNavigation: NavItem[] = [
     href: "/admin",
     icon: DuoHomeIcon,
   },
-      {
-        title: "User Roles",
-        href: "/admin/settings/users-permissions/groups",
-        icon: DuoPermissionsIcon,
-        description: "Create user roles scoped to a company and its branches.",
-      },
-      {
-        title: "User Management",
-        href: "/admin/settings/users-permissions/users",
-        icon: DuoUsersIcon,
-        description: "Invite users and assign them to entities with a role.",
-      },
-      
+  {
+    title: "User Roles",
+    href: "/admin/settings/users-permissions/groups",
+    icon: DuoUserRolesIcon,
+    description: "Create user roles scoped to a company and its branches.",
+  },
+  {
+    title: "Permission Management",
+    href: "/admin/settings/users-permissions/permissions",
+    icon: DuoPermissionsIcon,
+    description: "Configure module permissions per role and branch.",
+  },
+  {
+    title: "User Management",
+    href: "/admin/settings/users-permissions/users",
+    icon: DuoUsersIcon,
+    description: "Invite users and assign them to entities with a role.",
+  },
   {
     title: "Subscriptions",
     href: "/admin/subscriptions",

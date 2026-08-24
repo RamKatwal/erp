@@ -12,9 +12,10 @@ import {
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
 import {
-  BranchAccessChips,
   CompanyAccessChips,
+  UserAccessGroups,
   groupedBranchAccessSearchText,
+  userAccessSearchText,
 } from "@/components/settings/users-permissions/grouped-branch-chips"
 import { Button } from "@/components/ui/button"
 import {
@@ -36,17 +37,9 @@ type UserColumnHandlers = {
   onResendEmail: (user: AppUser) => void
 }
 
-export function getUserRoleLabel(user: AppUser, roles: Group[]) {
-  const roleId = user.assignments[0]?.groupId
-  if (!roleId) return "—"
-  return roles.find((role) => role.id === roleId)?.name ?? roleId
-}
-
-export function getUserAccessLabel(user: AppUser) {
+export function getUserAccessLabel(user: AppUser, roles: Group[] = []) {
   if (user.assignments.length === 0) return "No access"
-  return groupedBranchAccessSearchText(
-    user.assignments.map((assignment) => assignment.branchId)
-  )
+  return userAccessSearchText(user.assignments, roles)
 }
 
 export function createUserColumns({
@@ -88,16 +81,6 @@ export function createUserColumns({
       ),
     },
     {
-      id: "role",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Role" />
-      ),
-      accessorFn: (row) => getUserRoleLabel(row, groups),
-      cell: ({ row }) => (
-        <span className="text-sm">{getUserRoleLabel(row.original, groups)}</span>
-      ),
-    },
-    {
       id: "companies",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Company" />
@@ -121,15 +104,11 @@ export function createUserColumns({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Branches" />
       ),
-      accessorFn: (row) =>
-        groupedBranchAccessSearchText(
-          row.assignments.map((assignment) => assignment.branchId)
-        ),
+      accessorFn: (row) => userAccessSearchText(row.assignments, groups),
       cell: ({ row }) => (
-        <BranchAccessChips
-          branchIds={row.original.assignments.map(
-            (assignment) => assignment.branchId
-          )}
+        <UserAccessGroups
+          assignments={row.original.assignments}
+          roles={groups}
           emptyLabel="No access"
         />
       ),

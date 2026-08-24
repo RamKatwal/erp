@@ -31,7 +31,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, ignored: true })
   }
 
-  if (existing.payment.status === "confirmed" && existing.status === "plan_active") {
+  if (
+    existing.payment.status === "confirmed" &&
+    (existing.status === "plan_active" || existing.status === "complete")
+  ) {
     return NextResponse.json({ ok: true, alreadyConfirmed: true })
   }
 
@@ -57,7 +60,7 @@ export async function POST(request: Request) {
     payment: { ...existing.payment, status: "confirmed" },
     paymentSubStatus: "active",
     entitlement,
-    status: "plan_active",
+    status: "complete",
   })
 
   return NextResponse.json({ ok: true, success: true })

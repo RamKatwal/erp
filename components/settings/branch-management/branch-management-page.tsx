@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { PlusIcon } from "lucide-react"
 
 import {
@@ -152,6 +153,16 @@ export function BranchManagementPage() {
                 Branch limit reached
               </span>
             ) : null}
+            <Button
+              size="sm"
+              variant="outline"
+              nativeButton={false}
+              render={
+                <Link href="/onboarding/branches?from=branch-management" />
+              }
+            >
+              Quick branch setup
+            </Button>
             <Button size="sm" disabled={limitReached} onClick={openCreate}>
               <PlusIcon />
               Add Branch

@@ -10,6 +10,7 @@ import { isSetupPath } from "@/lib/onboarding/status"
 
 function OnboardingHeader() {
   const pathname = usePathname()
+  // Company + plan share the setup stepper; payment checkout shows its own label
   const showSetupStepper = isSetupPath(pathname)
   const isPaymentSubflow = pathname.includes("/onboarding/payment")
 

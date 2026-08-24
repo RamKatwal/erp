@@ -8,6 +8,7 @@ import {
   type OnboardingSessionData,
 } from "@/lib/onboarding/session-types"
 import {
+  canAccessPlanFlow,
   canAccessSetupStep,
   isAppShellPath,
   isOnboardingComplete,
@@ -48,21 +49,21 @@ export function middleware(req: NextRequest) {
 
   if (isOnboardingPath(pathname)) {
     if (!session) {
-      if (pathname.includes("/plan")) return NextResponse.next()
+      if (
+        pathname.includes("/plan") ||
+        pathname.includes("/company")
+      ) {
+        return NextResponse.next()
+      }
       const url = req.nextUrl.clone()
-      url.pathname = "/onboarding/plan"
+      url.pathname = "/onboarding/company"
       url.search = req.nextUrl.search
       return NextResponse.redirect(url)
     }
 
-    // Completed (incl. legacy users_pending): leave plan/branches/users;
-    // allow company for admin add-company
+    // Completed: allow company + plan so admin can add another organization.
     if (isOnboardingComplete(session.status)) {
-      if (
-        pathname.includes("/plan") ||
-        pathname.includes("/branches") ||
-        pathname.includes("/users")
-      ) {
+      if (pathname.includes("/users")) {
         return NextResponse.redirect(new URL("/admin", req.url))
       }
       return NextResponse.next()
@@ -74,15 +75,17 @@ export function middleware(req: NextRequest) {
       )
     }
 
-    // Plan/payment is standalone — only before setup entitlement is done,
-    // or while still on plan_active (rare back-nav). Prefer resume to setup
-    // once company work has started.
+    // Temporary quick branch setup — only after company exists / from admin.
+    // Incomplete users skip this during onboarding.
+    if (pathname.includes("/branches")) {
+      return NextResponse.redirect(
+        new URL(resumePathForStatus(session.status, session.email), req.url)
+      )
+    }
+
+    // Plan/payment only after company step
     if (isPlanOrPaymentPath(pathname)) {
-      if (
-        session.status === "company_pending" ||
-        session.status === "branches_pending" ||
-        session.status === "users_pending"
-      ) {
+      if (!canAccessPlanFlow(session.status)) {
         return NextResponse.redirect(
           new URL(resumePathForStatus(session.status, session.email), req.url)
         )

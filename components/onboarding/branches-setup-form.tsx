@@ -114,6 +114,11 @@ export default function BranchesSetupForm() {
   const searchParams = useSearchParams()
   const email = searchParams.get("email")?.trim() ?? ""
   const emailQuery = email ? `?email=${encodeURIComponent(email)}` : ""
+  const fromBranchManagement =
+    searchParams.get("from")?.trim() === "branch-management"
+  const returnPath = fromBranchManagement
+    ? "/admin/organizations/branch-management"
+    : "/admin"
 
   const [companyPrefix, setCompanyPrefix] = React.useState("BRN")
   const [branchLimit, setBranchLimit] = React.useState(1)
@@ -141,7 +146,11 @@ export default function BranchesSetupForm() {
       }
 
       if (!draft) {
-        router.replace(`/onboarding/company${emailQuery}`)
+        router.replace(
+          fromBranchManagement
+            ? returnPath
+            : `/onboarding/company${emailQuery}`
+        )
         return
       }
 
@@ -155,7 +164,7 @@ export default function BranchesSetupForm() {
     return () => {
       cancelled = true
     }
-  }, [emailQuery, router])
+  }, [emailQuery, fromBranchManagement, returnPath, router])
 
   async function finishSetup(branches: Branch[]) {
     persistBranchLimit(branchLimit)
@@ -186,17 +195,29 @@ export default function BranchesSetupForm() {
         }),
       })
       saveOnboardingSessionClient(res.session)
-      clearOnboardingDraftsClient()
+      if (!fromBranchManagement) {
+        clearOnboardingDraftsClient()
+      }
+      if (fromBranchManagement) {
+        router.push(returnPath)
+        return
+      }
       setIsSettingUp(true)
       window.setTimeout(() => {
-        router.push("/admin")
+        router.push(returnPath)
       }, 2500)
     } catch {
       // Demo resilience: still enter the workspace with local branches
-      clearOnboardingDraftsClient()
+      if (!fromBranchManagement) {
+        clearOnboardingDraftsClient()
+      }
+      if (fromBranchManagement) {
+        router.push(returnPath)
+        return
+      }
       setIsSettingUp(true)
       window.setTimeout(() => {
-        router.push("/admin")
+        router.push(returnPath)
       }, 2500)
     } finally {
       setIsLoading(false)

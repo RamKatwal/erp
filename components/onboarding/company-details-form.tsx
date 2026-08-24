@@ -182,7 +182,7 @@ export default function CompanyDetailsForm() {
         }
       )
       saveOnboardingSessionClient(res.session)
-      router.push(`/onboarding/branches${emailQuery}`)
+      router.push(`/onboarding/plan${emailQuery}`)
     } catch (e) {
       form.setError("companyName", {
         message:

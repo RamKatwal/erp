@@ -4,11 +4,8 @@ import type { ReactNode } from "react"
 import { PencilIcon } from "lucide-react"
 
 import {
-  getUserRoleLabel,
-} from "@/components/settings/users-permissions/user-columns"
-import {
-  BranchAccessChips,
   CompanyAccessChips,
+  UserAccessGroups,
 } from "@/components/settings/users-permissions/grouped-branch-chips"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -103,9 +100,6 @@ export function UserDetailSheet({
                 <DetailItem label="Username">
                   {displayValue(user.username)}
                 </DetailItem>
-                <DetailItem label="Role">
-                  {getUserRoleLabel(user, roles)}
-                </DetailItem>
                 <DetailItem label="Entry by">
                   {displayValue(user.entryBy)}
                 </DetailItem>
@@ -118,10 +112,9 @@ export function UserDetailSheet({
                   />
                 </DetailItem>
                 <DetailItem label="Branches">
-                  <BranchAccessChips
-                    branchIds={user.assignments.map(
-                      (assignment) => assignment.branchId
-                    )}
+                  <UserAccessGroups
+                    assignments={user.assignments}
+                    roles={roles}
                     emptyLabel="No access"
                   />
                 </DetailItem>

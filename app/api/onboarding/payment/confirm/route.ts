@@ -26,9 +26,9 @@ async function confirmPayment(body: ConfirmBody) {
     return NextResponse.json({ error: "Intent mismatch." }, { status: 400 })
   }
 
-  // Idempotent success: already active with same intent
+  // Idempotent success: already confirmed (plan_active legacy or complete)
   if (
-    existing.status === "plan_active" &&
+    (existing.status === "plan_active" || existing.status === "complete") &&
     existing.payment.status === "confirmed"
   ) {
     return NextResponse.json({ session: existing, alreadyConfirmed: true })
@@ -58,7 +58,8 @@ async function confirmPayment(body: ConfirmBody) {
     payment: { ...existing.payment, status: "confirmed" },
     paymentSubStatus: "active",
     entitlement,
-    status: "plan_active",
+    // Company is already done; paid plan finishes onboarding
+    status: "complete",
   })
 
   return NextResponse.json({

@@ -18,13 +18,13 @@ import {
 } from "@/lib/onboarding/status"
 import { cn } from "@/lib/utils"
 
-/** Post-payment setup stepper: Company → Branches */
+/** Post-account setup stepper: Company → Payment */
 export function OnboardingStepIndicator() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const emailFromQuery = searchParams.get("email")?.trim()
 
-  const [status, setStatus] = React.useState<OnboardingStatus>("plan_active")
+  const [status, setStatus] = React.useState<OnboardingStatus>("company_pending")
   const [email, setEmail] = React.useState(emailFromQuery ?? "")
 
   React.useEffect(() => {

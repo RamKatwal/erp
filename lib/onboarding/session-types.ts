@@ -83,7 +83,7 @@ export type AuthSessionData = {
 
 export function createEmptyOnboardingSession(
   email: string,
-  status: OnboardingStatus = "plan_pending"
+  status: OnboardingStatus = "company_pending"
 ): OnboardingSessionData {
   return {
     email: email.trim().toLowerCase(),

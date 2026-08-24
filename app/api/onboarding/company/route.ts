@@ -12,7 +12,7 @@ function isCompanyDraft(value: unknown): value is OnboardingCompanyDraft {
   return Boolean(v.companyName && v.email && v.pan)
 }
 
-/** Save company draft / finalize company → branches_pending. */
+/** Save company draft / finalize company → plan_pending (payment step). */
 export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as {
     company?: OnboardingCompanyDraft
@@ -32,14 +32,17 @@ export async function POST(request: Request) {
   }
 
   if (
-    existing.status !== "plan_active" &&
+    existing.status !== "account_verified" &&
     existing.status !== "company_pending" &&
+    existing.status !== "plan_pending" &&
+    existing.status !== "payment_pending" &&
+    existing.status !== "plan_active" &&
     existing.status !== "branches_pending" &&
     existing.status !== "users_pending" &&
     existing.status !== "complete"
   ) {
     return NextResponse.json(
-      { error: "Complete plan/payment before creating a company." },
+      { error: "Verify your account before creating a company." },
       { status: 403 }
     )
   }
@@ -56,11 +59,15 @@ export async function POST(request: Request) {
       ? "complete"
       : existing.status === "users_pending"
         ? "complete"
-      : existing.status === "branches_pending"
-        ? "branches_pending"
-      : body?.finalize === false
-        ? "company_pending"
-        : "branches_pending"
+        : existing.status === "branches_pending"
+          ? "branches_pending"
+          : existing.status === "plan_pending" ||
+              existing.status === "payment_pending" ||
+              existing.status === "plan_active"
+            ? existing.status
+            : body?.finalize === false
+              ? "company_pending"
+              : "plan_pending"
 
   const session = await patchOnboardingSession({
     company: body.company,

@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ auth, session: existing })
   }
 
-  const session = createEmptyOnboardingSession(email, "plan_pending")
+  const session = createEmptyOnboardingSession(email, "company_pending")
   await writeOnboardingSession(session)
   return NextResponse.json({ auth, session })
 }

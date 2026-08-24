@@ -60,7 +60,8 @@ export async function POST(request: Request) {
       entitlement,
       payment: null,
       paymentSubStatus: "active",
-      status: "plan_active",
+      // Company is already done; free plan finishes onboarding
+      status: "complete",
     })
 
     return NextResponse.json({ session, checkoutRequired: false })

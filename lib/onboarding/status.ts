@@ -1,8 +1,8 @@
 /**
  * Onboarding state machine.
- * Plan/Payment is a standalone entitlement gate (no stepper).
- * After plan_active: setup stepper = Company → Branches.
- * `users_pending` is a legacy status treated as complete.
+ * After OTP: Company → Plan/Payment → complete.
+ * Quick branch setup is temporary and opened from Branch Management.
+ * `users_pending` / `branches_pending` are legacy statuses.
  */
 
 export const ONBOARDING_STATUSES = [
@@ -18,16 +18,21 @@ export const ONBOARDING_STATUSES = [
 
 export type OnboardingStatus = (typeof ONBOARDING_STATUSES)[number]
 
-/** Steps shown in the post-payment setup stepper (not Plan). */
-export type SetupStepId = "company" | "branches"
+/** Steps shown in the onboarding stepper: Company → Payment. */
+export type SetupStepId = "company" | "plan"
 
 export const SETUP_STEPS: { id: SetupStepId; label: string }[] = [
   { id: "company", label: "Company" },
-  { id: "branches", label: "Branches" },
+  { id: "plan", label: "Payment" },
 ]
 
 export function isOnboardingComplete(status: OnboardingStatus): boolean {
-  return status === "complete" || status === "users_pending"
+  // branches_pending is legacy (quick branch setup left the onboarding flow)
+  return (
+    status === "complete" ||
+    status === "users_pending" ||
+    status === "branches_pending"
+  )
 }
 
 export function isPlanOrPaymentPath(pathname: string): boolean {
@@ -40,16 +45,16 @@ export function isPlanOrPaymentPath(pathname: string): boolean {
 export function isSetupPath(pathname: string): boolean {
   return (
     pathname.includes("/onboarding/company") ||
-    pathname.includes("/onboarding/branches")
+    pathname.includes("/onboarding/plan")
   )
 }
 
 /**
- * Setup stepper index: 0=company, 1=branches.
- * Returns -1 for plan/payment (not in stepper).
+ * Setup stepper index: 0=company, 1=plan/payment.
+ * Returns -1 outside the stepper.
  */
 export function setupStepIndexFromPath(pathname: string): number {
-  if (pathname.includes("/branches")) return 1
+  if (pathname.includes("/plan") || pathname.includes("/payment")) return 1
   if (pathname.includes("/company")) return 0
   return -1
 }
@@ -57,16 +62,18 @@ export function setupStepIndexFromPath(pathname: string): number {
 /** Highest setup step index the user may open. */
 export function maxReachableSetupStepIndex(status: OnboardingStatus): number {
   switch (status) {
-    case "plan_active":
+    case "account_verified":
     case "company_pending":
       return 0
-    case "branches_pending":
+    case "plan_pending":
+    case "payment_pending":
+    case "plan_active":
       return 1
+    case "branches_pending":
     case "users_pending":
     case "complete":
       return 1
     default:
-      // Before entitlement: no setup steps
       return -1
   }
 }
@@ -75,8 +82,14 @@ export function isSetupStepComplete(
   status: OnboardingStatus,
   stepIndex: number
 ): boolean {
-  if (isOnboardingComplete(status)) return true
-  if (status === "branches_pending") return stepIndex < 1
+  if (isOnboardingComplete(status) || status === "plan_active") return true
+  if (
+    status === "plan_pending" ||
+    status === "payment_pending" ||
+    status === "branches_pending"
+  ) {
+    return stepIndex < 1
+  }
   return false
 }
 
@@ -93,11 +106,11 @@ export function canAccessSetupStep(
 /** Whether the user may open plan/payment routes. */
 export function canAccessPlanFlow(status: OnboardingStatus): boolean {
   return (
-    status === "account_verified" ||
     status === "plan_pending" ||
     status === "payment_pending" ||
-    // Allow revisiting plan only before setup starts deeply? Prefer lock after active.
-    status === "plan_active"
+    status === "plan_active" ||
+    status === "branches_pending" ||
+    isOnboardingComplete(status)
   )
 }
 
@@ -113,19 +126,22 @@ export function resumePathForStatus(
 
   switch (status) {
     case "account_verified":
+    case "company_pending":
+      return `/onboarding/company${q}`
     case "plan_pending":
     case "payment_pending":
       return `/onboarding/plan${q}`
     case "plan_active":
-    case "company_pending":
+      // Legacy mid-flow after payment before company was first; finish company if needed
       return `/onboarding/company${q}`
     case "branches_pending":
-      return `/onboarding/branches${q}`
+      // Legacy: skip quick branch setup in onboarding
+      return "/admin"
     case "users_pending":
     case "complete":
       return "/admin"
     default:
-      return `/onboarding/plan${q}`
+      return `/onboarding/company${q}`
   }
 }
 
@@ -210,4 +226,4 @@ export function pathForStep(
   return pathForSetupStep(step, email)
 }
 
-export type OnboardingStepId = "plan" | SetupStepId
+export type OnboardingStepId = SetupStepId

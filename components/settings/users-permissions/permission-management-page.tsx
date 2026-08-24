@@ -430,17 +430,17 @@ export function PermissionManagementPage() {
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b px-4 py-3">
           <div className="flex min-w-0 items-center gap-2.5">
             <Label
-              htmlFor="permission-group"
+              htmlFor="permission-user-role"
               className="shrink-0 text-muted-foreground"
             >
-              Group
+              User Roles
             </Label>
             <AccessSelect
-              id="permission-group"
+              id="permission-user-role"
               value={groupId}
               onValueChange={handleGroupChange}
               disabled={groups.length === 0 || isEditing}
-              placeholder="No groups available"
+              placeholder="No user roles available"
               options={groups.map((group) => ({
                 value: group.id,
                 label: group.name,

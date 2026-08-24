@@ -10,6 +10,8 @@ import {
   type ResolvedBranchOption,
 } from "@/lib/companies/options"
 import { cn } from "@/lib/utils"
+import type { Group } from "@/types/group"
+import type { UserEntityAssignment } from "@/types/user"
 
 type StatusChipTone = {
   color: string
@@ -133,6 +135,83 @@ export function groupedBranchAccessSearchText(branchIds: string[]) {
         `${branch.companyName} ${branchChipLabel(branch)} ${branch.code}`
     )
     .join(" ")
+}
+
+function roleNameForAssignment(
+  assignment: UserEntityAssignment,
+  roles: Group[]
+) {
+  return (
+    roles.find((role) => role.id === assignment.groupId)?.name ??
+    assignment.groupId
+  )
+}
+
+export function userAccessSearchText(
+  assignments: UserEntityAssignment[],
+  roles: Group[]
+) {
+  if (assignments.length === 0) return ""
+  const roleByBranch = new Map(
+    assignments.map((assignment) => [assignment.branchId, assignment])
+  )
+  return groupBranchesByCompany(assignments.map((item) => item.branchId))
+    .flatMap((group) =>
+      group.branches.map((branch) => {
+        const assignment = roleByBranch.get(branch.id)
+        const roleName = assignment
+          ? roleNameForAssignment(assignment, roles)
+          : ""
+        return `${group.companyName} ${branchChipLabel(branch)} ${branch.code} ${roleName}`
+      })
+    )
+    .join(" ")
+}
+
+type UserAccessGroupsProps = {
+  assignments: UserEntityAssignment[]
+  roles: Group[]
+  emptyLabel?: string
+  className?: string
+}
+
+/** Company → branch · role, for list tables and detail views. */
+export function UserAccessGroups({
+  assignments,
+  roles,
+  emptyLabel = "No access",
+  className,
+}: UserAccessGroupsProps) {
+  const groups = groupBranchesByCompany(
+    assignments.map((assignment) => assignment.branchId)
+  )
+  const roleByBranch = new Map(
+    assignments.map((assignment) => [assignment.branchId, assignment])
+  )
+
+  if (groups.length === 0) {
+    return <span className="text-muted-foreground">{emptyLabel}</span>
+  }
+
+  return (
+    <ChipRow className={className}>
+      {groups.flatMap((group) =>
+        group.branches.map((branch) => {
+          const assignment = roleByBranch.get(branch.id)
+          const roleName = assignment
+            ? roleNameForAssignment(assignment, roles)
+            : "—"
+          return (
+            <StatusChip
+              key={branch.id}
+              label={`${branchChipLabel(branch)} · ${roleName}`}
+              tone={getCompanyTone(branch.companyId)}
+            />
+          )
+        })
+      )}
+    </ChipRow>
+  )
 }
 
 type BranchChipListProps = {

@@ -84,10 +84,10 @@ export default function VerificationForm() {
       saveOnboardingSessionClient(res.session)
       router.push(resumePathForStatus(res.session.status, res.session.email))
     } catch {
-      const planPath = emailParam
-        ? `/onboarding/plan?email=${encodeURIComponent(emailParam)}`
-        : "/onboarding/plan"
-      router.push(planPath)
+      const companyPath = emailParam
+        ? `/onboarding/company?email=${encodeURIComponent(emailParam)}`
+        : "/onboarding/company"
+      router.push(companyPath)
     } finally {
       setIsLoading(false)
     }
