@@ -4,12 +4,16 @@ import * as React from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 
 import { Spinner } from "@/components/ui/spinner"
+import { adminHomeAfterOrgCreated } from "@/lib/admin/organization-created"
 import {
   apiJson,
   saveOnboardingSessionClient,
 } from "@/lib/onboarding/client-session"
 import type { OnboardingSessionData } from "@/lib/onboarding/session-types"
-import { resumePathForStatus } from "@/lib/onboarding/status"
+import {
+  isOnboardingComplete,
+  resumePathForStatus,
+} from "@/lib/onboarding/status"
 
 /** Handles gateway return URLs: /onboarding/payment/return?intent=…&status=success|failed */
 export default function PaymentReturnClient() {
@@ -43,6 +47,10 @@ export default function PaymentReturnClient() {
 
         if (cancelled) return
         saveOnboardingSessionClient(confirmed.session)
+        if (outcome === "success" && isOnboardingComplete(confirmed.session.status)) {
+          router.replace(adminHomeAfterOrgCreated(confirmed.session.companyId))
+          return
+        }
         const path = resumePathForStatus(
           confirmed.session.status,
           confirmed.session.email

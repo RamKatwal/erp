@@ -64,7 +64,7 @@ export const subscriptionColumns: ColumnDef<Subscription>[] = [
       <DataTableColumnHeader column={column} title="Company Name" />
     ),
     cell: ({ row }) => {
-      const { companyName, companyDomain, companyId } = row.original
+      const { companyName, companyDomain, companyLogoUrl, companyId } = row.original
       return (
         <Link
           href={`/admin/companies/${companyId}/configuration`}
@@ -73,6 +73,7 @@ export const subscriptionColumns: ColumnDef<Subscription>[] = [
           <CompanyAvatar
             name={companyName}
             domain={companyDomain}
+            logoUrl={companyLogoUrl}
             showTooltip={false}
           />
           <span className="min-w-0 truncate font-medium">{companyName}</span>

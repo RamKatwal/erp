@@ -2,104 +2,190 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { ArrowRight, LayoutGrid, List, Plus } from "lucide-react"
+import { LayoutGrid, List, Plus } from "lucide-react"
 
+import {
+  organizationPlanBadgeClassName,
+  organizationStatusBadgeClassName,
+  organizationColumns,
+} from "@/components/admin/organization-columns"
+import {
+  branchAvatarItems,
+  StackedAvatars,
+  userAvatarItems,
+} from "@/components/admin/subscriptions/stacked-avatars"
 import { CompanyLogo } from "@/components/company-logo"
+import {
+  type DataTableRowSize,
+  DataTableCard,
+  useDataTable,
+  useDataTableFullscreen,
+} from "@/components/data-table/data-table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { organizations, type Organization } from "@/config/organizations"
+import {
+  homeOrganizations,
+  organizationNeedsUpgrade,
+  type HomeOrganization,
+} from "@/lib/admin/home-organizations"
 import { cn } from "@/lib/utils"
+import { subscriptionStatusLabels } from "@/types/subscription"
 
 type ViewMode = "grid" | "list"
 
-function planBadgeClassName(plan: string) {
-  if (plan.toLowerCase().includes("enterprise")) {
-    return "border-transparent bg-success/10 text-success"
-  }
-  if (plan.toLowerCase().includes("de-lite") || plan.toLowerCase().includes("lite")) {
-    return "border-transparent bg-secondary text-secondary-foreground"
-  }
-  return "border-transparent bg-primary/10 text-primary"
-}
-
 function OrganizationPlanBadge({ plan }: { plan: string }) {
   return (
-    <Badge className={cn("h-5 px-1.5 text-[10px] font-medium", planBadgeClassName(plan))}>
+    <Badge
+      className={cn(
+        "h-5 px-1.5 text-[10px] font-medium",
+        organizationPlanBadgeClassName(plan)
+      )}
+    >
       {plan}
     </Badge>
   )
 }
 
-function OrganizationCard({
+function OrganizationActions({
   org,
-  viewMode,
+  fullWidth = false,
 }: {
-  org: Organization
-  viewMode: ViewMode
+  org: HomeOrganization
+  fullWidth?: boolean
 }) {
-  const goToButton = (
-    <Button
-      variant="outline"
-      nativeButton={false}
-      className={cn(
-        "border-primary text-primary hover:bg-primary/10 hover:text-primary",
-        viewMode === "grid" ? "mt-5" : "shrink-0"
-      )}
-      render={<Link href="/" />}
-    >
-      Go to Organization
-      <ArrowRight data-icon="inline-end" />
-    </Button>
-  )
-
-  if (viewMode === "list") {
-    return (
-      <article className="flex flex-col gap-4 rounded-xl bg-card p-4 ring-1 ring-foreground/10 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex min-w-0 items-center gap-3">
-          <CompanyLogo
-            name={org.name}
-            domain={org.domain}
-            size={40}
-            className="size-10 rounded-md"
-          />
-          <div className="min-w-0 space-y-1">
-            <OrganizationPlanBadge plan={org.plan} />
-            <h2 className="truncate text-sm font-semibold tracking-tight">
-              {org.name}
-            </h2>
-            <p className="truncate text-sm text-muted-foreground">{org.location}</p>
-          </div>
-        </div>
-        {goToButton}
-      </article>
-    )
-  }
+  const showUpgrade = organizationNeedsUpgrade(org)
 
   return (
-    <article className="flex flex-col items-center rounded-xl bg-card px-6 py-7 text-center ring-1 ring-foreground/10">
-      <CompanyLogo
-        name={org.name}
-        domain={org.domain}
-        size={48}
-        className="mb-4 size-12 rounded-lg"
-      />
-      <OrganizationPlanBadge plan={org.plan} />
-      <h2 className="mt-2 text-base font-semibold tracking-tight">{org.name}</h2>
-      <p className="mt-1 text-sm text-muted-foreground">{org.location}</p>
-      {goToButton}
+    <div
+      className={cn(
+        "flex gap-2",
+        fullWidth ? "w-full flex-col" : "flex-wrap items-center justify-end"
+      )}
+    >
+      {showUpgrade ? (
+        <Button
+          size="sm"
+          variant="outline"
+          nativeButton={false}
+          className={cn(
+            "border-primary text-primary hover:bg-primary/10 hover:text-primary",
+            fullWidth && "w-full"
+          )}
+          render={<Link href={`/admin/subscriptions/${org.id}`} />}
+        >
+          Upgrade
+        </Button>
+      ) : (
+        <Button
+          size="sm"
+          variant="outline"
+          nativeButton={false}
+          className={cn(
+            "border-primary text-primary hover:bg-primary/10 hover:text-primary",
+            fullWidth && "w-full"
+          )}
+          render={<Link href="/" />}
+        >
+          Go to company
+        </Button>
+      )}
+    </div>
+  )
+}
+
+function OrganizationGridCard({ org }: { org: HomeOrganization }) {
+  return (
+    <article className="flex flex-col rounded-xl bg-card p-5 ring-1 ring-foreground/10">
+      <div className="flex flex-col items-center text-center">
+        <CompanyLogo
+          name={org.companyName}
+          domain={org.companyDomain}
+          logoUrl={org.companyLogoUrl}
+          size={48}
+          className="mb-3 size-12 rounded-lg"
+        />
+        <div className="flex flex-wrap items-center justify-center gap-1.5">
+          <OrganizationPlanBadge plan={org.planName} />
+          {org.isTrial ? <Badge variant="secondary">Trial</Badge> : null}
+        </div>
+        <h2 className="mt-2 text-base font-semibold tracking-tight">
+          {org.companyName}
+        </h2>
+        <p className="mt-0.5 text-sm text-muted-foreground">{org.location}</p>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-3 border-t pt-4 text-left">
+        <div className="space-y-1">
+          <p className="text-[11px] text-muted-foreground">Days remaining</p>
+          <p
+            className={cn(
+              "text-sm font-medium tabular-nums",
+              org.remainingDays <= 7 && "text-destructive"
+            )}
+          >
+            {org.remainingDays}
+          </p>
+        </div>
+        <div className="space-y-1">
+          <p className="text-[11px] text-muted-foreground">Status</p>
+          <Badge
+            variant="outline"
+            className={organizationStatusBadgeClassName(org.status)}
+          >
+            {subscriptionStatusLabels[org.status]}
+          </Badge>
+        </div>
+        <div className="space-y-1">
+          <p className="text-[11px] text-muted-foreground">Users</p>
+          <StackedAvatars
+            items={userAvatarItems(org.members, org.usersUsed)}
+            total={org.usersUsed}
+          />
+        </div>
+        <div className="space-y-1">
+          <p className="text-[11px] text-muted-foreground">Branches</p>
+          <StackedAvatars
+            items={branchAvatarItems(org.assignedBranches)}
+            total={org.branchesUsed}
+          />
+        </div>
+      </div>
+
+      <div className="mt-5 w-full">
+        <OrganizationActions org={org} fullWidth />
+      </div>
     </article>
   )
 }
 
 export function CompanyListsPage() {
   const [viewMode, setViewMode] = React.useState<ViewMode>("grid")
+  const [rowSize, setRowSize] = React.useState<DataTableRowSize>("md")
+  const { isFullscreen, toggleFullscreen } = useDataTableFullscreen()
+
+  const table = useDataTable({
+    data: homeOrganizations,
+    columns: organizationColumns,
+    pageSize: homeOrganizations.length,
+    globalFilterFn: (row, _columnId, filterValue) => {
+      const query = String(filterValue).toLowerCase()
+      const org = row.original
+      return (
+        org.companyName.toLowerCase().includes(query) ||
+        org.location.toLowerCase().includes(query) ||
+        org.planName.toLowerCase().includes(query) ||
+        org.status.toLowerCase().includes(query) ||
+        org.id.toLowerCase().includes(query)
+      )
+    },
+  })
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <h1 className="text-base font-semibold tracking-tight">
-            Your Organizations ({organizations.length})
+            Your Organizations ({homeOrganizations.length})
           </h1>
           <div className="flex items-center rounded-md border bg-background p-0.5">
             <Button
@@ -142,17 +228,24 @@ export function CompanyListsPage() {
       </div>
 
       {viewMode === "grid" ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {organizations.map((org) => (
-            <OrganizationCard key={org.id} org={org} viewMode="grid" />
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          {homeOrganizations.map((org) => (
+            <OrganizationGridCard key={org.id} org={org} />
           ))}
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
-          {organizations.map((org) => (
-            <OrganizationCard key={org.id} org={org} viewMode="list" />
-          ))}
-        </div>
+        <DataTableCard
+          table={table}
+          columnCount={organizationColumns.length}
+          searchPlaceholder="Search organizations..."
+          rowSize={rowSize}
+          onRowSizeChange={setRowSize}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={toggleFullscreen}
+          emptyMessage="No organizations found."
+          showFilter={false}
+          showPagination={false}
+        />
       )}
     </div>
   )

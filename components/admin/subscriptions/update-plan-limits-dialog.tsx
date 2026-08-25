@@ -201,7 +201,7 @@ export function UpdatePlanLimitsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[min(860px,calc(100svh-2rem))] w-full max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl">
+      <DialogContent className="flex max-h-[min(860px,calc(100svh-2rem))] w-full max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl">
         <DialogHeader className="border-b px-5 py-4 pr-12">
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
@@ -210,7 +210,7 @@ export function UpdatePlanLimitsDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid min-h-0 flex-1 overflow-hidden sm:grid-cols-[minmax(0,1fr)_minmax(17rem,19rem)]">
+        <div className="grid min-h-0 flex-1 overflow-hidden sm:grid-cols-[minmax(0,1fr)_minmax(24rem,28rem)]">
           <div className="flex min-h-0 flex-col gap-3 overflow-y-auto p-5">
             {includeBranches ? (
               <div className="flex flex-col gap-3 rounded-lg bg-card px-4 py-4 ring-1 ring-foreground/10">

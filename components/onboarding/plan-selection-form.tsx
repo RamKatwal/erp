@@ -36,6 +36,7 @@ import {
   type PaymentPeriod,
   type PlanId,
 } from "@/lib/onboarding/plans"
+import { adminHomeAfterOrgCreated } from "@/lib/admin/organization-created"
 import {
   apiJson,
   restoreOnboardingSessionFromClient,
@@ -223,8 +224,6 @@ export default function PlanSelectionForm() {
     setPaymentError(null)
     setPaymentSubStatus(pricing.isFree ? "confirming" : "checkout")
 
-    const adminPath = "/admin"
-
     try {
       // Ensure session exists (verification should have created it)
       if (email) {
@@ -248,7 +247,7 @@ export default function PlanSelectionForm() {
 
       if (!planRes.checkoutRequired) {
         setPaymentSubStatus("active")
-        router.push(adminPath)
+        router.push(adminHomeAfterOrgCreated(planRes.session.companyId))
         return
       }
 
@@ -264,7 +263,7 @@ export default function PlanSelectionForm() {
 
       if (payRes.alreadyActive) {
         setPaymentSubStatus("active")
-        router.push(adminPath)
+        router.push(adminHomeAfterOrgCreated(payRes.session.companyId))
         return
       }
 

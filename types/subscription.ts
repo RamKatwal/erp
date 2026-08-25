@@ -98,6 +98,8 @@ export type Subscription = {
   companyName: string
   /** Company website domain for Google favicon logos (e.g. stripe.com). */
   companyDomain?: string | null
+  /** Optional custom logo URL when favicon is unavailable or low quality. */
+  companyLogoUrl?: string | null
   planId: string
   planName: string
   planTier: string

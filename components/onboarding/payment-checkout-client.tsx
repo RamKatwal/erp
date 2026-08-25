@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
+import { adminHomeAfterOrgCreated } from "@/lib/admin/organization-created"
 import {
   apiJson,
   saveOnboardingSessionClient,
@@ -75,7 +76,7 @@ export default function PaymentCheckoutClient() {
       saveOnboardingSessionClient(confirmed.session)
 
       if (outcome === "success") {
-        router.replace("/admin")
+        router.replace(adminHomeAfterOrgCreated(confirmed.session.companyId))
       } else {
         const email = confirmed.session.email
         const failQ = email

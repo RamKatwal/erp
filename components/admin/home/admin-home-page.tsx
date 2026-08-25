@@ -1,18 +1,21 @@
 "use client"
 
-import { KpiStrip } from "@/components/admin/home/kpi-strip"
+import * as React from "react"
+
+import { CompleteSetupSection } from "@/components/admin/home/complete-setup-section"
+import { OrganizationCreatedDialog } from "@/components/admin/home/organization-created-dialog"
 import { CompanyListsPage } from "@/components/admin/company-lists-page"
-import { computeAdminHomeMetrics } from "@/lib/admin/home-metrics"
-import { mockSubscriptions } from "@/lib/mock/subscriptions"
 
 export function AdminHomePage() {
-  const { kpis } = computeAdminHomeMetrics(mockSubscriptions)
-
   return (
     <div className="flex flex-col gap-4">
-      <KpiStrip kpis={kpis} />
-
       <CompanyListsPage />
+
+      <CompleteSetupSection />
+
+      <React.Suspense fallback={null}>
+        <OrganizationCreatedDialog />
+      </React.Suspense>
     </div>
   )
 }

@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react"
 
 import { adminNavigation } from "@/config/admin-navigation"
 import { AppBrand } from "@/components/app-brand"
@@ -20,6 +20,7 @@ import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
+  SidebarGroupAction,
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
@@ -129,6 +130,14 @@ function OrganizationsNavSection({
       <SidebarGroupLabel className="px-2 text-[11px] font-medium text-sidebar-foreground/50">
         Organizations
       </SidebarGroupLabel>
+      <SidebarGroupAction
+        render={<Link href="/onboarding/company" />}
+        title="Add organization"
+        aria-label="Add organization"
+        className="top-3.5 right-2 text-sidebar-foreground/50 hover:text-sidebar-foreground"
+      >
+        <Plus className="size-3.5!" />
+      </SidebarGroupAction>
       <SidebarGroupContent>
         <OrganizationsNavList
           navItems={item.children ?? []}

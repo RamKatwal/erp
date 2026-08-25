@@ -28,6 +28,8 @@ type DataTableCardProps<TData> = {
   filters?: DataTableFilters
   /** When false, hides the toolbar Filter control. Defaults to true. */
   showFilter?: boolean
+  /** When false, hides row count and page navigation. Defaults to true. */
+  showPagination?: boolean
 }
 
 export function DataTableCard<TData>({
@@ -43,11 +45,12 @@ export function DataTableCard<TData>({
   leading,
   filters,
   showFilter = true,
+  showPagination = true,
 }: DataTableCardProps<TData>) {
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-xl border bg-card shadow-xs",
+        "overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10",
         dataTableFullscreenClassName(isFullscreen)
       )}
     >
@@ -79,6 +82,7 @@ export function DataTableCard<TData>({
         rowSize={rowSize}
         emptyMessage={emptyMessage}
         onRowClick={onRowClick}
+        showPagination={showPagination}
       />
     </div>
   )

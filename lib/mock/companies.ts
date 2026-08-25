@@ -19,9 +19,9 @@ const profileOverrides: Record<string, Partial<CompanyProfile>> = {
     province: "Bagmati",
     district: "Kathmandu",
     fullAddress: "Thapathali, Kathmandu 44600",
-    companyWebsite: "https://nvidia.com",
+    companyWebsite: "https://omniverse.com",
     employeeNumber: "120",
-    domain: "nvidia.com",
+    domain: "omniverse.com",
     logoUrl: appBrand.logo,
   },
   comp_11002: {
@@ -40,7 +40,7 @@ const profileOverrides: Record<string, Partial<CompanyProfile>> = {
   },
   comp_11140: {
     companyName: "Nova Logistics",
-    email: "finance@novalogistics.io",
+    email: "finance@flexport.com",
     contact: "+977-9812000003",
     pan: "111400001",
     registeredWithVat: false,
@@ -48,9 +48,9 @@ const profileOverrides: Record<string, Partial<CompanyProfile>> = {
     province: "Bagmati",
     district: "Kathmandu",
     fullAddress: "Teku, Kathmandu 44600",
-    companyWebsite: "https://novalogistics.io",
+    companyWebsite: "https://www.flexport.com",
     employeeNumber: "32",
-    domain: "novalogistics.io",
+    domain: "flexport.com",
   },
 }
 

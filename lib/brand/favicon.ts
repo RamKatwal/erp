@@ -1,4 +1,4 @@
-const FAVICON_SERVICE_BASE = "https://www.google.com/s2/favicons"
+const FAVICON_SERVICE_BASE = "https://favicon.im"
 
 /** Strip protocol, path, and leading www. from a URL or hostname. */
 export function normalizeDomain(input: string): string | null {
@@ -18,10 +18,20 @@ export function normalizeDomain(input: string): string | null {
   }
 }
 
-/** Google favicon URL for a company domain (e.g. stripe.com). */
-export function getFaviconUrl(domain: string, size = 128): string {
+/**
+ * High-res company logo URL for a domain.
+ * Uses favicon.im (apple-touch / manifest icons when available) instead of
+ * Google's often-compressed 16–32px favicon cache.
+ */
+export function getFaviconUrl(domain: string, size = 256): string {
   const normalized = normalizeDomain(domain) ?? domain.trim()
-  return `${FAVICON_SERVICE_BASE}?domain=${encodeURIComponent(normalized)}&sz=${size}`
+  const larger = size >= 64 ? "true" : "false"
+  return `${FAVICON_SERVICE_BASE}/${encodeURIComponent(normalized)}?larger=${larger}`
+}
+
+/** Request size for retina-sharp logos at a given CSS pixel size. */
+export function logoImageSize(displayPx: number): number {
+  return Math.min(512, Math.max(128, Math.round(displayPx * 2)))
 }
 
 export function companyInitials(name: string) {

@@ -28,6 +28,7 @@ import {
   type QuickBranchRow,
 } from "@/lib/onboarding/branch-draft"
 import { loadCompanyDraft } from "@/lib/onboarding/company-storage"
+import { adminHomeAfterOrgCreated } from "@/lib/admin/organization-created"
 import {
   apiJson,
   clearOnboardingDraftsClient,
@@ -116,9 +117,8 @@ export default function BranchesSetupForm() {
   const emailQuery = email ? `?email=${encodeURIComponent(email)}` : ""
   const fromBranchManagement =
     searchParams.get("from")?.trim() === "branch-management"
-  const returnPath = fromBranchManagement
-    ? "/admin/organizations/branch-management"
-    : "/admin"
+  const branchManagementReturnPath =
+    "/admin/organizations/branch-management"
 
   const [companyPrefix, setCompanyPrefix] = React.useState("BRN")
   const [branchLimit, setBranchLimit] = React.useState(1)
@@ -148,7 +148,7 @@ export default function BranchesSetupForm() {
       if (!draft) {
         router.replace(
           fromBranchManagement
-            ? returnPath
+            ? branchManagementReturnPath
             : `/onboarding/company${emailQuery}`
         )
         return
@@ -164,7 +164,7 @@ export default function BranchesSetupForm() {
     return () => {
       cancelled = true
     }
-  }, [emailQuery, fromBranchManagement, returnPath, router])
+  }, [emailQuery, fromBranchManagement, router])
 
   async function finishSetup(branches: Branch[]) {
     persistBranchLimit(branchLimit)
@@ -199,12 +199,13 @@ export default function BranchesSetupForm() {
         clearOnboardingDraftsClient()
       }
       if (fromBranchManagement) {
-        router.push(returnPath)
+        router.push(branchManagementReturnPath)
         return
       }
+      const homePath = adminHomeAfterOrgCreated(res.session.companyId)
       setIsSettingUp(true)
       window.setTimeout(() => {
-        router.push(returnPath)
+        router.push(homePath)
       }, 2500)
     } catch {
       // Demo resilience: still enter the workspace with local branches
@@ -212,12 +213,12 @@ export default function BranchesSetupForm() {
         clearOnboardingDraftsClient()
       }
       if (fromBranchManagement) {
-        router.push(returnPath)
+        router.push(branchManagementReturnPath)
         return
       }
       setIsSettingUp(true)
       window.setTimeout(() => {
-        router.push(returnPath)
+        router.push(adminHomeAfterOrgCreated())
       }, 2500)
     } finally {
       setIsLoading(false)
