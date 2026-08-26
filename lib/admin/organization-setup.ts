@@ -272,7 +272,7 @@ export function getOrganizationSetupProgress(
 
 export function getIncompleteOrganizationSetups(): OrganizationSetupProgress[] {
   return getHomeOrganizations()
-    .map(getOrganizationSetupProgress)
+    .map((org) => getOrganizationSetupProgress(org))
     .filter((progress) => progress.completedCount < SETUP_STEP_COUNT)
 }
 
