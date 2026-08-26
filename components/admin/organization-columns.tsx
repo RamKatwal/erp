@@ -12,14 +12,12 @@ import { CompanyAvatar } from "@/components/company-logo"
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { useOrganizationSetupProgress } from "@/hooks/use-organization-setup-progress"
 import {
   organizationNeedsUpgrade,
   type HomeOrganization,
 } from "@/lib/admin/home-organizations"
-import {
-  getOrganizationSetupProgress,
-  SETUP_STEP_COUNT,
-} from "@/lib/admin/organization-setup"
+import { SETUP_STEP_COUNT } from "@/lib/admin/organization-setup"
 import { cn } from "@/lib/utils"
 import {
   subscriptionStatusLabels,
@@ -56,6 +54,59 @@ export function organizationPlanBadgeClassName(plan: string) {
 
 type OrganizationColumnsOptions = {
   onContinueSetup: (companyId: string) => void
+}
+
+function OrganizationActionsCell({
+  org,
+  onContinueSetup,
+}: {
+  org: HomeOrganization
+  onContinueSetup: (companyId: string) => void
+}) {
+  const showUpgrade = organizationNeedsUpgrade(org)
+  const setup = useOrganizationSetupProgress(org)
+  const setupIncomplete = setup.completedCount < SETUP_STEP_COUNT
+
+  if (setupIncomplete && !showUpgrade) {
+    return (
+      <div className="flex items-center justify-end">
+        <Button
+          size="sm"
+          variant="outline"
+          className="border-primary text-primary hover:bg-primary/10 hover:text-primary"
+          onClick={() => onContinueSetup(org.companyId)}
+        >
+          Continue setup
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex items-center justify-end gap-2">
+      {showUpgrade ? (
+        <Button
+          size="sm"
+          variant="outline"
+          nativeButton={false}
+          className="border-primary text-primary hover:bg-primary/10 hover:text-primary"
+          render={<Link href={`/admin/subscriptions/${org.id}`} />}
+        >
+          Upgrade
+        </Button>
+      ) : (
+        <Button
+          size="sm"
+          variant="outline"
+          nativeButton={false}
+          className="border-primary text-primary hover:bg-primary/10 hover:text-primary"
+          render={<Link href="/" />}
+        >
+          Go to company
+        </Button>
+      )}
+    </div>
+  )
 }
 
 export function getOrganizationColumns({
@@ -176,53 +227,12 @@ export function getOrganizationColumns({
       header: () => <span className="sr-only">Actions</span>,
       enableHiding: false,
       enableSorting: false,
-      cell: ({ row }) => {
-        const org = row.original
-        const showUpgrade = organizationNeedsUpgrade(org)
-        const setup = getOrganizationSetupProgress(org)
-        const setupIncomplete = setup.completedCount < SETUP_STEP_COUNT
-
-        if (setupIncomplete && !showUpgrade) {
-          return (
-            <div className="flex items-center justify-end">
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-primary text-primary hover:bg-primary/10 hover:text-primary"
-                onClick={() => onContinueSetup(org.companyId)}
-              >
-                Continue setup
-              </Button>
-            </div>
-          )
-        }
-
-        return (
-          <div className="flex items-center justify-end gap-2">
-            {showUpgrade ? (
-              <Button
-                size="sm"
-                variant="outline"
-                nativeButton={false}
-                className="border-primary text-primary hover:bg-primary/10 hover:text-primary"
-                render={<Link href={`/admin/subscriptions/${org.id}`} />}
-              >
-                Upgrade
-              </Button>
-            ) : (
-              <Button
-                size="sm"
-                variant="outline"
-                nativeButton={false}
-                className="border-primary text-primary hover:bg-primary/10 hover:text-primary"
-                render={<Link href="/" />}
-              >
-                Go to company
-              </Button>
-            )}
-          </div>
-        )
-      },
+      cell: ({ row }) => (
+        <OrganizationActionsCell
+          org={row.original}
+          onContinueSetup={onContinueSetup}
+        />
+      ),
     },
   ]
 }

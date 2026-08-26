@@ -11,11 +11,7 @@ import { z } from "zod"
 
 import { AppBrand } from "@/components/app-brand"
 import { DemoFillFab } from "@/components/demo-fill-fab"
-import { GithubIcon } from "@/components/github-icon"
-import { GoogleIcon } from "@/components/google-icon"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Divider } from "@/components/ui/divider"
 import {
   Form,
   FormControl,
@@ -38,17 +34,13 @@ import { resumePathForStatus } from "@/lib/onboarding/status"
 import { cn } from "@/lib/utils"
 
 const FormSchema = z.object({
-  email: z
-    .string()
-    .trim()
-    .min(1, { message: "Email is required" })
-    .email({ message: "Please enter a valid email address" }),
+  tenantId: z.string().trim().min(1, { message: "Tenant ID is required" }),
+  username: z.string().trim().min(1, { message: "Username is required" }),
   password: z
     .string()
     .trim()
     .min(1, { message: "Password is required" })
     .min(8, { message: "Password must be at least 8 characters" }),
-  rememberMe: z.boolean().optional(),
 })
 
 export default function SignInForm() {
@@ -61,9 +53,9 @@ export default function SignInForm() {
     mode: "onSubmit",
     reValidateMode: "onChange",
     defaultValues: {
-      email: "",
+      tenantId: "",
+      username: "",
       password: "",
-      rememberMe: false,
     },
   })
 
@@ -74,14 +66,15 @@ export default function SignInForm() {
   }
 
   function fillDemoAdmin() {
-    form.setValue("email", DEMO_ADMIN.email, { shouldValidate: true })
+    form.setValue("tenantId", "demo", { shouldValidate: true })
+    form.setValue("username", DEMO_ADMIN.email, { shouldValidate: true })
     form.setValue("password", DEMO_ADMIN.password, { shouldValidate: true })
     form.clearErrors()
   }
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
-    const email = data.email.trim().toLowerCase()
-    const isAdmin = isDemoAdminCredentials(data.email, data.password)
+    const username = data.username.trim().toLowerCase()
+    const isAdmin = isDemoAdminCredentials(data.username, data.password)
     setIsLoading(true)
 
     try {
@@ -111,13 +104,13 @@ export default function SignInForm() {
       }>("/api/onboarding/status")
 
       const existing = statusRes.session
-      if (existing && existing.email === email) {
+      if (existing && existing.email === username) {
         const res = await apiJson<{
           auth: AuthSessionData
           session: OnboardingSessionData
         }>("/api/auth/session", {
           method: "POST",
-          body: JSON.stringify({ email }),
+          body: JSON.stringify({ email: username }),
         })
         saveAuthSessionClient(res.auth)
         saveOnboardingSessionClient(res.session)
@@ -128,7 +121,7 @@ export default function SignInForm() {
       }
 
       form.setError("password", {
-        message: `No onboarding session for this email. Sign up first, or use ${DEMO_ADMIN.email} / ${DEMO_ADMIN.password}`,
+        message: `No onboarding session for this username. Sign up first, or use ${DEMO_ADMIN.email} / ${DEMO_ADMIN.password}`,
       })
     } catch {
       form.setError("password", {
@@ -154,11 +147,6 @@ export default function SignInForm() {
               Sign Up
             </Link>
           </p>
-          <p className="text-xs text-muted-foreground">
-            Demo admin: {DEMO_ADMIN.email} / {DEMO_ADMIN.password}. To resume
-            unfinished onboarding, sign in with the same email (any password ≥8
-            characters).
-          </p>
         </div>
       </div>
 
@@ -169,12 +157,35 @@ export default function SignInForm() {
               <div className="flex flex-col gap-4">
                 <FormField
                   control={form.control}
-                  name="email"
+                  name="tenantId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>Tenant ID</FormLabel>
                       <FormControl>
-                        <Input type="email" autoComplete="email" {...field} />
+                        <Input
+                          type="text"
+                          autoComplete="organization"
+                          placeholder="Enter tenant ID"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="username"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Username</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="text"
+                          autoComplete="username"
+                          placeholder="Enter username"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -219,69 +230,12 @@ export default function SignInForm() {
                 />
               </div>
 
-              <div className="flex items-center justify-between gap-3">
-                <FormField
-                  control={form.control}
-                  name="rememberMe"
-                  render={({ field }) => (
-                    <div className="flex items-center gap-2">
-                      <FormControl>
-                        <Checkbox
-                          id="remember-me"
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormLabel
-                        htmlFor="remember-me"
-                        className="font-normal text-muted-foreground"
-                      >
-                        Remember me
-                      </FormLabel>
-                    </div>
-                  )}
-                />
-                <Link
-                  href="#"
-                  className="shrink-0 text-sm font-medium text-primary underline-offset-4 hover:underline"
-                >
-                  Forgot Password?
-                </Link>
-              </div>
-
               <Button className="w-full" type="submit" disabled={isLoading}>
                 {isLoading ? <Spinner size={18} variant="default" /> : "Sign In"}
               </Button>
             </div>
           </form>
         </Form>
-
-        <div className="flex items-center gap-2">
-          <Divider className="min-w-0 flex-1" />
-          <span className="shrink-0 text-sm font-medium text-muted-foreground">
-            Or continue with
-          </span>
-          <Divider className="min-w-0 flex-1" />
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <Button
-            variant="outline"
-            className="min-w-0"
-            type="button"
-          >
-            <GoogleIcon className="size-4 shrink-0" />
-            <span className="truncate">Google</span>
-          </Button>
-          <Button
-            variant="outline"
-            className="min-w-0"
-            type="button"
-          >
-            <GithubIcon className="size-4 shrink-0" />
-            <span className="truncate">Github</span>
-          </Button>
-        </div>
       </div>
 
       <DemoFillFab label="Fill admin login" onFill={fillDemoAdmin} />

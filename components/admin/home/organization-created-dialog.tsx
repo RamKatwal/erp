@@ -2,9 +2,12 @@
 
 import * as React from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { m, useReducedMotion } from "framer-motion"
+import { CheckIcon, StarIcon } from "lucide-react"
 
-import { CompanyLogo } from "@/components/company-logo"
+import { organizationPlanBadgeClassName } from "@/components/admin/organization-columns"
+import { SetupProgressBar } from "@/components/admin/setup/setup-progress-bar"
+import { IconStack } from "@/components/reui/icon-stack"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -27,6 +30,7 @@ import {
 import {
   getIncompleteOrganizationSetups,
   getOrganizationSetupByCompanyId,
+  SETUP_STEP_COUNT,
 } from "@/lib/admin/organization-setup"
 import { getCompanyById } from "@/lib/companies/options"
 import {
@@ -35,15 +39,12 @@ import {
 } from "@/lib/companies/portal-context"
 import { loadOnboardingSessionClient } from "@/lib/onboarding/client-session"
 import { loadWorkspaceSubscriptionClient } from "@/lib/onboarding/entitlement"
-import { withReducedMotion } from "@/lib/motion"
 import { cn } from "@/lib/utils"
 
 type CreatedCompany = {
   companyId: string | null
   companyName: string | null
   planName: string | null
-  companyDomain: string | null
-  companyLogoUrl: string | null
 }
 
 function resolveCreatedCompany(companyIdFromQuery: string | null): CreatedCompany {
@@ -85,61 +86,7 @@ function resolveCreatedCompany(companyIdFromQuery: string | null): CreatedCompan
     workspace?.planName ??
     null
 
-  return {
-    companyId,
-    companyName,
-    planName,
-    companyDomain:
-      fromHome?.companyDomain ??
-      (workspace?.companyId === companyId ? workspace.companyDomain : null) ??
-      null,
-    companyLogoUrl: fromHome?.companyLogoUrl ?? null,
-  }
-}
-
-function AnimatedSuccessTick({ className }: { className?: string }) {
-  const reduceMotion = useReducedMotion()
-  const circleTransition = withReducedMotion(
-    { duration: 0.35, ease: [0.4, 0, 0.2, 1] },
-    reduceMotion
-  )
-  const checkTransition = withReducedMotion(
-    { duration: 0.4, ease: [0.4, 0, 0.2, 1], delay: reduceMotion ? 0 : 0.2 },
-    reduceMotion
-  )
-
-  return (
-    <div
-      className={cn(
-        "flex size-14 items-center justify-center rounded-full bg-card shadow-sm ring-1 ring-foreground/5",
-        className
-      )}
-      aria-hidden
-    >
-      <svg viewBox="0 0 48 48" className="size-8 text-success" fill="none">
-        <m.circle
-          cx="24"
-          cy="24"
-          r="18"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 1 }}
-          transition={circleTransition}
-        />
-        <m.path
-          d="M15.5 24.5 21.2 30.2 32.5 18.5"
-          stroke="currentColor"
-          strokeWidth="2.75"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 1 }}
-          transition={checkTransition}
-        />
-      </svg>
-    </div>
-  )
+  return { companyId, companyName, planName }
 }
 
 export function OrganizationCreatedDialog() {
@@ -153,8 +100,6 @@ export function OrganizationCreatedDialog() {
     companyId: null,
     companyName: null,
     planName: null,
-    companyDomain: null,
-    companyLogoUrl: null,
   })
   const navigatingAwayRef = React.useRef(false)
 
@@ -221,49 +166,57 @@ export function OrganizationCreatedDialog() {
   }
 
   const displayName = company.companyName ?? "Your organization"
-  const displayPlan = company.planName ?? "Plan ready"
+  const planName = company.planName
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         showCloseButton
-        className="gap-0 overflow-hidden p-0 sm:max-w-md"
+        className="gap-0 overflow-hidden p-0 sm:max-w-sm"
       >
-        <div className="relative bg-success/15 px-6 pb-5 pt-8 text-center">
-          <div className="flex flex-col items-center gap-3">
-            {open ? <AnimatedSuccessTick /> : null}
-            <div className="space-y-1">
-              <DialogTitle className="text-base font-semibold tracking-tight text-foreground">
-                Organization created
-              </DialogTitle>
-              <DialogDescription className="text-sm text-muted-foreground">
-                Your new company workspace is ready to go
-              </DialogDescription>
-            </div>
-          </div>
-        </div>
+        <div className="flex flex-col items-center pt-10 text-center">
+          <div className="flex flex-col items-center px-6">
+            <IconStack aria-hidden="true" className="text-success">
+              <CheckIcon className="size-4 text-success" strokeWidth={2.5} />
+            </IconStack>
 
-        <div className="flex flex-col gap-3 bg-card px-5 py-5">
-          <div className="flex items-center gap-3 rounded-xl bg-muted/60 px-3 py-3">
-            <CompanyLogo
-              name={displayName}
-              domain={company.companyDomain}
-              logoUrl={company.companyLogoUrl}
-              size={40}
-              className="size-10 shrink-0 rounded-lg"
-            />
-            <div className="min-w-0 text-left">
-              <p className="truncate text-sm font-semibold tracking-tight">
-                {displayName}
-              </p>
-              <p className="truncate text-xs text-muted-foreground">
-                {displayPlan}
-              </p>
-            </div>
+            <DialogTitle className="mt-5 text-lg font-semibold tracking-tight text-foreground">
+              {displayName} is ready
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              Organization created successfully. Continue setup or open the
+              company workspace.
+            </DialogDescription>
+
+            {planName ? (
+              <Badge
+                className={cn(
+                  "mt-2 h-5 px-1.5 text-[10px] font-medium",
+                  organizationPlanBadgeClassName(planName)
+                )}
+              >
+                {planName}
+              </Badge>
+            ) : null}
           </div>
 
-          <div className="flex flex-col gap-2 pt-1">
-            <Button type="button" className="w-full" onClick={handleCompleteSetup}>
+          <div className="mt-6 w-full space-y-1.5 border-y border-border px-6 py-4 text-left">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[11px] text-muted-foreground">Setup progress</p>
+              <p className="truncate text-[11px] font-medium text-muted-foreground tabular-nums">
+                0 of {SETUP_STEP_COUNT}
+              </p>
+            </div>
+            <SetupProgressBar percent={0} className="h-1" />
+          </div>
+
+          <div className="flex w-full flex-col gap-2.5 px-6 pt-5 pb-6">
+            <Button
+              type="button"
+              className="w-full"
+              onClick={handleCompleteSetup}
+            >
+              <StarIcon data-icon="inline-start" />
               Complete setup now
             </Button>
             <Button

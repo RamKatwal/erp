@@ -18,6 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { canDeactivateBranch, isHeadOfficeBranch } from "@/lib/branches/head-office"
 import { formatDate } from "@/lib/format"
 import {
   branchStatusLabels,
@@ -41,9 +42,19 @@ export function createBranchColumns({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Branch Name" />
       ),
-      cell: ({ row }) => (
-        <span className="font-medium">{row.getValue("name")}</span>
-      ),
+      cell: ({ row }) => {
+        const branch = row.original
+        return (
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="truncate font-medium">{branch.name}</span>
+            {isHeadOfficeBranch(branch) ? (
+              <Badge variant="secondary" className="shrink-0">
+                Head Office
+              </Badge>
+            ) : null}
+          </div>
+        )
+      },
     },
     {
       accessorKey: "code",
@@ -83,6 +94,8 @@ export function createBranchColumns({
       cell: ({ row }) => {
         const branch = row.original
         const isActive = branch.status === "active"
+        const isHeadOffice = isHeadOfficeBranch(branch)
+        const showDeactivate = isActive && canDeactivateBranch(branch)
 
         return (
           <div className="flex items-center justify-end">
@@ -103,20 +116,24 @@ export function createBranchColumns({
                   <PencilIcon />
                   Edit branch
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                {isActive ? (
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={() => onDeactivate(branch)}
-                  >
-                    <PowerOffIcon />
-                    Deactivate
-                  </DropdownMenuItem>
-                ) : (
-                  <DropdownMenuItem onClick={() => onActivate(branch)}>
-                    <PowerIcon />
-                    Activate
-                  </DropdownMenuItem>
+                {isHeadOffice ? null : (
+                  <>
+                    <DropdownMenuSeparator />
+                    {showDeactivate ? (
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onClick={() => onDeactivate(branch)}
+                      >
+                        <PowerOffIcon />
+                        Deactivate
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem onClick={() => onActivate(branch)}>
+                        <PowerIcon />
+                        Activate
+                      </DropdownMenuItem>
+                    )}
+                  </>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>

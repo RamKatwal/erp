@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
@@ -73,8 +73,6 @@ function RequiredMark() {
 
 export default function CompanyDetailsForm() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const emailFromQuery = searchParams.get("email")?.trim() ?? ""
 
   const [isLoading, setIsLoading] = React.useState(false)
   const [hydrated, setHydrated] = React.useState(false)
@@ -85,11 +83,11 @@ export default function CompanyDetailsForm() {
     reValidateMode: "onChange",
     defaultValues: {
       companyName: "",
-      email: emailFromQuery,
+      email: "",
       contact: "",
       pan: "",
       registeredWithVat: false,
-      industryType: "Automobiles",
+      industryType: "",
       province: "",
       district: "",
       fullAddress: "",
@@ -110,19 +108,17 @@ export default function CompanyDetailsForm() {
         if (draft) {
           form.reset({
             companyName: draft.companyName,
-            email: draft.email || emailFromQuery,
+            email: draft.email,
             contact: draft.contact,
             pan: draft.pan,
             registeredWithVat: draft.registeredWithVat,
-            industryType: draft.industryType || "Automobiles",
+            industryType: draft.industryType || "",
             province: draft.province,
             district: draft.district,
             fullAddress: draft.fullAddress,
             companyWebsite: draft.companyWebsite ?? "",
             employeeNumber: draft.employeeNumber ?? "",
           })
-        } else if (emailFromQuery) {
-          form.setValue("email", emailFromQuery)
         }
       } catch {
         if (cancelled) return
@@ -131,10 +127,8 @@ export default function CompanyDetailsForm() {
             ...localDraft,
             companyWebsite: localDraft.companyWebsite ?? "",
             employeeNumber: localDraft.employeeNumber ?? "",
-            email: localDraft.email || emailFromQuery,
+            email: localDraft.email,
           })
-        } else if (emailFromQuery) {
-          form.setValue("email", emailFromQuery)
         }
       } finally {
         if (!cancelled) setHydrated(true)
@@ -143,12 +137,12 @@ export default function CompanyDetailsForm() {
     return () => {
       cancelled = true
     }
-  }, [emailFromQuery, form])
+  }, [form])
 
   function fillDemoCompany() {
     form.reset({
       ...DEMO_COMPANY,
-      email: emailFromQuery || DEMO_COMPANY.email,
+      email: DEMO_COMPANY.email,
     })
   }
 
@@ -338,6 +332,9 @@ export default function CompanyDetailsForm() {
                       name={field.name}
                       ref={field.ref}
                     >
+                      <option value="" disabled>
+                        Select industry type
+                      </option>
                       {INDUSTRY_OPTIONS.map((option) => (
                         <option key={option} value={option}>
                           {option}

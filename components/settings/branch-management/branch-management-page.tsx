@@ -17,6 +17,7 @@ import {
   type BranchFormValues,
 } from "@/components/settings/branch-management/branch-form-dialog"
 import { Button } from "@/components/ui/button"
+import { canDeactivateBranch } from "@/lib/branches/head-office"
 import {
   createBranchId,
   readBranches,
@@ -49,8 +50,7 @@ export function BranchManagementPage() {
   const limitReached = isBranchLimitReached(branches.length)
 
   const persist = React.useCallback((next: Branch[]) => {
-    setBranches(next)
-    saveBranches(next)
+    setBranches(saveBranches(next))
   }, [])
 
   function openCreate() {
@@ -102,6 +102,8 @@ export function BranchManagementPage() {
   }
 
   function setStatus(branch: Branch, status: Branch["status"]) {
+    if (status === "inactive" && !canDeactivateBranch(branch)) return
+
     persist(
       branches.map((item) =>
         item.id === branch.id ? { ...item, status } : item

@@ -12,7 +12,7 @@ import type { NavItem } from "@/types/navigation"
 
 export const organizationNavigation: NavItem[] = [
   {
-    title: "Company Configuration",
+    title: "Company Profile",
     href: "/admin/companies/comp_10294/configuration",
     icon: DuoCompanyListsIcon,
     description: "View and update company profile information.",

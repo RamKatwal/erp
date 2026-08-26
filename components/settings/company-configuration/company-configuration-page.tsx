@@ -3,13 +3,12 @@
 import * as React from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowLeft, PencilIcon } from "lucide-react"
+import { CameraIcon, PencilIcon } from "lucide-react"
 
 import { CompanyAvatar } from "@/components/company-logo"
 import { CompanyDetailField } from "@/components/settings/company-configuration/company-detail-field"
 import { CompanyConfigurationFormDialog } from "@/components/settings/company-configuration/company-configuration-form-dialog"
 import { PageHeader } from "@/components/layout/page-header"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { appBrand } from "@/config/navigation"
@@ -37,6 +36,18 @@ function websiteDomain(website?: string) {
   }
 }
 
+function readImageAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result === "string") resolve(reader.result)
+      else reject(new Error("Could not read image"))
+    }
+    reader.onerror = () => reject(reader.error ?? new Error("Could not read image"))
+    reader.readAsDataURL(file)
+  })
+}
+
 export function CompanyConfigurationPage({
   companyId,
   backHref,
@@ -45,6 +56,8 @@ export function CompanyConfigurationPage({
   const [profile, setProfile] = React.useState<CompanyProfile | null>(null)
   const [isLoading, setIsLoading] = React.useState(true)
   const [editOpen, setEditOpen] = React.useState(false)
+  const [logoBusy, setLogoBusy] = React.useState(false)
+  const logoInputRef = React.useRef<HTMLInputElement>(null)
 
   React.useEffect(() => {
     const resolvedId = companyId ?? getDefaultCompanyId()
@@ -67,6 +80,25 @@ export function CompanyConfigurationPage({
 
     saveCompanyProfile(next)
     setProfile(next)
+  }
+
+  async function handleLogoChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ""
+    if (!file || !profile) return
+    if (!file.type.startsWith("image/")) return
+
+    setLogoBusy(true)
+    try {
+      const logoUrl = await readImageAsDataUrl(file)
+      const next: CompanyProfile = { ...profile, logoUrl }
+      saveCompanyProfile(next)
+      setProfile(next)
+    } catch {
+      // Ignore read failures (quota / corrupt file).
+    } finally {
+      setLogoBusy(false)
+    }
   }
 
   if (isLoading) {
@@ -103,48 +135,52 @@ export function CompanyConfigurationPage({
 
   return (
     <div className="flex flex-col gap-5">
-      <PageHeader
-        title="Company Configuration"
-        breadcrumb={
-          backHref
-            ? (
-                <Button
-                  variant="link"
-                  size="sm"
-                  className="mb-0.5 h-auto self-start px-0 text-muted-foreground"
-                  nativeButton={false}
-                  render={<Link href={backHref} />}
-                >
-                  <ArrowLeft />
-                  {backLabel ?? "Back"}
-                </Button>
-              )
-            : undefined
-        }
-      />
+      <PageHeader title="Company Profile" />
 
       <section className="rounded-xl border bg-card shadow-xs">
         <div className="flex flex-col gap-4 p-4 sm:p-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-start gap-4">
-              {logoSrc ? (
-                <Image
-                  src={logoSrc}
-                  alt={profile.companyName}
-                  width={64}
-                  height={64}
-                  className="size-16 shrink-0 rounded-[22%] object-contain"
+              <div className="relative size-16 shrink-0">
+                {logoSrc ? (
+                  <Image
+                    src={logoSrc}
+                    alt={profile.companyName}
+                    width={64}
+                    height={64}
+                    unoptimized={logoSrc.startsWith("data:")}
+                    className="size-16 rounded-[22%] object-contain"
+                  />
+                ) : (
+                  <CompanyAvatar
+                    name={profile.companyName}
+                    domain={avatarDomain}
+                    size="lg"
+                    showTooltip={false}
+                    avatarClassName="size-16"
+                    fallbackClassName="text-base"
+                  />
+                )}
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={handleLogoChange}
                 />
-              ) : (
-                <CompanyAvatar
-                  name={profile.companyName}
-                  domain={avatarDomain}
-                  size="lg"
-                  showTooltip={false}
-                  avatarClassName="size-16"
-                  fallbackClassName="text-base"
-                />
-              )}
+                <Button
+                  type="button"
+                  size="icon-sm"
+                  variant="outline"
+                  disabled={logoBusy}
+                  className="absolute -right-1 -bottom-1 size-7 rounded-full bg-background shadow-xs"
+                  aria-label="Change company image"
+                  title="Change company image"
+                  onClick={() => logoInputRef.current?.click()}
+                >
+                  <CameraIcon className="size-3.5" />
+                </Button>
+              </div>
               <div className="min-w-0">
                 <h2 className="text-lg font-semibold tracking-tight">
                   {profile.companyName}
@@ -153,12 +189,6 @@ export function CompanyConfigurationPage({
                   {profile.email}
                   {profile.contact ? ` · ${profile.contact}` : ""}
                 </p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {profile.registeredWithVat ? (
-                    <Badge variant="secondary">VAT Registered</Badge>
-                  ) : null}
-                  <Badge variant="outline">{profile.industryType}</Badge>
-                </div>
               </div>
             </div>
 

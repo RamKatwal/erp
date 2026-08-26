@@ -37,7 +37,7 @@ export function saveCompanyProfile(profile: CompanyProfile): void {
   if (typeof window === "undefined") return
 
   try {
-    const { id, domain, logoUrl, ...draft } = profile
+    const { id, ...draft } = profile
     window.localStorage.setItem(storageKey(id), JSON.stringify(draft))
   } catch {
     // ignore quota / private mode errors

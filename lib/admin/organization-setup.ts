@@ -72,7 +72,7 @@ const setupFlagsByCompanyId: Record<string, SetupFlags> = {
   comp_11140: { userRoles: false, permissions: false },
 }
 
-type SetupOverrides = Partial<Record<SetupStepId, boolean>>
+export type SetupOverrides = Partial<Record<SetupStepId, boolean>>
 
 export type ResolvedSetupStep = SetupStepDefinition & {
   complete: boolean
@@ -111,16 +111,36 @@ function isCompanyProfileComplete(companyId: string): boolean {
   return Boolean(profile.companyName && profile.pan)
 }
 
-function readAllOverrides(): Record<string, SetupOverrides> {
-  if (typeof window === "undefined") return {}
+/** Client snapshot for `useSyncExternalStore`. Must be referentially stable until storage changes. */
+export function getSetupOverridesSnapshot(): string {
+  if (typeof window === "undefined") return ""
   try {
-    const raw = window.localStorage.getItem(SETUP_OVERRIDES_KEY)
-    if (!raw) return {}
+    return window.localStorage.getItem(SETUP_OVERRIDES_KEY) ?? ""
+  } catch {
+    return ""
+  }
+}
+
+export function getServerSetupOverridesSnapshot(): string {
+  return ""
+}
+
+export function parseAllSetupOverrides(
+  raw: string
+): Record<string, SetupOverrides> {
+  if (!raw) return {}
+  try {
     const parsed = JSON.parse(raw) as Record<string, SetupOverrides>
-    return parsed && typeof parsed === "object" ? parsed : {}
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? parsed
+      : {}
   } catch {
     return {}
   }
+}
+
+function readAllOverrides(): Record<string, SetupOverrides> {
+  return parseAllSetupOverrides(getSetupOverridesSnapshot())
 }
 
 function writeAllOverrides(next: Record<string, SetupOverrides>) {
@@ -217,13 +237,13 @@ function previewSteps(steps: ResolvedSetupStep[]): ResolvedSetupStep[] {
 }
 
 export function getOrganizationSetupProgress(
-  org: HomeOrganization
+  org: HomeOrganization,
+  overrides: SetupOverrides = getSetupOverrides(org.companyId)
 ): OrganizationSetupProgress {
   const flags = setupFlagsByCompanyId[org.companyId] ?? {
     userRoles: false,
     permissions: false,
   }
-  const overrides = getSetupOverrides(org.companyId)
 
   const steps: ResolvedSetupStep[] = SETUP_STEPS.map((definition) => {
     const { locked, lockLabel } = resolveStepLocked(definition, org)

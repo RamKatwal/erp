@@ -1,3 +1,4 @@
+import { ensureHeadOfficeActive } from "@/lib/branches/head-office"
 import { mockBranches } from "@/lib/mock/branches"
 import type { Branch } from "@/types/branch"
 
@@ -8,7 +9,7 @@ export function readBranches(): Branch[] {
   try {
     const saved = window.localStorage.getItem(BRANCHES_STORAGE_KEY)
     if (saved) {
-      return JSON.parse(saved) as Branch[]
+      return ensureHeadOfficeActive(JSON.parse(saved) as Branch[])
     }
   } catch {
     // Fall back to mock seed data.
@@ -18,7 +19,9 @@ export function readBranches(): Branch[] {
 }
 
 export function saveBranches(branches: Branch[]) {
-  window.localStorage.setItem(BRANCHES_STORAGE_KEY, JSON.stringify(branches))
+  const next = ensureHeadOfficeActive(branches)
+  window.localStorage.setItem(BRANCHES_STORAGE_KEY, JSON.stringify(next))
+  return next
 }
 
 export function readActiveBranchId(): string | null {

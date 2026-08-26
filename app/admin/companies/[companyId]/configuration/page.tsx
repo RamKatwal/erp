@@ -7,11 +7,5 @@ export default async function AdminCompanyConfigurationRoute({
 }) {
   const { companyId } = await params
 
-  return (
-    <CompanyConfigurationPage
-      companyId={companyId}
-      backHref="/admin/subscriptions"
-      backLabel="Back to subscriptions"
-    />
-  )
+  return <CompanyConfigurationPage companyId={companyId} />
 }

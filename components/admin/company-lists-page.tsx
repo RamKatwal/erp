@@ -20,6 +20,7 @@ import {
 } from "@/components/data-table/data-table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { useOrganizationSetupProgress } from "@/hooks/use-organization-setup-progress"
 import {
   getHomeOrganizations,
   homeOrganizations,
@@ -29,10 +30,8 @@ import {
   type HomeOrganization,
 } from "@/lib/admin/home-organizations"
 import {
-  getOrganizationSetupProgress,
   SETUP_STEP_COUNT,
   setupStageLabel,
-  subscribeSetupOverrides,
   type OrganizationSetupProgress,
 } from "@/lib/admin/organization-setup"
 import { cn } from "@/lib/utils"
@@ -130,7 +129,7 @@ function OrganizationGridCard({
   org: HomeOrganization
   onContinueSetup: (companyId: string) => void
 }) {
-  const setup = getOrganizationSetupProgress(org)
+  const setup = useOrganizationSetupProgress(org)
 
   return (
     <article className="flex flex-col rounded-xl bg-card p-4 ring-1 ring-foreground/10">
@@ -199,7 +198,6 @@ export function CompanyListsPage() {
   const [setupCompanyId, setSetupCompanyId] = React.useState<string | null>(
     null
   )
-  const [, setSetupTick] = React.useState(0)
   const { isFullscreen, toggleFullscreen } = useDataTableFullscreen()
 
   React.useEffect(() => {
@@ -207,12 +205,6 @@ export function CompanyListsPage() {
     setOrganizations(getHomeOrganizations())
     return subscribeHomeOrganizations(() => {
       setOrganizations(getHomeOrganizations())
-    })
-  }, [])
-
-  React.useEffect(() => {
-    return subscribeSetupOverrides(() => {
-      setSetupTick((value) => value + 1)
     })
   }, [])
 
