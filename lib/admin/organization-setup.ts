@@ -1,5 +1,6 @@
 import {
-  homeOrganizations,
+  getHomeOrganizations,
+  getHomeOrganizationByCompanyId,
   type HomeOrganization,
 } from "@/lib/admin/home-organizations"
 import { getMockCompanyProfile } from "@/lib/mock/companies"
@@ -8,12 +9,9 @@ import type { SubscriptionStatus } from "@/types/subscription"
 export const SETUP_STEP_IDS = [
   "company_profile",
   "branch_setup",
-  "warehouse_setup",
-  "chart_of_accounts",
   "user_roles",
-  "opening_balances",
-  "tax_configuration",
-  "payment_billing",
+  "permissions",
+  "user_management",
 ] as const
 
 export type SetupStepId = (typeof SETUP_STEP_IDS)[number]
@@ -24,93 +22,63 @@ export type SetupStepDefinition = {
   id: SetupStepId
   title: string
   description: string
+  /** When true, step stays locked until the org has at least one branch. */
+  requiresBranch?: boolean
 }
 
 export const SETUP_STEPS: SetupStepDefinition[] = [
   {
     id: "company_profile",
-    title: "Company profile",
+    title: "Company Profile",
     description: "Legal name, PAN/tax ID, fiscal year, and currency.",
   },
   {
     id: "branch_setup",
-    title: "Branch setup",
+    title: "Branch Setup",
     description: "Add at least one branch for this organization.",
   },
   {
-    id: "warehouse_setup",
-    title: "Warehouse setup",
-    description: "Create a default warehouse for each branch.",
-  },
-  {
-    id: "chart_of_accounts",
-    title: "Chart of accounts",
-    description: "Use the default template or customize the ledger.",
-  },
-  {
     id: "user_roles",
-    title: "User roles & permissions",
-    description: "Invite at least one user beyond the organization admin.",
+    title: "User Role",
+    description: "Create user roles scoped to the company and branches.",
   },
   {
-    id: "opening_balances",
-    title: "Opening balances",
-    description: "Enter inventory, cash, bank, receivables, and payables.",
+    id: "permissions",
+    title: "Permission",
+    description: "Configure module permissions per role and branch.",
   },
   {
-    id: "tax_configuration",
-    title: "Tax configuration",
-    description: "Set VAT/GST rates and registration numbers.",
-  },
-  {
-    id: "payment_billing",
-    title: "Payment & billing setup",
-    description: "Confirm the subscription plan and a valid payment method.",
+    id: "user_management",
+    title: "User Management",
+    description: "Invite users and assign them to entities with a role.",
   },
 ]
 
 export const SETUP_STEP_COUNT = SETUP_STEPS.length
 
+const SETUP_OVERRIDES_KEY = "providhy_org_setup_overrides"
+const SETUP_OVERRIDES_EVENT = "providhy-org-setup-overrides"
+
 type SetupFlags = {
-  warehouse: boolean
-  chartOfAccounts: boolean
-  openingBalances: boolean
-  tax: boolean
+  userRoles: boolean
+  permissions: boolean
 }
 
 /** Mock extras that are not already on the subscription record. */
 const setupFlagsByCompanyId: Record<string, SetupFlags> = {
-  comp_10294: {
-    warehouse: true,
-    chartOfAccounts: true,
-    openingBalances: true,
-    tax: true,
-  },
-  comp_10881: {
-    warehouse: true,
-    chartOfAccounts: true,
-    openingBalances: false,
-    tax: false,
-  },
-  comp_11002: {
-    warehouse: true,
-    chartOfAccounts: true,
-    openingBalances: true,
-    tax: true,
-  },
-  comp_11140: {
-    warehouse: false,
-    chartOfAccounts: false,
-    openingBalances: false,
-    tax: false,
-  },
+  comp_10294: { userRoles: true, permissions: true },
+  comp_10881: { userRoles: true, permissions: false },
+  comp_11002: { userRoles: true, permissions: false },
+  comp_11140: { userRoles: false, permissions: false },
 }
+
+type SetupOverrides = Partial<Record<SetupStepId, boolean>>
 
 export type ResolvedSetupStep = SetupStepDefinition & {
   complete: boolean
-  blocking: boolean
-  locked: boolean
   href: string
+  locked: boolean
+  lockLabel: string | null
 }
 
 export type OrganizationSetupProgress = {
@@ -128,18 +96,12 @@ function setupHref(stepId: SetupStepId, org: HomeOrganization): string {
       return `/admin/companies/${org.companyId}/configuration`
     case "branch_setup":
       return "/admin/organizations/branch-management"
-    case "warehouse_setup":
-      return "/inventory"
-    case "chart_of_accounts":
-      return "/accounting/chart-of-accounts"
     case "user_roles":
+      return "/admin/settings/users-permissions/groups"
+    case "permissions":
+      return "/admin/settings/users-permissions/permissions"
+    case "user_management":
       return "/admin/settings/users-permissions/users"
-    case "opening_balances":
-      return "/accounting"
-    case "tax_configuration":
-      return "/configurations/general/company-configuration"
-    case "payment_billing":
-      return `/admin/subscriptions/${org.id}`
   }
 }
 
@@ -149,40 +111,99 @@ function isCompanyProfileComplete(companyId: string): boolean {
   return Boolean(profile.companyName && profile.pan)
 }
 
-function isPaymentComplete(org: HomeOrganization): boolean {
-  if (org.status === "past_due" || org.status === "pending") return false
-  if (org.status === "trialing" || org.isTrial) return false
-  return Boolean(org.paymentMethod)
+function readAllOverrides(): Record<string, SetupOverrides> {
+  if (typeof window === "undefined") return {}
+  try {
+    const raw = window.localStorage.getItem(SETUP_OVERRIDES_KEY)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw) as Record<string, SetupOverrides>
+    return parsed && typeof parsed === "object" ? parsed : {}
+  } catch {
+    return {}
+  }
 }
 
-function isPaymentBlocking(status: SubscriptionStatus): boolean {
-  return status === "past_due"
+function writeAllOverrides(next: Record<string, SetupOverrides>) {
+  if (typeof window === "undefined") return
+  window.localStorage.setItem(SETUP_OVERRIDES_KEY, JSON.stringify(next))
+  window.dispatchEvent(new Event(SETUP_OVERRIDES_EVENT))
+}
+
+export function getSetupOverrides(companyId: string): SetupOverrides {
+  return readAllOverrides()[companyId] ?? {}
+}
+
+export function markSetupStepComplete(companyId: string, stepId: SetupStepId) {
+  const all = readAllOverrides()
+  all[companyId] = { ...all[companyId], [stepId]: true }
+  writeAllOverrides(all)
+}
+
+export function markSetupStepIncomplete(
+  companyId: string,
+  stepId: SetupStepId
+) {
+  const all = readAllOverrides()
+  all[companyId] = { ...all[companyId], [stepId]: false }
+  writeAllOverrides(all)
+}
+
+export function markAllSetupStepsComplete(companyId: string) {
+  const all = readAllOverrides()
+  const next: SetupOverrides = { ...all[companyId] }
+  for (const stepId of SETUP_STEP_IDS) {
+    next[stepId] = true
+  }
+  all[companyId] = next
+  writeAllOverrides(all)
+}
+
+export function subscribeSetupOverrides(listener: () => void) {
+  if (typeof window === "undefined") return () => {}
+
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === SETUP_OVERRIDES_KEY || event.key === null) listener()
+  }
+
+  window.addEventListener("storage", onStorage)
+  window.addEventListener(SETUP_OVERRIDES_EVENT, listener)
+  return () => {
+    window.removeEventListener("storage", onStorage)
+    window.removeEventListener(SETUP_OVERRIDES_EVENT, listener)
+  }
 }
 
 function resolveStepComplete(
   stepId: SetupStepId,
   org: HomeOrganization,
   flags: SetupFlags,
-  chartOfAccountsComplete: boolean
+  overrides: SetupOverrides
 ): boolean {
+  if (overrides[stepId] === true) return true
+  if (overrides[stepId] === false) return false
+
   switch (stepId) {
     case "company_profile":
       return isCompanyProfileComplete(org.companyId)
     case "branch_setup":
       return org.branchesUsed > 0
-    case "warehouse_setup":
-      return flags.warehouse
-    case "chart_of_accounts":
-      return flags.chartOfAccounts
     case "user_roles":
+      return flags.userRoles
+    case "permissions":
+      return flags.permissions
+    case "user_management":
       return org.usersUsed > 1
-    case "opening_balances":
-      return chartOfAccountsComplete && flags.openingBalances
-    case "tax_configuration":
-      return flags.tax
-    case "payment_billing":
-      return isPaymentComplete(org)
   }
+}
+
+function resolveStepLocked(
+  definition: SetupStepDefinition,
+  org: HomeOrganization
+): { locked: boolean; lockLabel: string | null } {
+  if (definition.requiresBranch && org.branchesUsed <= 0) {
+    return { locked: true, lockLabel: "Requires branch setup first" }
+  }
+  return { locked: false, lockLabel: null }
 }
 
 export function setupUrgencyForStatus(status: SubscriptionStatus): SetupUrgency {
@@ -192,43 +213,28 @@ export function setupUrgencyForStatus(status: SubscriptionStatus): SetupUrgency 
 }
 
 function previewSteps(steps: ResolvedSetupStep[]): ResolvedSetupStep[] {
-  const incomplete = steps.filter((step) => !step.complete)
-  return incomplete.slice(0, 2)
+  return steps.filter((step) => !step.complete).slice(0, 2)
 }
 
 export function getOrganizationSetupProgress(
   org: HomeOrganization
 ): OrganizationSetupProgress {
   const flags = setupFlagsByCompanyId[org.companyId] ?? {
-    warehouse: false,
-    chartOfAccounts: false,
-    openingBalances: false,
-    tax: false,
+    userRoles: false,
+    permissions: false,
   }
-  const chartOfAccountsComplete = flags.chartOfAccounts
+  const overrides = getSetupOverrides(org.companyId)
 
   const steps: ResolvedSetupStep[] = SETUP_STEPS.map((definition) => {
-    const complete = resolveStepComplete(
-      definition.id,
-      org,
-      flags,
-      chartOfAccountsComplete
-    )
-    const blocking =
-      definition.id === "payment_billing" && isPaymentBlocking(org.status)
-    const locked =
-      definition.id === "opening_balances" && !chartOfAccountsComplete
-    const href =
-      locked
-        ? setupHref("chart_of_accounts", org)
-        : setupHref(definition.id, org)
-
+    const { locked, lockLabel } = resolveStepLocked(definition, org)
     return {
       ...definition,
-      complete,
-      blocking,
+      complete: locked
+        ? false
+        : resolveStepComplete(definition.id, org, flags, overrides),
+      href: setupHref(definition.id, org),
       locked,
-      href,
+      lockLabel,
     }
   })
 
@@ -245,7 +251,7 @@ export function getOrganizationSetupProgress(
 }
 
 export function getIncompleteOrganizationSetups(): OrganizationSetupProgress[] {
-  return homeOrganizations
+  return getHomeOrganizations()
     .map(getOrganizationSetupProgress)
     .filter((progress) => progress.completedCount < SETUP_STEP_COUNT)
 }
@@ -253,7 +259,13 @@ export function getIncompleteOrganizationSetups(): OrganizationSetupProgress[] {
 export function getOrganizationSetupByCompanyId(
   companyId: string
 ): OrganizationSetupProgress | undefined {
-  const org = homeOrganizations.find((item) => item.companyId === companyId)
+  const org = getHomeOrganizationByCompanyId(companyId)
   if (!org) return undefined
   return getOrganizationSetupProgress(org)
+}
+
+export function setupStageLabel(completedCount: number): string {
+  if (completedCount <= 1) return "Just getting started"
+  if (completedCount <= 3) return "Making progress"
+  return "Almost done"
 }

@@ -16,6 +16,10 @@ import {
   organizationNeedsUpgrade,
   type HomeOrganization,
 } from "@/lib/admin/home-organizations"
+import {
+  getOrganizationSetupProgress,
+  SETUP_STEP_COUNT,
+} from "@/lib/admin/organization-setup"
 import { cn } from "@/lib/utils"
 import {
   subscriptionStatusLabels,
@@ -50,147 +54,175 @@ export function organizationPlanBadgeClassName(plan: string) {
   return "border-transparent bg-primary/10 text-primary"
 }
 
-export const organizationColumns: ColumnDef<HomeOrganization>[] = [
-  {
-    id: "company",
-    accessorFn: (row) => row.companyName,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Company" />
-    ),
-    cell: ({ row }) => {
-      const { companyName, companyDomain, companyLogoUrl, location } = row.original
-      return (
-        <div className="flex min-w-0 items-center gap-2.5">
-          <CompanyAvatar
-            name={companyName}
-            domain={companyDomain}
-            logoUrl={companyLogoUrl}
-            showTooltip={false}
-          />
-          <div className="min-w-0">
-            <p className="truncate font-medium">{companyName}</p>
-            <p className="truncate text-xs text-muted-foreground">{location}</p>
-          </div>
-        </div>
-      )
-    },
-  },
-  {
-    id: "plan",
-    accessorFn: (row) => row.planName,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Plan" />
-    ),
-    cell: ({ row }) => (
-      <div className="flex items-center gap-1.5">
-        <Badge
-          className={cn(
-            "h-5 px-1.5 text-[10px] font-medium",
-            organizationPlanBadgeClassName(row.original.planName)
-          )}
-        >
-          {row.original.planName}
-        </Badge>
-        {row.original.isTrial ? (
-          <Badge variant="secondary">Trial</Badge>
-        ) : null}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "remainingDays",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Days remaining" />
-    ),
-    cell: ({ row }) => {
-      const days = row.original.remainingDays
-      return (
-        <span
-          className={
-            days <= 7
-              ? "font-medium tabular-nums text-destructive"
-              : "tabular-nums text-muted-foreground"
-          }
-        >
-          {days}
-        </span>
-      )
-    },
-  },
-  {
-    id: "users",
-    accessorFn: (row) => row.usersUsed,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Users" />
-    ),
-    cell: ({ row }) => (
-      <StackedAvatars
-        items={userAvatarItems(row.original.members, row.original.usersUsed)}
-        total={row.original.usersUsed}
-      />
-    ),
-  },
-  {
-    id: "branches",
-    accessorFn: (row) => row.branchesUsed,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Branches" />
-    ),
-    cell: ({ row }) => (
-      <StackedAvatars
-        items={branchAvatarItems(row.original.assignedBranches)}
-        total={row.original.branchesUsed}
-      />
-    ),
-  },
-  {
-    accessorKey: "status",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Status" />
-    ),
-    cell: ({ row }) => (
-      <Badge
-        variant="outline"
-        className={organizationStatusBadgeClassName(row.original.status)}
-      >
-        {subscriptionStatusLabels[row.original.status]}
-      </Badge>
-    ),
-  },
-  {
-    id: "actions",
-    header: () => <span className="sr-only">Actions</span>,
-    enableHiding: false,
-    enableSorting: false,
-    cell: ({ row }) => {
-      const org = row.original
-      const showUpgrade = organizationNeedsUpgrade(org)
+type OrganizationColumnsOptions = {
+  onContinueSetup: (companyId: string) => void
+}
 
-      return (
-        <div className="flex items-center justify-end gap-2">
-          {showUpgrade ? (
-            <Button
-              size="sm"
-              variant="outline"
-              nativeButton={false}
-              className="border-primary text-primary hover:bg-primary/10 hover:text-primary"
-              render={<Link href={`/admin/subscriptions/${org.id}`} />}
-            >
-              Upgrade
-            </Button>
-          ) : (
-            <Button
-              size="sm"
-              variant="outline"
-              nativeButton={false}
-              className="border-primary text-primary hover:bg-primary/10 hover:text-primary"
-              render={<Link href="/" />}
-            >
-              Go to company
-            </Button>
-          )}
-        </div>
-      )
+export function getOrganizationColumns({
+  onContinueSetup,
+}: OrganizationColumnsOptions): ColumnDef<HomeOrganization>[] {
+  return [
+    {
+      id: "company",
+      accessorFn: (row) => row.companyName,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Company" />
+      ),
+      cell: ({ row }) => {
+        const { companyName, companyDomain, companyLogoUrl, location } =
+          row.original
+        return (
+          <div className="flex min-w-0 items-center gap-2.5">
+            <CompanyAvatar
+              name={companyName}
+              domain={companyDomain}
+              logoUrl={companyLogoUrl}
+              showTooltip={false}
+            />
+            <div className="min-w-0">
+              <p className="truncate font-medium">{companyName}</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {location}
+              </p>
+            </div>
+          </div>
+        )
+      },
     },
-  },
-]
+    {
+      id: "plan",
+      accessorFn: (row) => row.planName,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Plan" />
+      ),
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1.5">
+          <Badge
+            className={cn(
+              "h-5 px-1.5 text-[10px] font-medium",
+              organizationPlanBadgeClassName(row.original.planName)
+            )}
+          >
+            {row.original.planName}
+          </Badge>
+          {row.original.isTrial ? (
+            <Badge variant="secondary">Trial</Badge>
+          ) : null}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "remainingDays",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Days remaining" />
+      ),
+      cell: ({ row }) => {
+        const days = row.original.remainingDays
+        return (
+          <span
+            className={
+              days <= 7
+                ? "font-medium tabular-nums text-destructive"
+                : "tabular-nums text-muted-foreground"
+            }
+          >
+            {days}
+          </span>
+        )
+      },
+    },
+    {
+      id: "users",
+      accessorFn: (row) => row.usersUsed,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Users" />
+      ),
+      cell: ({ row }) => (
+        <StackedAvatars
+          items={userAvatarItems(row.original.members, row.original.usersUsed)}
+          total={row.original.usersUsed}
+        />
+      ),
+    },
+    {
+      id: "branches",
+      accessorFn: (row) => row.branchesUsed,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Branches" />
+      ),
+      cell: ({ row }) => (
+        <StackedAvatars
+          items={branchAvatarItems(row.original.assignedBranches)}
+          total={row.original.branchesUsed}
+        />
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Status" />
+      ),
+      cell: ({ row }) => (
+        <Badge
+          variant="outline"
+          className={organizationStatusBadgeClassName(row.original.status)}
+        >
+          {subscriptionStatusLabels[row.original.status]}
+        </Badge>
+      ),
+    },
+    {
+      id: "actions",
+      header: () => <span className="sr-only">Actions</span>,
+      enableHiding: false,
+      enableSorting: false,
+      cell: ({ row }) => {
+        const org = row.original
+        const showUpgrade = organizationNeedsUpgrade(org)
+        const setup = getOrganizationSetupProgress(org)
+        const setupIncomplete = setup.completedCount < SETUP_STEP_COUNT
+
+        if (setupIncomplete && !showUpgrade) {
+          return (
+            <div className="flex items-center justify-end">
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-primary text-primary hover:bg-primary/10 hover:text-primary"
+                onClick={() => onContinueSetup(org.companyId)}
+              >
+                Continue setup
+              </Button>
+            </div>
+          )
+        }
+
+        return (
+          <div className="flex items-center justify-end gap-2">
+            {showUpgrade ? (
+              <Button
+                size="sm"
+                variant="outline"
+                nativeButton={false}
+                className="border-primary text-primary hover:bg-primary/10 hover:text-primary"
+                render={<Link href={`/admin/subscriptions/${org.id}`} />}
+              >
+                Upgrade
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                variant="outline"
+                nativeButton={false}
+                className="border-primary text-primary hover:bg-primary/10 hover:text-primary"
+                render={<Link href="/" />}
+              >
+                Go to company
+              </Button>
+            )}
+          </div>
+        )
+      },
+    },
+  ]
+}

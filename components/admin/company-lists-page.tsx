@@ -2,18 +2,15 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { useRouter, useSearchParams } from "next/navigation"
 import { LayoutGrid, List, Plus } from "lucide-react"
 
 import {
-  organizationPlanBadgeClassName,
   organizationStatusBadgeClassName,
-  organizationColumns,
+  getOrganizationColumns,
 } from "@/components/admin/organization-columns"
-import {
-  branchAvatarItems,
-  StackedAvatars,
-  userAvatarItems,
-} from "@/components/admin/subscriptions/stacked-avatars"
+import { OrganizationSetupDialog } from "@/components/admin/setup/organization-setup-dialog"
+import { SetupProgressBar } from "@/components/admin/setup/setup-progress-bar"
 import { CompanyLogo } from "@/components/company-logo"
 import {
   type DataTableRowSize,
@@ -24,53 +21,89 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
+  getHomeOrganizations,
   homeOrganizations,
   organizationNeedsUpgrade,
+  subscribeHomeOrganizations,
+  syncWorkspaceOrgIntoHomeOrganizations,
   type HomeOrganization,
 } from "@/lib/admin/home-organizations"
+import {
+  getOrganizationSetupProgress,
+  SETUP_STEP_COUNT,
+  setupStageLabel,
+  subscribeSetupOverrides,
+  type OrganizationSetupProgress,
+} from "@/lib/admin/organization-setup"
 import { cn } from "@/lib/utils"
 import { subscriptionStatusLabels } from "@/types/subscription"
 
 type ViewMode = "grid" | "list"
 
-function OrganizationPlanBadge({ plan }: { plan: string }) {
-  return (
-    <Badge
-      className={cn(
-        "h-5 px-1.5 text-[10px] font-medium",
-        organizationPlanBadgeClassName(plan)
-      )}
-    >
-      {plan}
-    </Badge>
-  )
+const SETUP_QUERY = "setup"
+
+function formatCount(value: number): string {
+  return value > 0 ? String(value) : "—"
 }
 
-function OrganizationActions({
+function OrganizationCardFooter({
   org,
-  fullWidth = false,
+  setup,
+  onContinueSetup,
 }: {
   org: HomeOrganization
-  fullWidth?: boolean
+  setup: OrganizationSetupProgress
+  onContinueSetup: (companyId: string) => void
 }) {
-  const showUpgrade = organizationNeedsUpgrade(org)
+  const needsUpgrade = organizationNeedsUpgrade(org)
+  const setupIncomplete = setup.completedCount < SETUP_STEP_COUNT
+
+  if (setupIncomplete) {
+    return (
+      <div className="mt-4 flex flex-col gap-3 border-t pt-4">
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[11px] text-muted-foreground">Setup progress</p>
+            <p className="truncate text-[11px] font-medium text-muted-foreground tabular-nums">
+              {setup.completedCount} of {SETUP_STEP_COUNT} ·{" "}
+              {setupStageLabel(setup.completedCount)}
+            </p>
+          </div>
+          <SetupProgressBar percent={setup.percent} className="h-1" />
+        </div>
+
+        {needsUpgrade ? (
+          <Button
+            size="sm"
+            variant="outline"
+            nativeButton={false}
+            className="w-full"
+            render={<Link href={`/admin/subscriptions/${org.id}`} />}
+          >
+            Upgrade
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            variant="outline"
+            className="w-full"
+            onClick={() => onContinueSetup(org.companyId)}
+          >
+            Continue setup
+          </Button>
+        )}
+      </div>
+    )
+  }
 
   return (
-    <div
-      className={cn(
-        "flex gap-2",
-        fullWidth ? "w-full flex-col" : "flex-wrap items-center justify-end"
-      )}
-    >
-      {showUpgrade ? (
+    <div className="mt-4 border-t pt-4">
+      {needsUpgrade ? (
         <Button
           size="sm"
           variant="outline"
           nativeButton={false}
-          className={cn(
-            "border-primary text-primary hover:bg-primary/10 hover:text-primary",
-            fullWidth && "w-full"
-          )}
+          className="w-full"
           render={<Link href={`/admin/subscriptions/${org.id}`} />}
         >
           Upgrade
@@ -80,10 +113,7 @@ function OrganizationActions({
           size="sm"
           variant="outline"
           nativeButton={false}
-          className={cn(
-            "border-primary text-primary hover:bg-primary/10 hover:text-primary",
-            fullWidth && "w-full"
-          )}
+          className="w-full"
           render={<Link href="/" />}
         >
           Go to company
@@ -93,80 +123,122 @@ function OrganizationActions({
   )
 }
 
-function OrganizationGridCard({ org }: { org: HomeOrganization }) {
+function OrganizationGridCard({
+  org,
+  onContinueSetup,
+}: {
+  org: HomeOrganization
+  onContinueSetup: (companyId: string) => void
+}) {
+  const setup = getOrganizationSetupProgress(org)
+
   return (
-    <article className="flex flex-col rounded-xl bg-card p-5 ring-1 ring-foreground/10">
-      <div className="flex flex-col items-center text-center">
+    <article className="flex flex-col rounded-xl bg-card p-4 ring-1 ring-foreground/10">
+      <div className="flex flex-col gap-1">
         <CompanyLogo
           name={org.companyName}
           domain={org.companyDomain}
           logoUrl={org.companyLogoUrl}
-          size={48}
-          className="mb-3 size-12 rounded-lg"
+          size={36}
+          className="size-9 rounded-md"
         />
-        <div className="flex flex-wrap items-center justify-center gap-1.5">
-          <OrganizationPlanBadge plan={org.planName} />
-          {org.isTrial ? <Badge variant="secondary">Trial</Badge> : null}
-        </div>
-        <h2 className="mt-2 text-base font-semibold tracking-tight">
+        <p className="mt-2 text-xs text-muted-foreground">{org.planName}</p>
+        <h2 className="text-base font-semibold tracking-tight">
           {org.companyName}
         </h2>
-        <p className="mt-0.5 text-sm text-muted-foreground">{org.location}</p>
+        <p className="text-sm text-muted-foreground">{org.location}</p>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-3 border-t pt-4 text-left">
-        <div className="space-y-1">
+      <div className="mt-4 grid grid-cols-4 gap-2">
+        <div className="min-w-0 space-y-1">
           <p className="text-[11px] text-muted-foreground">Days remaining</p>
-          <p
-            className={cn(
-              "text-sm font-medium tabular-nums",
-              org.remainingDays <= 7 && "text-destructive"
-            )}
-          >
-            {org.remainingDays}
-          </p>
+          <p className="text-sm font-medium tabular-nums">{org.remainingDays}</p>
         </div>
-        <div className="space-y-1">
+        <div className="min-w-0 space-y-1">
           <p className="text-[11px] text-muted-foreground">Status</p>
           <Badge
             variant="outline"
-            className={organizationStatusBadgeClassName(org.status)}
+            className={cn(
+              "h-5 max-w-full truncate px-1.5 text-[10px] font-medium",
+              organizationStatusBadgeClassName(org.status)
+            )}
           >
             {subscriptionStatusLabels[org.status]}
           </Badge>
         </div>
-        <div className="space-y-1">
+        <div className="min-w-0 space-y-1">
           <p className="text-[11px] text-muted-foreground">Users</p>
-          <StackedAvatars
-            items={userAvatarItems(org.members, org.usersUsed)}
-            total={org.usersUsed}
-          />
+          <p className="text-sm font-medium tabular-nums">
+            {formatCount(org.usersUsed)}
+          </p>
         </div>
-        <div className="space-y-1">
+        <div className="min-w-0 space-y-1">
           <p className="text-[11px] text-muted-foreground">Branches</p>
-          <StackedAvatars
-            items={branchAvatarItems(org.assignedBranches)}
-            total={org.branchesUsed}
-          />
+          <p className="text-sm font-medium tabular-nums">
+            {formatCount(org.branchesUsed)}
+          </p>
         </div>
       </div>
 
-      <div className="mt-5 w-full">
-        <OrganizationActions org={org} fullWidth />
-      </div>
+      <OrganizationCardFooter
+        org={org}
+        setup={setup}
+        onContinueSetup={onContinueSetup}
+      />
     </article>
   )
 }
 
 export function CompanyListsPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [viewMode, setViewMode] = React.useState<ViewMode>("grid")
   const [rowSize, setRowSize] = React.useState<DataTableRowSize>("md")
+  const [organizations, setOrganizations] =
+    React.useState<HomeOrganization[]>(homeOrganizations)
+  const [setupCompanyId, setSetupCompanyId] = React.useState<string | null>(
+    null
+  )
+  const [, setSetupTick] = React.useState(0)
   const { isFullscreen, toggleFullscreen } = useDataTableFullscreen()
 
+  React.useEffect(() => {
+    syncWorkspaceOrgIntoHomeOrganizations()
+    setOrganizations(getHomeOrganizations())
+    return subscribeHomeOrganizations(() => {
+      setOrganizations(getHomeOrganizations())
+    })
+  }, [])
+
+  React.useEffect(() => {
+    return subscribeSetupOverrides(() => {
+      setSetupTick((value) => value + 1)
+    })
+  }, [])
+
+  React.useEffect(() => {
+    const setupId = searchParams.get(SETUP_QUERY)
+    if (!setupId) return
+    setSetupCompanyId(setupId)
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete(SETUP_QUERY)
+    const next = params.toString()
+    router.replace(next ? `/admin?${next}` : "/admin")
+  }, [router, searchParams])
+
+  const openSetup = React.useCallback((companyId: string) => {
+    setSetupCompanyId(companyId)
+  }, [])
+
+  const columns = React.useMemo(
+    () => getOrganizationColumns({ onContinueSetup: openSetup }),
+    [openSetup]
+  )
+
   const table = useDataTable({
-    data: homeOrganizations,
-    columns: organizationColumns,
-    pageSize: homeOrganizations.length,
+    data: organizations,
+    columns,
+    pageSize: Math.max(organizations.length, 1),
     globalFilterFn: (row, _columnId, filterValue) => {
       const query = String(filterValue).toLowerCase()
       const org = row.original
@@ -185,7 +257,7 @@ export function CompanyListsPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <h1 className="text-base font-semibold tracking-tight">
-            Your Organizations ({homeOrganizations.length})
+            Your Organizations ({organizations.length})
           </h1>
           <div className="flex items-center rounded-md border bg-background p-0.5">
             <Button
@@ -229,14 +301,18 @@ export function CompanyListsPage() {
 
       {viewMode === "grid" ? (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-          {homeOrganizations.map((org) => (
-            <OrganizationGridCard key={org.id} org={org} />
+          {organizations.map((org) => (
+            <OrganizationGridCard
+              key={org.id}
+              org={org}
+              onContinueSetup={openSetup}
+            />
           ))}
         </div>
       ) : (
         <DataTableCard
           table={table}
-          columnCount={organizationColumns.length}
+          columnCount={columns.length}
           searchPlaceholder="Search organizations..."
           rowSize={rowSize}
           onRowSizeChange={setRowSize}
@@ -247,6 +323,14 @@ export function CompanyListsPage() {
           showPagination={false}
         />
       )}
+
+      <OrganizationSetupDialog
+        companyId={setupCompanyId}
+        open={Boolean(setupCompanyId)}
+        onOpenChange={(open) => {
+          if (!open) setSetupCompanyId(null)
+        }}
+      />
     </div>
   )
 }

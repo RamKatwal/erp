@@ -22,6 +22,10 @@ import {
   entitlementToSubscription,
 } from "@/lib/onboarding/entitlement"
 import { persistBranchLimit } from "@/lib/branches/subscription"
+import {
+  locationFromCompanyDraft,
+  upsertHomeOrganizationFromSubscription,
+} from "@/lib/admin/home-organizations"
 
 /** Mirror server cookie session into localStorage for resume + optimistic UX. */
 export function saveOnboardingSessionClient(
@@ -42,12 +46,15 @@ export function saveOnboardingSessionClient(
   if (session.entitlement) {
     saveEntitlementClient(session.entitlement)
     if (session.companyId && session.company) {
-      saveWorkspaceSubscriptionClient(
-        entitlementToSubscription(session.entitlement, {
-          id: session.companyId,
-          name: session.company.companyName,
-          website: session.company.companyWebsite,
-        })
+      const subscription = entitlementToSubscription(session.entitlement, {
+        id: session.companyId,
+        name: session.company.companyName,
+        website: session.company.companyWebsite,
+      })
+      saveWorkspaceSubscriptionClient(subscription)
+      upsertHomeOrganizationFromSubscription(
+        subscription,
+        locationFromCompanyDraft(session.company)
       )
     }
     persistBranchLimit(session.entitlement.branchCount)

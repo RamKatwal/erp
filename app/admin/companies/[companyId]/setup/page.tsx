@@ -1,6 +1,5 @@
-import { notFound } from "next/navigation"
+import { redirect } from "next/navigation"
 
-import { OrganizationSetupPage } from "@/components/admin/setup/organization-setup-page"
 import { getOrganizationSetupByCompanyId } from "@/lib/admin/organization-setup"
 
 export default async function AdminCompanySetupRoute({
@@ -10,9 +9,9 @@ export default async function AdminCompanySetupRoute({
 }) {
   const { companyId } = await params
 
-  if (!getOrganizationSetupByCompanyId(companyId)) {
-    notFound()
+  if (getOrganizationSetupByCompanyId(companyId)) {
+    redirect(`/admin?setup=${companyId}`)
   }
 
-  return <OrganizationSetupPage companyId={companyId} />
+  redirect("/admin")
 }

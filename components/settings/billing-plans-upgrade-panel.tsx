@@ -10,6 +10,10 @@ import {
   saveOnboardingSessionClient,
 } from "@/lib/onboarding/client-session"
 import {
+  locationFromCompanyDraft,
+  upsertHomeOrganizationFromSubscription,
+} from "@/lib/admin/home-organizations"
+import {
   entitlementToSubscription,
   loadEntitlementClient,
   loadWorkspaceSubscriptionClient,
@@ -106,6 +110,10 @@ export function BillingPlansUpgradePanel() {
             website: res.session.company.companyWebsite,
           })
           saveWorkspaceSubscriptionClient(sub)
+          upsertHomeOrganizationFromSubscription(
+            sub,
+            locationFromCompanyDraft(res.session.company)
+          )
           setSubscription(sub)
         }
       }

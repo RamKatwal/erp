@@ -2,15 +2,14 @@
 
 import * as React from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { CircleCheckIcon } from "lucide-react"
+import { m, useReducedMotion } from "framer-motion"
 
+import { CompanyLogo } from "@/components/company-logo"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
-  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
 import {
@@ -18,23 +17,36 @@ import {
   ORG_CREATED_QUERY,
   isOrgCreatedQuery,
 } from "@/lib/admin/organization-created"
-import { homeOrganizations } from "@/lib/admin/home-organizations"
+import {
+  getHomeOrganizationByCompanyId,
+  homeOrganizations,
+  locationFromCompanyDraft,
+  syncWorkspaceOrgIntoHomeOrganizations,
+  upsertHomeOrganizationFromSubscription,
+} from "@/lib/admin/home-organizations"
 import {
   getIncompleteOrganizationSetups,
   getOrganizationSetupByCompanyId,
 } from "@/lib/admin/organization-setup"
-import { loadOnboardingSessionClient } from "@/lib/onboarding/client-session"
-import { loadWorkspaceSubscriptionClient } from "@/lib/onboarding/entitlement"
+import { getCompanyById } from "@/lib/companies/options"
 import {
   enterCompanyPortal,
   getActiveBranches,
 } from "@/lib/companies/portal-context"
-import { getCompanyById } from "@/lib/companies/options"
+import { loadOnboardingSessionClient } from "@/lib/onboarding/client-session"
+import { loadWorkspaceSubscriptionClient } from "@/lib/onboarding/entitlement"
+import { withReducedMotion } from "@/lib/motion"
+import { cn } from "@/lib/utils"
 
-function resolveCreatedCompany(companyIdFromQuery: string | null): {
+type CreatedCompany = {
   companyId: string | null
   companyName: string | null
-} {
+  planName: string | null
+  companyDomain: string | null
+  companyLogoUrl: string | null
+}
+
+function resolveCreatedCompany(companyIdFromQuery: string | null): CreatedCompany {
   const session = loadOnboardingSessionClient()
   const workspace = loadWorkspaceSubscriptionClient()
 
@@ -44,21 +56,90 @@ function resolveCreatedCompany(companyIdFromQuery: string | null): {
     workspace?.companyId ||
     null
 
-  if (!companyId) {
-    return {
-      companyId: null,
-      companyName: session?.company?.companyName ?? workspace?.companyName ?? null,
-    }
+  if (workspace?.companyId) {
+    const location =
+      session?.company && session.companyId === workspace.companyId
+        ? locationFromCompanyDraft(session.company)
+        : undefined
+    upsertHomeOrganizationFromSubscription(workspace, location)
+  } else {
+    syncWorkspaceOrgIntoHomeOrganizations()
   }
 
-  const fromHome = homeOrganizations.find((org) => org.companyId === companyId)
+  const fromHome = companyId
+    ? getHomeOrganizationByCompanyId(companyId)
+    : undefined
+
   const companyName =
     fromHome?.companyName ??
     (session?.companyId === companyId ? session.company?.companyName : null) ??
     (workspace?.companyId === companyId ? workspace.companyName : null) ??
+    session?.company?.companyName ??
+    workspace?.companyName ??
     null
 
-  return { companyId, companyName }
+  const planName =
+    fromHome?.planName ??
+    (workspace?.companyId === companyId ? workspace.planName : null) ??
+    session?.entitlement?.planName ??
+    workspace?.planName ??
+    null
+
+  return {
+    companyId,
+    companyName,
+    planName,
+    companyDomain:
+      fromHome?.companyDomain ??
+      (workspace?.companyId === companyId ? workspace.companyDomain : null) ??
+      null,
+    companyLogoUrl: fromHome?.companyLogoUrl ?? null,
+  }
+}
+
+function AnimatedSuccessTick({ className }: { className?: string }) {
+  const reduceMotion = useReducedMotion()
+  const circleTransition = withReducedMotion(
+    { duration: 0.35, ease: [0.4, 0, 0.2, 1] },
+    reduceMotion
+  )
+  const checkTransition = withReducedMotion(
+    { duration: 0.4, ease: [0.4, 0, 0.2, 1], delay: reduceMotion ? 0 : 0.2 },
+    reduceMotion
+  )
+
+  return (
+    <div
+      className={cn(
+        "flex size-14 items-center justify-center rounded-full bg-card shadow-sm ring-1 ring-foreground/5",
+        className
+      )}
+      aria-hidden
+    >
+      <svg viewBox="0 0 48 48" className="size-8 text-success" fill="none">
+        <m.circle
+          cx="24"
+          cy="24"
+          r="18"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
+          animate={{ pathLength: 1, opacity: 1 }}
+          transition={circleTransition}
+        />
+        <m.path
+          d="M15.5 24.5 21.2 30.2 32.5 18.5"
+          stroke="currentColor"
+          strokeWidth="2.75"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
+          animate={{ pathLength: 1, opacity: 1 }}
+          transition={checkTransition}
+        />
+      </svg>
+    </div>
+  )
 }
 
 export function OrganizationCreatedDialog() {
@@ -68,8 +149,13 @@ export function OrganizationCreatedDialog() {
   const companyIdParam = searchParams.get(ORG_CREATED_COMPANY_ID_QUERY)
 
   const [open, setOpen] = React.useState(false)
-  const [companyId, setCompanyId] = React.useState<string | null>(null)
-  const [companyName, setCompanyName] = React.useState<string | null>(null)
+  const [company, setCompany] = React.useState<CreatedCompany>({
+    companyId: null,
+    companyName: null,
+    planName: null,
+    companyDomain: null,
+    companyLogoUrl: null,
+  })
   const navigatingAwayRef = React.useRef(false)
 
   React.useEffect(() => {
@@ -81,9 +167,7 @@ export function OrganizationCreatedDialog() {
 
     if (navigatingAwayRef.current) return
 
-    const resolved = resolveCreatedCompany(companyIdParam)
-    setCompanyId(resolved.companyId)
-    setCompanyName(resolved.companyName)
+    setCompany(resolveCreatedCompany(companyIdParam))
     setOpen(true)
   }, [createdFlag, companyIdParam])
 
@@ -98,7 +182,6 @@ export function OrganizationCreatedDialog() {
       setOpen(true)
       return
     }
-    // Ignore close events fired while we navigate to setup / company
     if (navigatingAwayRef.current) {
       setOpen(false)
       return
@@ -110,6 +193,7 @@ export function OrganizationCreatedDialog() {
     navigatingAwayRef.current = true
     setOpen(false)
 
+    const { companyId } = company
     const hasSetup =
       companyId != null && Boolean(getOrganizationSetupByCompanyId(companyId))
     const targetId = hasSetup
@@ -118,73 +202,80 @@ export function OrganizationCreatedDialog() {
         homeOrganizations[0]?.companyId ??
         companyId)
 
-    router.replace(
-      targetId ? `/admin/companies/${targetId}/setup` : "/admin"
-    )
+    router.replace(targetId ? `/admin?setup=${targetId}` : "/admin")
   }
 
   function handleGoToCompany() {
     navigatingAwayRef.current = true
     setOpen(false)
 
-    if (companyId) {
-      const company = getCompanyById(companyId)
-      const branch = company ? getActiveBranches(company)[0] : null
-      if (company && branch) {
-        enterCompanyPortal(company.id, branch.id)
+    if (company.companyId) {
+      const option = getCompanyById(company.companyId)
+      const branch = option ? getActiveBranches(option)[0] : null
+      if (option && branch) {
+        enterCompanyPortal(option.id, branch.id)
       }
     }
 
     router.replace("/")
   }
 
+  const displayName = company.companyName ?? "Your organization"
+  const displayPlan = company.planName ?? "Plan ready"
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md" showCloseButton>
-        <DialogHeader className="items-center text-center sm:items-center sm:text-center">
-          <div className="mb-1 flex size-12 items-center justify-center rounded-full bg-success/10 text-success">
-            <CircleCheckIcon className="size-6" strokeWidth={1.75} aria-hidden />
+      <DialogContent
+        showCloseButton
+        className="gap-0 overflow-hidden p-0 sm:max-w-md"
+      >
+        <div className="relative bg-success/15 px-6 pb-5 pt-8 text-center">
+          <div className="flex flex-col items-center gap-3">
+            {open ? <AnimatedSuccessTick /> : null}
+            <div className="space-y-1">
+              <DialogTitle className="text-base font-semibold tracking-tight text-foreground">
+                Organization created
+              </DialogTitle>
+              <DialogDescription className="text-sm text-muted-foreground">
+                Your new company workspace is ready to go
+              </DialogDescription>
+            </div>
           </div>
-          <DialogTitle className="text-base font-semibold">
-            Organization created successfully
-          </DialogTitle>
-          <DialogDescription>
-            {companyName ? (
-              <>
-                <span className="font-medium text-foreground">{companyName}</span>{" "}
-                is ready. Complete setup now, open the company workspace, or
-                stay on Home.
-              </>
-            ) : (
-              <>
-                Your organization is ready. Complete setup now, open the company
-                workspace, or stay on Home.
-              </>
-            )}
-          </DialogDescription>
-        </DialogHeader>
+        </div>
 
-        <DialogFooter className="flex-col gap-2 sm:flex-col sm:space-x-0">
-          <Button type="button" className="w-full" onClick={handleCompleteSetup}>
-            Complete setup now
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={handleGoToCompany}
-          >
-            Go to company
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            className="w-full"
-            onClick={dismissToHome}
-          >
-            Cancel
-          </Button>
-        </DialogFooter>
+        <div className="flex flex-col gap-3 bg-card px-5 py-5">
+          <div className="flex items-center gap-3 rounded-xl bg-muted/60 px-3 py-3">
+            <CompanyLogo
+              name={displayName}
+              domain={company.companyDomain}
+              logoUrl={company.companyLogoUrl}
+              size={40}
+              className="size-10 shrink-0 rounded-lg"
+            />
+            <div className="min-w-0 text-left">
+              <p className="truncate text-sm font-semibold tracking-tight">
+                {displayName}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">
+                {displayPlan}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2 pt-1">
+            <Button type="button" className="w-full" onClick={handleCompleteSetup}>
+              Complete setup now
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={handleGoToCompany}
+            >
+              Go to company
+            </Button>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   )
