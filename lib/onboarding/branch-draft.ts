@@ -9,6 +9,13 @@ export type QuickBranchRow = {
   contactEmail: string
   /** When true, code follows company prefix + location + sequence. */
   codeAuto: boolean
+  /**
+   * Persisted or system-managed row — fields are read-only.
+   * Branch code cannot be changed once set.
+   */
+  locked?: boolean
+  /** Set when the row maps to an already-created branch. */
+  existingBranchId?: string
 }
 
 const SKIP_WORDS = new Set([
@@ -103,6 +110,8 @@ export function createEmptyBranchRow(
     code:
       opts?.code ??
       generateBranchCode(companyPrefix, location, index),
+    locked: opts?.locked ?? false,
+    existingBranchId: opts?.existingBranchId,
   }
 }
 
@@ -112,12 +121,63 @@ export function resequenceBranchCodes(
   companyPrefix: string
 ): QuickBranchRow[] {
   return rows.map((row, index) => {
-    if (!row.codeAuto) return row
+    if (row.locked || !row.codeAuto) return row
     return {
       ...row,
       code: generateBranchCode(companyPrefix, row.location, index),
     }
   })
+}
+
+/**
+ * Prefill quick setup with existing branches (locked) and empty slots
+ * up to the subscription branch limit.
+ * When none exist yet, seeds a locked head-office row from company details.
+ */
+export function buildQuickSetupRowsFromExisting(
+  existing: Array<{
+    id: string
+    name: string
+    code: string
+    address: string
+    contactNumber: string
+    contactEmail: string
+  }>,
+  limit: number,
+  companyName: string,
+  company?: OnboardingCompanyDraft | null
+): QuickBranchRow[] {
+  const prefix = companyCodePrefix(companyName || "Branch")
+  const safeLimit = Math.max(1, limit)
+
+  if (existing.length === 0) {
+    return buildDefaultBranchRows(safeLimit, company ?? null)
+  }
+
+  const existingRows: QuickBranchRow[] = existing
+    .slice(0, safeLimit)
+    .map((branch) => ({
+      id: branch.id,
+      name: branch.name,
+      code: branch.code,
+      location: branch.address,
+      contactNumber: branch.contactNumber,
+      contactEmail: branch.contactEmail,
+      codeAuto: false,
+      locked: true,
+      existingBranchId: branch.id,
+    }))
+
+  const remaining = Math.max(0, safeLimit - existingRows.length)
+  const draftRows = Array.from({ length: remaining }, (_, offset) => {
+    const index = existingRows.length + offset
+    return createEmptyBranchRow(index, prefix, {
+      id: `draft-${index + 1}`,
+      locked: false,
+    })
+  })
+
+  return resequenceBranchCodes([...existingRows, ...draftRows], prefix)
 }
 
 export function headOfficeLocationFromCompany(
@@ -147,6 +207,7 @@ export function buildDefaultBranchRows(
       contactNumber: isHeadOffice ? (company?.contact ?? "") : "",
       contactEmail: isHeadOffice ? (company?.email ?? "") : "",
       codeAuto: true,
+      locked: isHeadOffice,
     })
   })
 }

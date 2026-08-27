@@ -49,7 +49,15 @@ function validateRows(rows: QuickBranchRow[]): RowErrors {
 
   rows.forEach((row, index) => {
     const rowError: Partial<Record<keyof QuickBranchRow, string>> = {}
-    const isHeadOffice = index === 0
+    const isLocked = Boolean(row.locked)
+    const isHeadOffice = isLocked && !row.existingBranchId && index === 0
+
+    if (isLocked) {
+      if (row.code.trim()) {
+        seenCodes.add(row.code.trim().toUpperCase())
+      }
+      return
+    }
 
     if (!row.name.trim()) {
       rowError.name = "Required"
@@ -238,8 +246,10 @@ export default function BranchesSetupForm() {
     if (!hqLocation) return
     setRows((current) =>
       resequenceBranchCodes(
-        current.map((row, index) =>
-          index === 0 ? row : { ...row, location: hqLocation, codeAuto: true }
+        current.map((row) =>
+          row.locked
+            ? row
+            : { ...row, location: hqLocation, codeAuto: true }
         ),
         companyPrefix
       )
@@ -248,17 +258,14 @@ export default function BranchesSetupForm() {
   }
 
   function fillDemoBranches() {
+    let demoIndex = 0
     setRows((current) =>
       resequenceBranchCodes(
-        current.map((row, index) => {
-          if (index === 0) {
-            return {
-              ...row,
-              codeAuto: true,
-            }
-          }
+        current.map((row) => {
+          if (row.locked) return row
           const location =
-            DEMO_BRANCH_LOCATIONS[(index - 1) % DEMO_BRANCH_LOCATIONS.length]
+            DEMO_BRANCH_LOCATIONS[demoIndex % DEMO_BRANCH_LOCATIONS.length]
+          demoIndex += 1
           return {
             ...row,
             location,

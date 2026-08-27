@@ -22,19 +22,34 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
-import { DEMO_ADMIN, isDemoAdminCredentials } from "@/lib/demo/auth"
+import {
+  DEMO_ADMIN,
+  DEMO_USER,
+  isDemoAdminCredentials,
+  isDemoUserCredentials,
+  isSixDigitTenantId,
+} from "@/lib/demo/auth"
 import {
   apiJson,
   restoreOnboardingSessionFromClient,
   saveAuthSessionClient,
   saveOnboardingSessionClient,
 } from "@/lib/onboarding/client-session"
-import type { AuthSessionData, OnboardingSessionData } from "@/lib/onboarding/session-types"
+import type {
+  AuthSessionData,
+  OnboardingSessionData,
+} from "@/lib/onboarding/session-types"
 import { resumePathForStatus } from "@/lib/onboarding/status"
 import { cn } from "@/lib/utils"
 
 const FormSchema = z.object({
-  tenantId: z.string().trim().min(1, { message: "Tenant ID is required" }),
+  tenantId: z
+    .string()
+    .trim()
+    .min(1, { message: "Tenant ID is required" })
+    .refine(isSixDigitTenantId, {
+      message: "Tenant ID must be 6 digits",
+    }),
   username: z.string().trim().min(1, { message: "Username is required" }),
   password: z
     .string()
@@ -66,15 +81,32 @@ export default function SignInForm() {
   }
 
   function fillDemoAdmin() {
-    form.setValue("tenantId", "demo", { shouldValidate: true })
+    form.setValue("tenantId", DEMO_ADMIN.tenantId, { shouldValidate: true })
     form.setValue("username", DEMO_ADMIN.email, { shouldValidate: true })
     form.setValue("password", DEMO_ADMIN.password, { shouldValidate: true })
     form.clearErrors()
   }
 
+  function fillDemoUser() {
+    form.setValue("tenantId", DEMO_USER.tenantId, { shouldValidate: true })
+    form.setValue("username", DEMO_USER.email, { shouldValidate: true })
+    form.setValue("password", DEMO_USER.password, { shouldValidate: true })
+    form.clearErrors()
+  }
+
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     const username = data.username.trim().toLowerCase()
-    const isAdmin = isDemoAdminCredentials(data.username, data.password)
+    const tenantId = data.tenantId.trim()
+    const isAdmin = isDemoAdminCredentials(
+      tenantId,
+      data.username,
+      data.password
+    )
+    const isUser = isDemoUserCredentials(
+      tenantId,
+      data.username,
+      data.password
+    )
     setIsLoading(true)
 
     try {
@@ -93,6 +125,24 @@ export default function SignInForm() {
         saveAuthSessionClient(res.auth)
         saveOnboardingSessionClient(res.session)
         router.push("/admin")
+        return
+      }
+
+      if (isUser) {
+        const res = await apiJson<{
+          auth: AuthSessionData
+          session: OnboardingSessionData
+        }>("/api/auth/session", {
+          method: "POST",
+          body: JSON.stringify({
+            email: DEMO_USER.email,
+            name: DEMO_USER.name,
+            completeOnboarding: true,
+          }),
+        })
+        saveAuthSessionClient(res.auth)
+        saveOnboardingSessionClient(res.session)
+        router.push("/branch-selector")
         return
       }
 
@@ -121,11 +171,11 @@ export default function SignInForm() {
       }
 
       form.setError("password", {
-        message: `No onboarding session for this username. Sign up first, or use ${DEMO_ADMIN.email} / ${DEMO_ADMIN.password}`,
+        message: "Invalid tenant ID, username, or password.",
       })
     } catch {
       form.setError("password", {
-        message: `Use ${DEMO_ADMIN.email} / ${DEMO_ADMIN.password} for demo sign-in`,
+        message: "Unable to sign in. Please try again.",
       })
     } finally {
       setIsLoading(false)
@@ -164,9 +214,17 @@ export default function SignInForm() {
                       <FormControl>
                         <Input
                           type="text"
+                          inputMode="numeric"
+                          maxLength={6}
                           autoComplete="organization"
-                          placeholder="Enter tenant ID"
+                          placeholder="6-digit tenant ID"
                           {...field}
+                          onChange={(event) => {
+                            const next = event.target.value
+                              .replace(/\D/g, "")
+                              .slice(0, 6)
+                            field.onChange(next)
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -238,7 +296,20 @@ export default function SignInForm() {
         </Form>
       </div>
 
-      <DemoFillFab label="Fill admin login" onFill={fillDemoAdmin} />
+      <DemoFillFab
+        actions={[
+          {
+            label: "Fill admin login",
+            onFill: fillDemoAdmin,
+            shortcutKey: "d",
+          },
+          {
+            label: "Fill user login",
+            onFill: fillDemoUser,
+            shortcutKey: "u",
+          },
+        ]}
+      />
     </div>
   )
 }

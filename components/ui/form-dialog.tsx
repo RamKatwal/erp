@@ -17,6 +17,8 @@ const formDialogSizes = {
   lg: "sm:max-w-xl",
   xl: "sm:max-w-2xl",
   "2xl": "sm:max-w-3xl",
+  "4xl": "sm:max-w-5xl",
+  "5xl": "sm:max-w-6xl",
 } as const
 
 type FormDialogSize = keyof typeof formDialogSizes

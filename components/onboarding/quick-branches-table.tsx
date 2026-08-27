@@ -74,6 +74,15 @@ function FieldCell({
   )
 }
 
+function isRowLocked(row: QuickBranchRow) {
+  return Boolean(row.locked)
+}
+
+/** Onboarding head office draft hides the system-managed code as "-". */
+function shouldHideCode(row: QuickBranchRow, index: number) {
+  return isRowLocked(row) && !row.existingBranchId && index === 0
+}
+
 export function QuickBranchesTable({
   rows,
   onChange,
@@ -92,8 +101,7 @@ export function QuickBranchesTable({
   ) {
     const next = rows.map((row, index) => {
       if (row.id !== id) return row
-      // Head office row is always locked.
-      if (index === 0) return row
+      if (isRowLocked(row)) return row
 
       const updated: QuickBranchRow = { ...row, ...patch }
 
@@ -143,10 +151,10 @@ export function QuickBranchesTable({
 
     pasted.forEach((cells, rowOffset) => {
       const rowIndex = startRow + rowOffset
-      // Never overwrite locked head office.
-      if (rowIndex === 0 || rowIndex >= next.length) return
+      if (rowIndex < 0 || rowIndex >= next.length) return
+      if (isRowLocked(next[rowIndex]!)) return
 
-      const row = { ...next[rowIndex] }
+      const row = { ...next[rowIndex]! }
       cells.forEach((value, colOffset) => {
         const col = COL_ORDER[startColIndex + colOffset]
         if (!col) return
@@ -206,9 +214,11 @@ export function QuickBranchesTable({
           <tbody onPaste={handlePaste}>
             {rows.map((row, index) => {
               const rowErrors = errors[row.id]
-              const isHeadOffice = index === 0
+              const locked = isRowLocked(row)
+              const hideCode = shouldHideCode(row, index)
+              const isExisting = Boolean(row.existingBranchId)
 
-              if (isHeadOffice) {
+              if (locked) {
                 return (
                   <tr
                     key={row.id}
@@ -220,7 +230,9 @@ export function QuickBranchesTable({
                     <FieldCell>
                       <div className={lockedCellClass}>{row.name}</div>
                       <p className="text-[10px] leading-tight text-muted-foreground">
-                        This is head office — can&apos;t be edited now.
+                        {isExisting
+                          ? "Already created — branch code cannot be changed."
+                          : "This is head office — cannot be edited now."}
                       </p>
                     </FieldCell>
                     <FieldCell>
@@ -232,10 +244,16 @@ export function QuickBranchesTable({
                       <div
                         className={cn(
                           lockedCellClass,
-                          "font-mono text-center"
+                          "font-mono",
+                          hideCode ? "text-center" : "uppercase"
                         )}
+                        title={
+                          isExisting
+                            ? "Branch code cannot be changed after creation"
+                            : undefined
+                        }
                       >
-                        -
+                        {hideCode ? "-" : row.code || "—"}
                       </div>
                     </FieldCell>
                     <FieldCell>

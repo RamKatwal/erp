@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
 import { PlusIcon } from "lucide-react"
 
 import {
@@ -16,6 +15,7 @@ import {
   BranchFormDialog,
   type BranchFormValues,
 } from "@/components/settings/branch-management/branch-form-dialog"
+import { QuickBranchSetupDialog } from "@/components/settings/branch-management/quick-branch-setup-dialog"
 import { Button } from "@/components/ui/button"
 import { canDeactivateBranch } from "@/lib/branches/head-office"
 import {
@@ -40,6 +40,7 @@ export function BranchManagementPage() {
   const [dialogOpen, setDialogOpen] = React.useState(false)
   const [dialogMode, setDialogMode] = React.useState<"create" | "edit">("create")
   const [editingBranch, setEditingBranch] = React.useState<Branch | null>(null)
+  const [quickSetupOpen, setQuickSetupOpen] = React.useState(false)
 
   React.useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -101,6 +102,13 @@ export function BranchManagementPage() {
     )
   }
 
+  function handleQuickSetupSave(created: Branch[]) {
+    if (created.length === 0) return
+    const remaining = Math.max(0, branchLimit - branches.length)
+    if (remaining === 0) return
+    persist([...branches, ...created.slice(0, remaining)])
+  }
+
   function setStatus(branch: Branch, status: Branch["status"]) {
     if (status === "inactive" && !canDeactivateBranch(branch)) return
 
@@ -158,10 +166,7 @@ export function BranchManagementPage() {
             <Button
               size="sm"
               variant="outline"
-              nativeButton={false}
-              render={
-                <Link href="/onboarding/branches?from=branch-management" />
-              }
+              onClick={() => setQuickSetupOpen(true)}
             >
               Quick branch setup
             </Button>
@@ -192,6 +197,14 @@ export function BranchManagementPage() {
         branch={editingBranch}
         existingCodes={existingCodes}
         onSubmit={handleFormSubmit}
+      />
+
+      <QuickBranchSetupDialog
+        open={quickSetupOpen}
+        onOpenChange={setQuickSetupOpen}
+        existingBranches={branches}
+        branchLimit={branchLimit}
+        onSave={handleQuickSetupSave}
       />
     </div>
   )

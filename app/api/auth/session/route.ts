@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 
-import { DEMO_ADMIN } from "@/lib/demo/auth"
+import { DEMO_ADMIN, DEMO_USER } from "@/lib/demo/auth"
 import {
   readAuthSession,
   readOnboardingSession,
@@ -34,9 +34,10 @@ export async function POST(request: Request) {
   await writeAuthSession(auth)
 
   const isDemoAdmin = email === DEMO_ADMIN.email.toLowerCase()
+  const isDemoUser = email === DEMO_USER.email.toLowerCase()
   const existing = await readOnboardingSession()
 
-  if (body?.completeOnboarding || isDemoAdmin) {
+  if (body?.completeOnboarding || isDemoAdmin || isDemoUser) {
     const session =
       existing && existing.email === email
         ? { ...existing, status: "complete" as const, updatedAt: new Date().toISOString() }
