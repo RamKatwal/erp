@@ -1,3 +1,4 @@
+import { getBranchLocation } from "@/lib/branches/location"
 import {
   getCompanyById,
   type CompanyBranchOption,
@@ -32,7 +33,7 @@ function toPortalBranch(branch: CompanyBranchOption): Branch {
     id: branch.id,
     name: branch.name,
     code: branch.code,
-    address: "",
+    address: branch.address || branch.location || getBranchLocation(branch),
     contactNumber: "",
     contactEmail: "",
     status: toBranchStatus(branch.status),

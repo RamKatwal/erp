@@ -1,27 +1,36 @@
 import { ensureHeadOfficeActive } from "@/lib/branches/head-office"
+import { getBranchLocation } from "@/lib/branches/location"
 import { mockBranches } from "@/lib/mock/branches"
 import type { Branch } from "@/types/branch"
 
 const BRANCHES_STORAGE_KEY = "ibmerp-branches"
 const ACTIVE_BRANCH_STORAGE_KEY = "ibmerp-active-branch"
 
+function normalizeBranchAddresses(branches: Branch[]): Branch[] {
+  return branches.map((b) => ({
+    ...b,
+    address: b.address?.trim() ? b.address.trim() : getBranchLocation(b),
+  }))
+}
+
 export function readBranches(): Branch[] {
   try {
     const saved = window.localStorage.getItem(BRANCHES_STORAGE_KEY)
     if (saved) {
-      return ensureHeadOfficeActive(JSON.parse(saved) as Branch[])
+      const parsed = JSON.parse(saved) as Branch[]
+      return normalizeBranchAddresses(ensureHeadOfficeActive(parsed))
     }
   } catch {
     // Fall back to mock seed data.
   }
 
-  return mockBranches.map((branch) => ({ ...branch }))
+  return normalizeBranchAddresses(mockBranches.map((branch) => ({ ...branch })))
 }
 
 export function saveBranches(branches: Branch[]) {
-  const next = ensureHeadOfficeActive(branches)
-  window.localStorage.setItem(BRANCHES_STORAGE_KEY, JSON.stringify(next))
-  return next
+  const normalized = normalizeBranchAddresses(ensureHeadOfficeActive(branches))
+  window.localStorage.setItem(BRANCHES_STORAGE_KEY, JSON.stringify(normalized))
+  return normalized
 }
 
 export function readActiveBranchId(): string | null {

@@ -1,8 +1,24 @@
 "use client"
 
 import * as React from "react"
-import { Check, ChevronsUpDown } from "lucide-react"
+import {
+  ArrowRight,
+  Check,
+  ChevronsUpDown,
+  MapPin,
+} from "lucide-react"
+import { AnimatePresence, m } from "framer-motion"
+import { toast } from "sonner"
 
+import { IconStack } from "@/components/reui/icon-stack"
+import { SetupProgressBar } from "@/components/admin/setup/setup-progress-bar"
+import { Badge } from "@/components/ui/badge"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,17 +29,25 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
+  SidebarMenuButton,
+  useSidebar,
+} from "@/components/ui/sidebar"
+import {
   readActiveBranchId,
   readBranches,
   resolveActiveBranch,
   saveActiveBranchId,
 } from "@/lib/branches/storage"
+import { getBranchLocation } from "@/lib/branches/location"
 import { mockBranches } from "@/lib/mock/branches"
 import { cn } from "@/lib/utils"
 import type { Branch } from "@/types/branch"
 
 function branchInitials(branch: Branch) {
-  return branch.code.slice(0, 2).toUpperCase()
+  const parts = branch.name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return branch.code.slice(0, 2).toUpperCase()
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return `${parts[0][0] ?? ""}${parts[1][0] ?? ""}`.toUpperCase()
 }
 
 function BranchMark({
@@ -36,7 +60,7 @@ function BranchMark({
   return (
     <span
       className={cn(
-        "flex size-7 shrink-0 items-center justify-center rounded-md bg-muted text-[10px] font-semibold text-foreground",
+        "flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-xs font-semibold text-foreground",
         className
       )}
     >
@@ -45,11 +69,39 @@ function BranchMark({
   )
 }
 
+function BranchAvatar({
+  branch,
+  className,
+}: {
+  branch: Branch
+  className?: string
+}) {
+  return (
+    <div
+      className={cn(
+        "relative flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary font-bold text-sm shadow-xs border border-primary/20",
+        className
+      )}
+    >
+      {branchInitials(branch)}
+    </div>
+  )
+}
+
 export function BranchSwitcher({ className }: { className?: string }) {
+  const { isMobile } = useSidebar()
   const [branches, setBranches] = React.useState<Branch[]>(mockBranches)
   const [activeBranchId, setActiveBranchId] = React.useState(
     () => mockBranches[0]?.id ?? ""
   )
+  const [isDropdownOpen, setIsDropdownOpen] = React.useState(false)
+
+  // Switching modal state
+  const [isSwitching, setIsSwitching] = React.useState(false)
+  const [switchingFrom, setSwitchingFrom] = React.useState<Branch | null>(null)
+  const [switchingTo, setSwitchingTo] = React.useState<Branch | null>(null)
+  const [switchProgress, setSwitchProgress] = React.useState(0)
+  const [hasAvatarReplaced, setHasAvatarReplaced] = React.useState(false)
 
   React.useEffect(() => {
     const nextBranches = readBranches()
@@ -71,66 +123,177 @@ export function BranchSwitcher({ className }: { className?: string }) {
     accessibleBranches[0] ??
     null
 
-  function selectBranch(branch: Branch) {
-    setActiveBranchId(branch.id)
-    saveActiveBranchId(branch.id)
+  function handleBranchClick(targetBranch: Branch) {
+    if (!activeBranch || targetBranch.id === activeBranch.id) {
+      setIsDropdownOpen(false)
+      return
+    }
+
+    setIsDropdownOpen(false)
+    setSwitchingFrom(activeBranch)
+    setSwitchingTo(targetBranch)
+    setHasAvatarReplaced(false)
+    setSwitchProgress(15)
+    setIsSwitching(true)
+
+    const step1 = setTimeout(() => {
+      setSwitchProgress(45)
+      setHasAvatarReplaced(true)
+    }, 380)
+    const step2 = setTimeout(() => setSwitchProgress(80), 650)
+    const step3 = setTimeout(() => setSwitchProgress(100), 900)
+
+    const finish = setTimeout(() => {
+      setActiveBranchId(targetBranch.id)
+      saveActiveBranchId(targetBranch.id)
+      setIsSwitching(false)
+
+      // Trigger sonner toast
+      toast.success(`Switched to ${targetBranch.name}`, {
+        duration: 4000,
+      })
+    }, 1050)
+
+    return () => {
+      clearTimeout(step1)
+      clearTimeout(step2)
+      clearTimeout(step3)
+      clearTimeout(finish)
+    }
   }
 
   if (!activeBranch) return null
 
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <button
-            type="button"
-            aria-label="Switch branch"
-            className={cn(
-              "inline-flex h-9 w-full max-w-56 min-w-0 cursor-pointer items-center gap-2 rounded-lg border bg-background px-2 py-1 text-left outline-none transition-colors",
-              "hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring/30",
-              "data-popup-open:border-ring data-popup-open:bg-muted/50 data-popup-open:ring-2 data-popup-open:ring-ring/20",
-              className
-            )}
-          />
-        }
-      >
-        <BranchMark branch={activeBranch} />
-        <div className="grid min-w-0 flex-1 gap-0.5 leading-none">
-          <span className="truncate text-sm font-medium text-foreground">
-            {activeBranch.name}
-          </span>
-          <span className="truncate text-[11px] text-muted-foreground">
-            {activeBranch.code}
-          </span>
-        </div>
-        <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground/70" />
-      </DropdownMenuTrigger>
+  const displayedModalBranch = hasAvatarReplaced ? switchingTo : switchingFrom
 
-      <DropdownMenuContent align="start" className="w-64">
-        <DropdownMenuGroup>
-          <DropdownMenuLabel>Branches</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {accessibleBranches.map((branch) => (
-            <DropdownMenuItem
-              key={branch.id}
-              onClick={() => selectBranch(branch)}
-              className="gap-2"
-            >
-              <BranchMark branch={branch} className="size-6" />
-              <span className="flex min-w-0 flex-1 flex-col gap-0.5 leading-none">
-                <span className="truncate font-medium">{branch.name}</span>
-                <span className="truncate text-xs text-muted-foreground">
-                  {branch.code}
-                  {branch.address ? ` · ${branch.address}` : null}
+  return (
+    <>
+      <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+        <DropdownMenuTrigger
+          render={
+            <SidebarMenuButton
+              size="lg"
+              tooltip={activeBranch.name}
+              className={cn(
+                "h-12 cursor-pointer gap-2.5 rounded-lg px-2 data-popup-open:bg-sidebar-accent",
+                className
+              )}
+            />
+          }
+        >
+          <BranchMark branch={activeBranch} />
+          <div className="grid min-w-0 flex-1 text-left leading-tight group-data-[collapsible=icon]:hidden">
+            <span className="truncate text-sm font-medium text-sidebar-foreground">
+              {activeBranch.name}
+            </span>
+            <span className="truncate text-[11px] text-sidebar-foreground/50">
+              {getBranchLocation(activeBranch)}
+            </span>
+          </div>
+          <ChevronsUpDown className="ml-auto size-3.5 shrink-0 text-sidebar-foreground/40 group-data-[collapsible=icon]:hidden" />
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent
+          side={isMobile ? "bottom" : "right"}
+          align="end"
+          className="w-64"
+        >
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>Branches</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {accessibleBranches.map((branch) => (
+              <DropdownMenuItem
+                key={branch.id}
+                onClick={() => handleBranchClick(branch)}
+                className="gap-2"
+              >
+                <BranchMark branch={branch} className="size-6 text-[10px] rounded-md" />
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5 leading-none">
+                  <span className="truncate font-medium">{branch.name}</span>
+                  <span className="truncate text-xs text-muted-foreground">
+                    {getBranchLocation(branch)}
+                  </span>
                 </span>
-              </span>
-              {branch.id === activeBranch.id ? (
-                <Check className="size-4 shrink-0 text-foreground" />
-              ) : null}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+                {branch.id === activeBranch.id ? (
+                  <Check className="size-4 shrink-0 text-foreground" />
+                ) : null}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* Branch Switching Modal */}
+      <Dialog open={isSwitching}>
+        <DialogContent
+          showCloseButton={false}
+          className="gap-0 overflow-hidden p-0 sm:max-w-sm"
+        >
+          <div className="flex flex-col items-center pt-8 text-center">
+            <div className="flex flex-col items-center px-6">
+              {/* Stack with animated avatar transition */}
+              <IconStack aria-hidden="true" className="text-primary">
+                <AnimatePresence mode="wait">
+                  {displayedModalBranch ? (
+                    <m.div
+                      key={displayedModalBranch.id}
+                      initial={{ opacity: 0, scale: 0.6, y: 8 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.6, y: -8 }}
+                      transition={{ duration: 0.28, ease: "easeOut" }}
+                      className="flex items-center justify-center"
+                    >
+                      <BranchAvatar branch={displayedModalBranch} />
+                    </m.div>
+                  ) : null}
+                </AnimatePresence>
+              </IconStack>
+
+              <DialogTitle className="mt-5 text-lg font-semibold tracking-tight text-foreground">
+                Switching Branch
+              </DialogTitle>
+              <DialogDescription className="sr-only">
+                Switching branch from {switchingFrom?.name} to {switchingTo?.name}
+              </DialogDescription>
+
+              {/* Source -> Destination transition tag */}
+              <div className="mt-3 flex items-center justify-center gap-2 rounded-lg border border-border/60 bg-muted/40 px-3 py-1.5 text-xs font-medium">
+                <div className="flex items-center gap-1.5">
+                  {switchingFrom ? (
+                    <BranchMark branch={switchingFrom} className="size-5 rounded text-[9px]" />
+                  ) : null}
+                  <span className="max-w-24 truncate text-muted-foreground font-medium">
+                    {switchingFrom?.name}
+                  </span>
+                </div>
+                <ArrowRight className="size-3.5 text-muted-foreground/60 shrink-0" />
+                <div className="flex items-center gap-1.5">
+                  {switchingTo ? (
+                    <BranchMark branch={switchingTo} className="size-5 rounded bg-primary/15 text-primary text-[9px]" />
+                  ) : null}
+                  <span className="max-w-24 truncate font-semibold text-foreground">
+                    {switchingTo?.name}
+                  </span>
+                </div>
+              </div>
+
+             
+            </div>
+
+            <div className="mt-6 w-full space-y-1.5 border-t border-border px-6 py-4 text-left">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[11px] text-muted-foreground">
+                  Switching workspace…
+                </p>
+                <p className="truncate text-[11px] font-medium text-muted-foreground tabular-nums">
+                  {switchProgress}%
+                </p>
+              </div>
+              <SetupProgressBar percent={switchProgress} className="h-1" />
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

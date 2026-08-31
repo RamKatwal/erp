@@ -52,6 +52,8 @@ export type SubscriptionAssignedBranch = {
   branchId: string
   branchName: string
   branchCode: string
+  address?: string
+  location?: string
   status: "Active" | "Inactive"
 }
 

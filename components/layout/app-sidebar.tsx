@@ -4,19 +4,17 @@ import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
-  Check,
   ChevronLeft,
   ChevronRight,
-  ChevronsUpDown,
   LayoutGrid,
   Maximize2,
   Minimize2,
   MoreHorizontal,
-  Plus,
   RotateCcw,
 } from "lucide-react"
 
 import { AppBrand } from "@/components/app-brand"
+import { BranchSwitcher } from "@/components/layout/branch-switcher"
 import {
   SidebarSubmenuItem,
   SidebarSubmenuPanel,
@@ -24,16 +22,11 @@ import {
 import {
   mainNavigation,
 } from "@/config/navigation"
-import {
-  organizations,
-  type Organization,
-} from "@/config/organizations"
 import { useHomeView } from "@/components/dashboard/home/home-view-context"
 import {
   Collapsible,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -287,11 +280,6 @@ export function AppSidebar() {
   const pathname = usePathname()
   const { state, isMobile, toggleSidebar } = useSidebar()
   const isCollapsed = state === "collapsed" && !isMobile
-  const [activeOrgId, setActiveOrgId] = React.useState<Organization["id"]>(
-    organizations[0].id
-  )
-  const activeOrg =
-    organizations.find((org) => org.id === activeOrgId) ?? organizations[0]
 
   return (
     <Sidebar collapsible="icon" className="relative">
@@ -345,84 +333,13 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-2 gap-2">
         <SidebarTrialFooter daysRemaining={3} />
         <SidebarMenu>
           <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <SidebarMenuButton
-                    size="lg"
-                    tooltip={activeOrg.name}
-                    className="h-12 cursor-pointer gap-2.5 rounded-lg px-2 data-popup-open:bg-sidebar-accent"
-                  />
-                }
-              >
-                <Avatar className="size-8 shrink-0">
-                  <AvatarFallback
-                    className={cn(
-                      "text-xs font-semibold",
-                      activeOrg.color
-                    )}
-                  >
-                    {activeOrg.initials}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="grid min-w-0 flex-1 text-left leading-tight group-data-[collapsible=icon]:hidden">
-                  <span className="truncate text-sm font-medium text-sidebar-foreground">
-                    {activeOrg.name}
-                  </span>
-                  <span className="truncate text-[11px] text-sidebar-foreground/50">
-                    {activeOrg.plan}
-                  </span>
-                </div>
-                <ChevronsUpDown className="ml-auto size-3.5 shrink-0 text-sidebar-foreground/40 group-data-[collapsible=icon]:hidden" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                side={isMobile ? "bottom" : "right"}
-                align="end"
-                className="w-64"
-              >
-                <DropdownMenuGroup>
-                  <DropdownMenuLabel>Organizations</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {organizations.map((org) => (
-                    <DropdownMenuItem
-                      key={org.id}
-                      onClick={() => setActiveOrgId(org.id)}
-                      className="gap-2"
-                    >
-                      <span
-                        className={cn(
-                          "flex size-6 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold",
-                          org.color
-                        )}
-                      >
-                        {org.initials}
-                      </span>
-                      <span className="flex min-w-0 flex-1 flex-col">
-                        <span className="truncate font-medium">{org.name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {org.plan}
-                        </span>
-                      </span>
-                      {org.id === activeOrgId ? (
-                        <Check className="size-4 shrink-0 text-foreground" />
-                      ) : null}
-                    </DropdownMenuItem>
-                  ))}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <Plus />
-                    Create Organization
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <BranchSwitcher />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

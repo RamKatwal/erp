@@ -1,9 +1,12 @@
+import { getBranchLocation } from "@/lib/branches/location"
 import { mockSubscriptions } from "@/lib/mock/subscriptions"
 
 export type CompanyBranchOption = {
   id: string
   name: string
   code: string
+  address?: string
+  location?: string
   status: string
   isHeadOffice: boolean
 }
@@ -48,6 +51,8 @@ function ensureHeadOffice(
       id: `${companyId}-head-office`,
       name: "Head Office",
       code: "HQ",
+      address: "Durbar Marg, Kathmandu 44600",
+      location: "Kathmandu, Nepal",
       status: "Active",
       isHeadOffice: true,
     },
@@ -79,6 +84,8 @@ export function getCompanyOptions(): CompanyOption[] {
         id: branch.branchId,
         name: branch.branchName,
         code: branch.branchCode,
+        address: branch.address,
+        location: branch.location,
         status: branch.status,
         isHeadOffice: isHeadOfficeBranch(branch.branchName, branch.branchCode),
       }))

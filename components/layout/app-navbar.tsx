@@ -21,7 +21,6 @@ import { useTheme } from "next-themes"
 
 import { AdminGoToCompany } from "@/components/layout/admin-go-to-company"
 import { AppBreadcrumb } from "@/components/layout/app-breadcrumb"
-import { BranchSwitcher } from "@/components/layout/branch-switcher"
 import { CommandSearch } from "@/components/layout/command-search"
 import { CreateDialog } from "@/components/layout/create-dialog"
 import { NotificationsPanel } from "@/components/layout/notifications-panel"
@@ -68,12 +67,6 @@ export function AppNavbar() {
 
   return (
     <header className="sticky top-0 z-10 flex h-14 shrink-0 items-stretch border-b bg-white dark:bg-background">
-      {!onAdminPortal ? (
-        <div className="flex shrink-0 items-center border-r px-3">
-          <BranchSwitcher />
-        </div>
-      ) : null}
-
       <div className="flex min-w-0 flex-1 items-center px-4">
         <AppBreadcrumb />
       </div>
