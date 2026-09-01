@@ -11,6 +11,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { getBranchesByIds } from "@/lib/companies/options"
+import { branchChipLabel } from "@/components/settings/users-permissions/grouped-branch-chips"
 import type {
   SubscriptionAssignedBranch,
   SubscriptionMember,
@@ -126,4 +128,21 @@ export function branchAvatarItems(
     initials: branchInitials(branch.branchName),
     title: branch.branchName,
   }))
+}
+
+export function branchAvatarItemsFromIds(
+  branchIds: string[] = []
+): StackedAvatarItem[] {
+  const branches = getBranchesByIds(branchIds)
+  const branchMap = new Map(branches.map((b) => [b.id, b]))
+
+  return branchIds.map((id) => {
+    const branch = branchMap.get(id)
+    const title = branch ? branchChipLabel(branch) : id
+    return {
+      key: id,
+      initials: branchInitials(title),
+      title,
+    }
+  })
 }

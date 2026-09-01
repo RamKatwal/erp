@@ -8,12 +8,15 @@ export type Supplier = {
   id: string
   type: SupplierType
   name: string
+  panNumber?: string
   address: string
   email: string
   contact: string
   category: string
   entryBy: string
   status: SupplierStatus
+  createdBranchId?: string
+  addedBranchIds?: string[]
 }
 
 export const supplierTypeLabels: Record<SupplierType, string> = {

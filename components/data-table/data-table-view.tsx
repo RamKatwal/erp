@@ -43,7 +43,7 @@ export function DataTableView<TData>({
       className={cn("flex min-h-0 flex-1 flex-col", className)}
       data-slot="data-table"
     >
-      <div className="min-h-0 flex-1 overflow-auto">
+      <div className="thin-scrollbar min-h-0 flex-1 overflow-auto">
         <table
           className={cn(dataTableClassNames.table, tableClassName)}
           data-row-size={rowSize}

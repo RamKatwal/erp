@@ -10,7 +10,7 @@ import {
   useDataTableFullscreen,
 } from "@/components/data-table/data-table"
 import { PageHeader } from "@/components/layout/page-header"
-import { PartyNav } from "@/components/parties/party-nav"
+import { groupedBranchAccessSearchText } from "@/components/settings/users-permissions/grouped-branch-chips"
 import { createCustomerColumns } from "@/components/customers/customer-columns"
 import { Button } from "@/components/ui/button"
 import { Tabs } from "@/components/ui/tabs"
@@ -81,6 +81,11 @@ export function CustomersPage() {
     globalFilterFn: (row, _columnId, filterValue) => {
       const query = filterValue.toLowerCase()
       const item = row.original
+      const branchText = groupedBranchAccessSearchText(
+        [item.createdBranchId, ...(item.addedBranchIds ?? [])].filter(
+          Boolean
+        ) as string[]
+      )
 
       return (
         item.id.toLowerCase().includes(query) ||
@@ -90,7 +95,8 @@ export function CustomersPage() {
         item.email.toLowerCase().includes(query) ||
         item.contact.toLowerCase().includes(query) ||
         item.category.toLowerCase().includes(query) ||
-        item.entryBy.toLowerCase().includes(query)
+        item.entryBy.toLowerCase().includes(query) ||
+        branchText.toLowerCase().includes(query)
       )
     },
   })
@@ -102,8 +108,6 @@ export function CustomersPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <PartyNav />
-
       <PageHeader
         title="Customers"
         count={`${customers.length} customers`}

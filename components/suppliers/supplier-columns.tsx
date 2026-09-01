@@ -1,9 +1,17 @@
 "use client"
 
 import type { ColumnDef } from "@tanstack/react-table"
-import { EyeOffIcon, PencilIcon } from "lucide-react"
+import { EyeIcon, EyeOffIcon, PencilIcon } from "lucide-react"
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
+import {
+  BranchAccessChips,
+  groupedBranchAccessSearchText,
+} from "@/components/settings/users-permissions/grouped-branch-chips"
+import {
+  StackedAvatars,
+  branchAvatarItemsFromIds,
+} from "@/components/admin/subscriptions/stacked-avatars"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { Supplier } from "@/types/supplier"
@@ -108,6 +116,41 @@ export function createSupplierColumns({
       ),
     },
     {
+      id: "createdOn",
+      accessorFn: (row) =>
+        row.createdBranchId
+          ? groupedBranchAccessSearchText([row.createdBranchId])
+          : "",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Created on" />
+      ),
+      cell: ({ row }) => (
+        <BranchAccessChips
+          branchIds={
+            row.original.createdBranchId ? [row.original.createdBranchId] : []
+          }
+          emptyLabel="—"
+        />
+      ),
+      meta: { wrapCell: true },
+    },
+    {
+      id: "addedOn",
+      accessorFn: (row) => row.addedBranchIds?.length ?? 0,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Added on" />
+      ),
+      cell: ({ row }) => {
+        const branchIds = row.original.addedBranchIds ?? []
+        return (
+          <StackedAvatars
+            items={branchAvatarItemsFromIds(branchIds)}
+            total={branchIds.length}
+          />
+        )
+      },
+    },
+    {
       accessorKey: "entryBy",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Entry By" />
@@ -127,26 +170,34 @@ export function createSupplierColumns({
           <div className="flex items-center justify-end gap-1">
             <Button
               variant="ghost"
-              size="icon-sm"
-              aria-label={`Edit ${supplier.name}`}
+              size="sm"
+              className="h-7 px-2 text-xs font-normal text-muted-foreground hover:text-foreground"
               onClick={() => onEdit(supplier)}
             >
-              <PencilIcon />
+              <PencilIcon className="size-3.5" />
+              Edit
             </Button>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label={
-                isActive
-                  ? `Deactivate ${supplier.name}`
-                  : `Activate ${supplier.name}`
-              }
-              onClick={() =>
-                isActive ? onDeactivate(supplier) : onActivate(supplier)
-              }
-            >
-              <EyeOffIcon />
-            </Button>
+            {isActive ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs font-normal text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                onClick={() => onDeactivate(supplier)}
+              >
+                <EyeOffIcon className="size-3.5" />
+                Deactivate
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs font-normal text-muted-foreground hover:bg-success/10 hover:text-success"
+                onClick={() => onActivate(supplier)}
+              >
+                <EyeIcon className="size-3.5" />
+                Activate
+              </Button>
+            )}
           </div>
         )
       },

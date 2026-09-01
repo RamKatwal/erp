@@ -11,6 +11,8 @@ export const mockCustomers: Customer[] = [
     category: "Customer Category 1",
     entryBy: "ram",
     status: "active",
+    createdBranchId: "br_ht_01",
+    addedBranchIds: ["br_ht_01", "br_ht_02"],
   },
   {
     id: "CUS2",
@@ -22,6 +24,13 @@ export const mockCustomers: Customer[] = [
     category: "Customer Category 1",
     entryBy: "admin",
     status: "active",
+    createdBranchId: "comp_10881-head-office",
+    addedBranchIds: [
+      "comp_10881-head-office",
+      "br_ht_01",
+      "br_ht_02",
+      "br_ev_02",
+    ],
   },
   {
     id: "CUS3",
@@ -33,6 +42,8 @@ export const mockCustomers: Customer[] = [
     category: "Customer Category 2",
     entryBy: "ram",
     status: "active",
+    createdBranchId: "br_ev_02",
+    addedBranchIds: ["br_ev_02", "br_ht_01", "br_ht_02"],
   },
   {
     id: "CUS4",
@@ -44,6 +55,8 @@ export const mockCustomers: Customer[] = [
     category: "Customer Category 2",
     entryBy: "admin",
     status: "inactive",
+    createdBranchId: "br_ht_02",
+    addedBranchIds: ["br_ht_02"],
   },
 ]
 

@@ -1,7 +1,19 @@
 "use client"
 
 import * as React from "react"
-import { DownloadIcon, PlusIcon, UploadIcon } from "lucide-react"
+import {
+  Building2Icon,
+  CheckIcon,
+  ChevronDownIcon,
+  DownloadIcon,
+  FilterIcon,
+  GitBranchIcon,
+  PlusIcon,
+  SearchIcon,
+  UploadIcon,
+  UserIcon,
+  XIcon,
+} from "lucide-react"
 
 import {
   type DataTableRowSize,
@@ -10,34 +22,80 @@ import {
   useDataTableFullscreen,
 } from "@/components/data-table/data-table"
 import { PageHeader } from "@/components/layout/page-header"
-import { PartyNav } from "@/components/parties/party-nav"
+import { groupedBranchAccessSearchText } from "@/components/settings/users-permissions/grouped-branch-chips"
+import { CreateSupplierDialog } from "@/components/suppliers/create-supplier-dialog"
+import { SearchAddSupplierDialog } from "@/components/suppliers/search-add-supplier-dialog"
 import { createSupplierColumns } from "@/components/suppliers/supplier-columns"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Tabs } from "@/components/ui/tabs"
+import { readActiveBranchId } from "@/lib/branches/storage"
+import { getBranchesByIds } from "@/lib/companies/options"
 import { mockSuppliers, supplierCategories } from "@/lib/mock/suppliers"
+import { cn } from "@/lib/utils"
 import type { Supplier, SupplierStatus } from "@/types/supplier"
 
 export function SuppliersPage() {
   const [suppliers, setSuppliers] = React.useState<Supplier[]>(mockSuppliers)
   const [statusTab, setStatusTab] = React.useState<SupplierStatus>("active")
+  const [branchFilter, setBranchFilter] = React.useState("all")
+  const [typeFilter, setTypeFilter] = React.useState("all")
   const [categoryFilter, setCategoryFilter] = React.useState("All")
   const [rowSize, setRowSize] = React.useState<DataTableRowSize>("md")
+  const [currentBranchId, setCurrentBranchId] = React.useState<string>("br_ht_01")
+  const [searchAddDialogOpen, setSearchAddDialogOpen] = React.useState(false)
+  const [createDialogOpen, setCreateDialogOpen] = React.useState(false)
   const { isFullscreen, toggleFullscreen } = useDataTableFullscreen()
+
+  React.useEffect(() => {
+    const stored = readActiveBranchId()
+    if (stored) {
+      setCurrentBranchId(stored)
+    }
+  }, [])
 
   const activeCount = suppliers.filter((item) => item.status === "active").length
   const inactiveCount = suppliers.filter(
     (item) => item.status === "inactive"
   ).length
 
+  // Available unique branches for the branch multi-filter
+  const availableBranches = React.useMemo(() => {
+    const branchSet = new Set(
+      suppliers.map((s) => s.createdBranchId).filter(Boolean) as string[]
+    )
+    return getBranchesByIds(Array.from(branchSet))
+  }, [suppliers])
+
+  // Multi-filtered data: status + branch + type + category
   const filteredData = React.useMemo(
     () =>
       suppliers.filter((item) => {
         if (item.status !== statusTab) return false
-        if (categoryFilter === "All") return true
-        return item.category === categoryFilter
+        if (branchFilter !== "all" && item.createdBranchId !== branchFilter)
+          return false
+        if (typeFilter !== "all" && item.type !== typeFilter) return false
+        if (categoryFilter !== "All" && item.category !== categoryFilter)
+          return false
+        return true
       }),
-    [suppliers, statusTab, categoryFilter]
+    [suppliers, statusTab, branchFilter, typeFilter, categoryFilter]
   )
+
+  const isAnyFilterActive =
+    branchFilter !== "all" || typeFilter !== "all" || categoryFilter !== "All"
+
+  function handleResetFilters() {
+    setBranchFilter("all")
+    setTypeFilter("all")
+    setCategoryFilter("All")
+    table.setPageIndex(0)
+  }
 
   function setStatus(supplier: Supplier, status: SupplierStatus) {
     setSuppliers((current) =>
@@ -45,6 +103,27 @@ export function SuppliersPage() {
         item.id === supplier.id ? { ...item, status } : item
       )
     )
+  }
+
+  function handleAddSupplierToBranch(supplierId: string, branchId: string) {
+    setSuppliers((current) =>
+      current.map((s) => {
+        if (s.id === supplierId) {
+          const existing = s.addedBranchIds ?? []
+          if (!existing.includes(branchId)) {
+            return {
+              ...s,
+              addedBranchIds: [...existing, branchId],
+            }
+          }
+        }
+        return s
+      })
+    )
+  }
+
+  function handleCreateSupplier(newSupplier: Supplier) {
+    setSuppliers((current) => [newSupplier, ...current])
   }
 
   const columns = React.useMemo(
@@ -58,22 +137,6 @@ export function SuppliersPage() {
     [suppliers]
   )
 
-  const categoryFilterOptions = React.useMemo(
-    () =>
-      supplierCategories.map((category) => ({
-        value: category,
-        label: category === "All" ? "Category: All" : category,
-        count:
-          category === "All"
-            ? suppliers.filter((item) => item.status === statusTab).length
-            : suppliers.filter(
-                (item) =>
-                  item.status === statusTab && item.category === category
-              ).length,
-      })),
-    [suppliers, statusTab]
-  )
-
   const table = useDataTable({
     data: filteredData,
     columns,
@@ -81,6 +144,12 @@ export function SuppliersPage() {
     globalFilterFn: (row, _columnId, filterValue) => {
       const query = filterValue.toLowerCase()
       const item = row.original
+      const pan = (item.panNumber ?? "").toLowerCase()
+      const branchText = groupedBranchAccessSearchText(
+        [item.createdBranchId, ...(item.addedBranchIds ?? [])].filter(
+          Boolean
+        ) as string[]
+      )
 
       return (
         item.id.toLowerCase().includes(query) ||
@@ -90,7 +159,9 @@ export function SuppliersPage() {
         item.email.toLowerCase().includes(query) ||
         item.contact.toLowerCase().includes(query) ||
         item.category.toLowerCase().includes(query) ||
-        item.entryBy.toLowerCase().includes(query)
+        item.entryBy.toLowerCase().includes(query) ||
+        pan.includes(query) ||
+        branchText.toLowerCase().includes(query)
       )
     },
   })
@@ -102,8 +173,6 @@ export function SuppliersPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <PartyNav />
-
       <PageHeader
         title="Suppliers"
         count={`${suppliers.length} suppliers`}
@@ -117,10 +186,36 @@ export function SuppliersPage() {
               <UploadIcon />
               Import
             </Button>
-            <Button size="sm">
-              <PlusIcon />
-              Create Supplier
-            </Button>
+
+            {/* Create Supplier Dropdown Options */}
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button size="sm" className="gap-1.5">
+                    <PlusIcon className="size-4" />
+                    Create Supplier
+                    <ChevronDownIcon className="size-3.5 opacity-70" />
+                  </Button>
+                }
+              />
+              <DropdownMenuContent align="end" className="w-52 p-1">
+                <DropdownMenuItem
+                  onClick={() => setCreateDialogOpen(true)}
+                  className="cursor-pointer gap-2 py-1.5 text-xs font-medium"
+                >
+                  <PlusIcon className="size-4 text-primary" />
+                  <span>Add New</span>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  onClick={() => setSearchAddDialogOpen(true)}
+                  className="cursor-pointer gap-2 py-1.5 text-xs font-medium"
+                >
+                  <SearchIcon className="size-4 text-muted-foreground" />
+                  <span>Search and Add</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </>
         }
       />
@@ -128,31 +223,226 @@ export function SuppliersPage() {
       <DataTableCard
         table={table}
         columnCount={columns.length}
-        searchPlaceholder="Search suppliers..."
+        searchPlaceholder="Search suppliers by name, PAN, address..."
         rowSize={rowSize}
         onRowSizeChange={setRowSize}
         isFullscreen={isFullscreen}
         onToggleFullscreen={toggleFullscreen}
+        showFilter={false}
         emptyMessage={`No ${statusTab} suppliers found.`}
         leading={
-          <Tabs
-            items={statusTabItems}
-            value={statusTab}
-            onValueChange={(status) => {
-              if (typeof status !== "string") return
-              setStatusTab(status as SupplierStatus)
-              table.setPageIndex(0)
-            }}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <Tabs
+              items={statusTabItems}
+              value={statusTab}
+              onValueChange={(status) => {
+                if (typeof status !== "string") return
+                setStatusTab(status as SupplierStatus)
+                table.setPageIndex(0)
+              }}
+            />
+
+            <div className="hidden h-4 w-px bg-border sm:block" />
+
+            {/* Multi-Filter: Branch */}
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      "h-8 gap-1.5 text-xs font-normal",
+                      branchFilter !== "all" &&
+                        "border-primary bg-primary/5 font-medium text-primary"
+                    )}
+                  >
+                    <GitBranchIcon className="size-3.5" />
+                    <span className="max-w-[120px] truncate">
+                      {branchFilter === "all"
+                        ? "Branch: All"
+                        : availableBranches.find((b) => b.id === branchFilter)
+                            ?.name ?? "Branch"}
+                    </span>
+                    <ChevronDownIcon className="size-3 opacity-60" />
+                  </Button>
+                }
+              />
+              <DropdownMenuContent
+                align="start"
+                className="thin-scrollbar max-h-60 min-w-48 overflow-y-auto"
+              >
+                <DropdownMenuItem
+                  onClick={() => {
+                    setBranchFilter("all")
+                    table.setPageIndex(0)
+                  }}
+                  className="cursor-pointer text-xs"
+                >
+                  <span>All Branches</span>
+                  {branchFilter === "all" ? (
+                    <CheckIcon className="ml-auto size-4 text-primary" />
+                  ) : null}
+                </DropdownMenuItem>
+                {availableBranches.map((b) => (
+                  <DropdownMenuItem
+                    key={b.id}
+                    onClick={() => {
+                      setBranchFilter(b.id)
+                      table.setPageIndex(0)
+                    }}
+                    className="cursor-pointer text-xs"
+                  >
+                    <span>{b.name}</span>
+                    {branchFilter === b.id ? (
+                      <CheckIcon className="ml-auto size-4 text-primary" />
+                    ) : null}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Multi-Filter: Type */}
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      "h-8 gap-1.5 text-xs font-normal",
+                      typeFilter !== "all" &&
+                        "border-primary bg-primary/5 font-medium text-primary"
+                    )}
+                  >
+                    <UserIcon className="size-3.5" />
+                    <span>
+                      {typeFilter === "all"
+                        ? "Type: All"
+                        : typeFilter === "company"
+                          ? "Type: Company"
+                          : "Type: Individual"}
+                    </span>
+                    <ChevronDownIcon className="size-3 opacity-60" />
+                  </Button>
+                }
+              />
+              <DropdownMenuContent align="start" className="min-w-36">
+                <DropdownMenuItem
+                  onClick={() => {
+                    setTypeFilter("all")
+                    table.setPageIndex(0)
+                  }}
+                  className="cursor-pointer text-xs"
+                >
+                  <span>All Types</span>
+                  {typeFilter === "all" ? (
+                    <CheckIcon className="ml-auto size-4 text-primary" />
+                  ) : null}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setTypeFilter("company")
+                    table.setPageIndex(0)
+                  }}
+                  className="cursor-pointer text-xs"
+                >
+                  <span>Company</span>
+                  {typeFilter === "company" ? (
+                    <CheckIcon className="ml-auto size-4 text-primary" />
+                  ) : null}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setTypeFilter("individual")
+                    table.setPageIndex(0)
+                  }}
+                  className="cursor-pointer text-xs"
+                >
+                  <span>Individual</span>
+                  {typeFilter === "individual" ? (
+                    <CheckIcon className="ml-auto size-4 text-primary" />
+                  ) : null}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Multi-Filter: Category */}
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      "h-8 gap-1.5 text-xs font-normal",
+                      categoryFilter !== "All" &&
+                        "border-primary bg-primary/5 font-medium text-primary"
+                    )}
+                  >
+                    <FilterIcon className="size-3.5" />
+                    <span className="max-w-[130px] truncate">
+                      {categoryFilter === "All"
+                        ? "Category: All"
+                        : categoryFilter}
+                    </span>
+                    <ChevronDownIcon className="size-3 opacity-60" />
+                  </Button>
+                }
+              />
+              <DropdownMenuContent
+                align="start"
+                className="thin-scrollbar max-h-60 min-w-48 overflow-y-auto"
+              >
+                {supplierCategories.map((cat) => (
+                  <DropdownMenuItem
+                    key={cat}
+                    onClick={() => {
+                      setCategoryFilter(cat)
+                      table.setPageIndex(0)
+                    }}
+                    className="cursor-pointer text-xs"
+                  >
+                    <span>{cat === "All" ? "All Categories" : cat}</span>
+                    {categoryFilter === cat ? (
+                      <CheckIcon className="ml-auto size-4 text-primary" />
+                    ) : null}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Reset Filter Button */}
+            {isAnyFilterActive ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 gap-1 px-2 text-xs text-muted-foreground hover:text-foreground"
+                onClick={handleResetFilters}
+              >
+                <XIcon className="size-3.5" />
+                Reset
+              </Button>
+            ) : null}
+          </div>
         }
-        filters={{
-          value: categoryFilter,
-          options: categoryFilterOptions,
-          onValueChange: (value) => {
-            setCategoryFilter(value)
-            table.setPageIndex(0)
-          },
-        }}
+      />
+
+      {/* Search & Add Supplier Dialog */}
+      <SearchAddSupplierDialog
+        open={searchAddDialogOpen}
+        onOpenChange={setSearchAddDialogOpen}
+        currentBranchId={currentBranchId}
+        allSuppliers={suppliers}
+        onAddSupplierToBranch={handleAddSupplierToBranch}
+      />
+
+      {/* Create Supplier Dialog */}
+      <CreateSupplierDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        currentBranchId={currentBranchId}
+        onCreateSupplier={handleCreateSupplier}
       />
     </div>
   )

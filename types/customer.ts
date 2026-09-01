@@ -14,6 +14,8 @@ export type Customer = {
   category: string
   entryBy: string
   status: CustomerStatus
+  createdBranchId?: string
+  addedBranchIds?: string[]
 }
 
 export const customerTypeLabels: Record<CustomerType, string> = {
