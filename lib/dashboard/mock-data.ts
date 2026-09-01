@@ -294,8 +294,8 @@ export const createMenuSections: CreateMenuSection[] = [
   {
     title: "General",
     items: [
-      { label: "Customer", href: "/customers", shortcut: "Alt+C" },
-      { label: "Supplier", href: "/suppliers", shortcut: "Alt+V" },
+      { label: "Customer", href: "/sales/customers", shortcut: "Alt+C" },
+      { label: "Supplier", href: "/purchase/suppliers", shortcut: "Alt+V" },
       { label: "Product", href: "/inventory/products" },
       { label: "Contra", href: "/accounting/contra", shortcut: "Alt+T" },
     ],

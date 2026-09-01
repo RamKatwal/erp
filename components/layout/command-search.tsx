@@ -54,7 +54,13 @@ function iconForHref(href: string): React.ComponentType<{ className?: string }> 
   if (href.startsWith("/inventory")) return PackageIcon
   if (href.startsWith("/configurations")) return SettingsIcon
   if (href.startsWith("/reports")) return FileTextIcon
-  if (href === "/customers" || href === "/suppliers") return UsersIcon
+  if (
+    href === "/customers" ||
+    href === "/sales/customers" ||
+    href === "/suppliers" ||
+    href === "/purchase/suppliers"
+  )
+    return UsersIcon
   if (href.includes("bank")) return LandmarkIcon
   if (href.includes("payment")) return WalletIcon
   if (href === "/") return LayoutDashboardIcon
@@ -126,13 +132,13 @@ function buildPaletteItems(): PaletteItem[] {
   }> = [
     {
       title: "Customers",
-      href: "/customers",
+      href: "/sales/customers",
       keywords: "customer clients party create customer",
       shortcut: "G C",
     },
     {
       title: "Vendors / Suppliers",
-      href: "/suppliers",
+      href: "/purchase/suppliers",
       keywords: "vendor supplier party create vendor",
       shortcut: "G V",
     },

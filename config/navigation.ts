@@ -21,6 +21,7 @@ import {
   DuoSettingsIcon,
   DuoStockAdjustmentIcon,
   DuoUnitIcon,
+  DuoUsersIcon,
 } from "@/components/icons/duo"
 import { getAdminNavItemByHref } from "@/config/admin-navigation"
 import { getConfigurationsItemByHref } from "@/config/configurations-navigation"
@@ -100,6 +101,12 @@ export const mainNavigation: NavItem[] = [
         icon: DuoPaymentsIcon,
         description: "Track supplier payments and settlements.",
       },
+      {
+        title: "Suppliers",
+        href: "/purchase/suppliers",
+        icon: DuoUsersIcon,
+        description: "Manage supplier profiles and contact details.",
+      },
     ],
   },
   {
@@ -142,6 +149,12 @@ export const mainNavigation: NavItem[] = [
         href: "/sales/payments",
         icon: DuoPaymentsIcon,
         description: "Record customer payments and receipts.",
+      },
+      {
+        title: "Customers",
+        href: "/sales/customers",
+        icon: DuoUsersIcon,
+        description: "Manage customer profiles and contact details.",
       },
     ],
   },
