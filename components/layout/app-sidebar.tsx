@@ -306,7 +306,10 @@ export function AppSidebar() {
             )}
           </TooltipTrigger>
           <TooltipContent side="right">
-            {isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            <NavShortcutTooltipLabel
+              title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              shortcutKeys={["Mod", "B"]}
+            />
           </TooltipContent>
         </Tooltip>
       ) : null}

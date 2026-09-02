@@ -33,7 +33,9 @@ import type { NavIcon } from "@/types/navigation"
 
 const createActionIcons: Record<string, NavIcon> = {
   "/customers": DuoSalesIcon,
+  "/sales/customers": DuoSalesIcon,
   "/suppliers": DuoPurchaseIcon,
+  "/purchase/suppliers": DuoPurchaseIcon,
   "/inventory/products": DuoProductsIcon,
   "/accounting/contra": DuoAccountingIcon,
   "/purchase/invoice": DuoPurchaseIcon,
@@ -94,7 +96,9 @@ export function CreateDialog() {
               </h3>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {section.items.map((item) => {
-                  const Icon = createActionIcons[item.href]
+                  const Icon =
+                    createActionIcons[item.href] ??
+                    createActionIcons[item.href.split("?")[0]]
 
                   return (
                     <Button

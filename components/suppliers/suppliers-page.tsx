@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import {
   Building2Icon,
   CheckIcon,
@@ -34,13 +35,24 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Tabs } from "@/components/ui/tabs"
+import { useIsMac } from "@/hooks/use-is-mac"
 import { readActiveBranchId } from "@/lib/branches/storage"
 import { getBranchesByIds } from "@/lib/companies/options"
 import { mockSuppliers, supplierCategories } from "@/lib/mock/suppliers"
 import { cn } from "@/lib/utils"
 import type { Supplier, SupplierStatus } from "@/types/supplier"
 
+const CREATE_QUERY = "create"
+
+function displayShortcut(shortcut: string, isMac: boolean) {
+  if (!isMac) return shortcut
+  return shortcut.replace(/^Alt\+/i, "⌥")
+}
+
 export function SuppliersPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const isMac = useIsMac()
   const [suppliers, setSuppliers] = React.useState<Supplier[]>(mockSuppliers)
   const [statusTab, setStatusTab] = React.useState<SupplierStatus>("active")
   const [branchFilter, setBranchFilter] = React.useState("all")
@@ -58,6 +70,16 @@ export function SuppliersPage() {
       setCurrentBranchId(stored)
     }
   }, [])
+
+  React.useEffect(() => {
+    if (searchParams.get(CREATE_QUERY) !== "1") return
+
+    setCreateDialogOpen(true)
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete(CREATE_QUERY)
+    const next = params.toString()
+    router.replace(next ? `/purchase/suppliers?${next}` : "/purchase/suppliers")
+  }, [router, searchParams])
 
   const activeCount = suppliers.filter((item) => item.status === "active").length
   const inactiveCount = suppliers.filter(
@@ -204,7 +226,10 @@ export function SuppliersPage() {
                   className="cursor-pointer gap-2 py-1.5 text-xs font-medium"
                 >
                   <PlusIcon className="size-4 text-primary" />
-                  <span>Add New</span>
+                  <span className="flex-1">Add New</span>
+                  <kbd className="pointer-events-none rounded border bg-muted px-1.5 py-0.5 font-mono text-[10px] font-medium text-muted-foreground">
+                    {displayShortcut("Alt+V", isMac)}
+                  </kbd>
                 </DropdownMenuItem>
 
                 <DropdownMenuItem

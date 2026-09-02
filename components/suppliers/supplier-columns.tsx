@@ -14,7 +14,10 @@ import {
 } from "@/components/admin/subscriptions/stacked-avatars"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import type { Supplier } from "@/types/supplier"
+import {
+  supplierTypeLabels,
+  type Supplier,
+} from "@/types/supplier"
 
 type SupplierColumnActions = {
   onEdit: (supplier: Supplier) => void
@@ -24,6 +27,12 @@ type SupplierColumnActions = {
 
 function displayValue(value: string) {
   return value.trim() ? value : "—"
+}
+
+function formatEntryBy(value: string) {
+  const trimmed = value.trim()
+  if (!trimmed) return "—"
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1)
 }
 
 export function createSupplierColumns({
@@ -69,7 +78,9 @@ export function createSupplierColumns({
         <DataTableColumnHeader column={column} title="Type" />
       ),
       cell: ({ row }) => (
-        <span className="text-muted-foreground">{row.getValue("type")}</span>
+        <span className="text-muted-foreground">
+          {supplierTypeLabels[row.original.type]}
+        </span>
       ),
     },
     {
@@ -156,7 +167,9 @@ export function createSupplierColumns({
         <DataTableColumnHeader column={column} title="Entry By" />
       ),
       cell: ({ row }) => (
-        <span className="text-muted-foreground">{row.getValue("entryBy")}</span>
+        <span className="text-muted-foreground">
+          {formatEntryBy(row.getValue("entryBy"))}
+        </span>
       ),
     },
     {
